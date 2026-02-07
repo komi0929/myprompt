@@ -68,9 +68,22 @@ function LegalContent(): React.ReactElement {
             </div>
 
             {/* Footer Credit */}
-            <p className="text-[10px] text-slate-300 text-center mt-6">
-              © {new Date().getFullYear()} 株式会社ヒトコト　代表 小南優作
-            </p>
+            <div className="mt-6 flex flex-col items-center gap-1">
+              <p className="text-[10px] text-slate-300">
+                © {new Date().getFullYear()} 株式会社ヒトコト
+              </p>
+              <p className="text-[10px] text-slate-300">
+                produced by{" "}
+                <a
+                  href="https://mykanban.hitokoto.tech/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-yellow-500 hover:text-yellow-600 font-medium transition-colors"
+                >
+                  komi
+                </a>
+              </p>
+            </div>
           </div>
         </div>
       </main>
