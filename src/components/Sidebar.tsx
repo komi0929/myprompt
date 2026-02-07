@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { Home, Flame, User, Bell } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePromptStore } from "@/lib/prompt-store";
 import { useAuth } from "@/components/AuthProvider";
 import { useAuthGuard } from "@/lib/useAuthGuard";
@@ -30,12 +31,14 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
     >
       {/* Logo Area */}
       <div className="mb-8 flex items-center justify-between px-1">
-        <div className="flex items-center space-x-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-yellow-400 font-bold text-slate-800 shadow-sm text-lg">
-            M
-          </div>
-          <span className="text-lg font-semibold text-slate-800">マイプロンプト</span>
-        </div>
+        <Image
+          src="/logo.png"
+          alt="マイプロンプト"
+          width={400}
+          height={100}
+          className="h-8 w-auto"
+          priority
+        />
         {/* Notification bell */}
         <button
           onClick={handleToggleNotifications}
