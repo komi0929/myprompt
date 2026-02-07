@@ -57,15 +57,20 @@ function PageContent(): React.ReactElement {
       {/* 2. Center Main Feed */}
       <main className="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
         {/* Nani-style Hero Header */}
-        <div className="px-6 pt-6 pb-2 z-20 flex flex-col items-center gap-2">
-          <Image
-            src="/icon.png"
-            alt="マイプロンプト"
-            width={200}
-            height={200}
-            className="h-12 w-12 object-contain drop-shadow-md"
-          />
-          <p className="text-center text-sm font-bold text-slate-700 leading-relaxed tracking-wide">
+        <div className="px-6 pt-7 pb-3 z-20 flex flex-col items-center gap-1.5">
+          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-400 shadow-lg shadow-yellow-200/50 flex items-center justify-center mb-1">
+            <Image
+              src="/icon.png"
+              alt="マイプロンプト"
+              width={200}
+              height={200}
+              className="h-9 w-9 object-contain"
+            />
+          </div>
+          <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">
+            マイプロンプト
+          </h1>
+          <p className="text-center text-xs text-slate-400 leading-relaxed tracking-wide">
             バイブコーダーのための<br />
             プロンプト簡単メモサイト
           </p>
