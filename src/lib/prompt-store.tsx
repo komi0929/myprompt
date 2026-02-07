@@ -67,16 +67,6 @@ type PromptStore = PromptStoreState & PromptStoreActions;
 const PromptStoreContext = createContext<PromptStore | null>(null);
 
 /* ─── LocalStorage helpers ─── */
-function loadJson<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") return fallback;
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) as T : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
 function saveJson(key: string, value: unknown): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(key, JSON.stringify(value));
@@ -212,12 +202,13 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     load();
   }, [refreshPrompts, refreshFavorites, refreshLikes]);
 
-  // Auto-select first prompt
-  useEffect(() => {
-    if (hydrated && prompts.length > 0 && !selectedPromptId) {
-      setSelectedPromptId(prompts[0].id);
-    }
-  }, [hydrated, prompts, selectedPromptId]);
+  // Auto-select first prompt (inside hydration callback, not in a separate effect)
+  const autoSelectId = hydrated && prompts.length > 0 && !selectedPromptId
+    ? prompts[0].id
+    : null;
+  if (autoSelectId && autoSelectId !== selectedPromptId) {
+    setSelectedPromptId(autoSelectId);
+  }
 
   /* ─── Notifications (placeholder - no mock data) ─── */
 
