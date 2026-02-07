@@ -6,12 +6,14 @@ import { PHASES } from "@/lib/mock-data";
 import { usePromptStore } from "@/lib/prompt-store";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { copyToClipboard } from "@/components/ui/Toast";
-import { ArrowRight, Copy, GitBranch, History, Share2, Sparkles, Edit3, Pencil } from "lucide-react";
+import { ArrowRight, Copy, GitBranch, History, Share2, Sparkles, Edit3, Pencil, Heart, Bookmark } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import HistoryModal from "@/components/HistoryModal";
+import { showToast } from "@/components/ui/Toast";
 
 export function DetailPanel(): React.ReactElement {
-  const { selectedPromptId, prompts, openEditor, duplicateAsArrangement } = usePromptStore();
+  const { selectedPromptId, prompts, openEditor, duplicateAsArrangement, toggleFavorite, isFavorited, toggleLike, isLiked } = usePromptStore();
   const { requireAuth } = useAuthGuard();
   const prompt = prompts.find(p => p.id === selectedPromptId) ?? null;
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -27,6 +29,8 @@ export function DetailPanel(): React.ReactElement {
   }
 
   const phaseInfo = PHASES.find(p => p.id === prompt.phase);
+  const fav = isFavorited(prompt.id);
+  const liked = isLiked(prompt.id);
 
   const handleShare = (): void => {
     if (navigator.share) {
@@ -49,6 +53,17 @@ export function DetailPanel(): React.ReactElement {
   const handleHistory = (): void => {
     if (!requireAuth("履歴の閲覧")) return;
     setHistoryOpen(true);
+  };
+
+  const handleFavorite = (): void => {
+    if (!requireAuth("お気に入り登録")) return;
+    toggleFavorite(prompt.id);
+    showToast(fav ? "お気に入りから削除" : "⭐ お気に入りに追加しました");
+  };
+
+  const handleLike = (): void => {
+    toggleLike(prompt.id);
+    if (!liked) showToast("👍 いいね！しました");
   };
 
   return (
@@ -115,6 +130,34 @@ export function DetailPanel(): React.ReactElement {
           <div className="text-xs text-slate-400 font-mono border-b border-slate-100 pb-3">
             更新日: {new Date(prompt.updatedAt).toLocaleDateString("ja-JP")}
           </div>
+        </div>
+
+        {/* Like & Favorite quick actions */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleLike}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-all",
+              liked
+                ? "text-pink-500 bg-pink-50 border-pink-200"
+                : "text-slate-400 bg-white border-slate-200 hover:text-pink-500 hover:bg-pink-50 hover:border-pink-200"
+            )}
+          >
+            <Heart className={cn("w-4 h-4", liked && "fill-pink-400")} />
+            いいね！ <span className="tabular-nums">{prompt.likeCount}</span>
+          </button>
+          <button
+            onClick={handleFavorite}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-all",
+              fav
+                ? "text-yellow-600 bg-yellow-50 border-yellow-300"
+                : "text-slate-400 bg-white border-slate-200 hover:text-yellow-600 hover:bg-yellow-50 hover:border-yellow-300"
+            )}
+          >
+            <Bookmark className={cn("w-4 h-4", fav && "fill-yellow-400")} />
+            {fav ? "お気に入り" : "お気に入りに追加"}
+          </button>
         </div>
 
         {/* Prompt Content */}

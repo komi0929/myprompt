@@ -3,37 +3,47 @@
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
-import { Copy, GitBranch, Star, Trash2, Pencil } from "lucide-react";
+import { Copy, GitBranch, Star, Trash2, Pencil, Heart, Bookmark } from "lucide-react";
 import { usePromptStore } from "@/lib/prompt-store";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { copyToClipboard, showToast } from "@/components/ui/Toast";
 import { type Prompt, PHASES } from "@/lib/mock-data";
 
 export function PromptFeed(): React.ReactElement {
-  const { getFilteredPrompts } = usePromptStore();
+  const { getFilteredPrompts, favorites } = usePromptStore();
   const prompts = getFilteredPrompts();
 
   return (
     <div className="grid grid-cols-1 gap-4 p-0.5 pb-28">
       {prompts.map((prompt) => (
-        <PromptCard key={prompt.id} prompt={prompt} />
+        <PromptCard key={prompt.id} prompt={prompt} isFavoritedByMe={favorites.includes(prompt.id)} />
       ))}
     </div>
   );
 }
 
-function PromptCard({ prompt }: { prompt: Prompt }): React.ReactElement {
-  const { setSelectedPromptId, selectedPromptId, deletePrompt, toggleFavorite, favorites, openEditor } = usePromptStore();
+function PromptCard({ prompt, isFavoritedByMe }: { prompt: Prompt; isFavoritedByMe: boolean }): React.ReactElement {
+  const { setSelectedPromptId, selectedPromptId, deletePrompt, toggleFavorite, toggleLike, isLiked, openEditor } = usePromptStore();
   const { requireAuth } = useAuthGuard();
   const isSelected = selectedPromptId === prompt.id;
-  const isFav = favorites.includes(prompt.id);
+  const liked = isLiked(prompt.id);
   const phaseInfo = PHASES.find(p => p.id === prompt.phase);
+
+  // Determine origin badge for マイライブラリ view
+  const MOCK_USER_ID = "mock-user";
+  const isOwned = prompt.authorId === MOCK_USER_ID;
 
   const handleFavorite = (e: React.MouseEvent): void => {
     e.stopPropagation();
     if (!requireAuth("お気に入り登録")) return;
     toggleFavorite(prompt.id);
-    showToast(isFav ? "お気に入りから削除" : "お気に入りに追加しました");
+    showToast(isFavoritedByMe ? "お気に入りから削除" : "⭐ お気に入りに追加しました");
+  };
+
+  const handleLike = (e: React.MouseEvent): void => {
+    e.stopPropagation();
+    toggleLike(prompt.id);
+    if (!liked) showToast("👍 いいね！しました");
   };
 
   const handleEdit = (e: React.MouseEvent): void => {
@@ -58,20 +68,19 @@ function PromptCard({ prompt }: { prompt: Prompt }): React.ReactElement {
       onClick={() => setSelectedPromptId(prompt.id)}
     >
 
-
       {/* Always-visible action bar */}
       <div className="absolute top-3 right-3 flex items-center gap-1 z-10">
         <button
           className={cn(
             "p-1.5 rounded-md transition-all",
-            isFav
+            isFavoritedByMe
               ? "text-yellow-500 bg-yellow-50"
               : "text-slate-300 hover:text-yellow-500 hover:bg-yellow-50"
           )}
           onClick={handleFavorite}
-          title={isFav ? "お気に入り解除" : "お気に入りに追加"}
+          title={isFavoritedByMe ? "お気に入り解除" : "お気に入りに追加"}
         >
-          <Star className={cn("w-4 h-4", isFav && "fill-yellow-400")} />
+          <Bookmark className={cn("w-4 h-4", isFavoritedByMe && "fill-yellow-400")} />
         </button>
         <button
           className="p-1.5 rounded-md text-slate-300 hover:text-yellow-600 hover:bg-yellow-50 transition-all"
@@ -97,6 +106,16 @@ function PromptCard({ prompt }: { prompt: Prompt }): React.ReactElement {
               <GitBranch className="w-3 h-3 mr-0.5" />派生
             </span>
           )}
+          {/* Origin indicator */}
+          {isOwned ? (
+            <span className="text-[10px] font-medium text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+              ✏️ 自作
+            </span>
+          ) : isFavoritedByMe ? (
+            <span className="text-[10px] font-medium text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-md border border-yellow-200">
+              ⭐ お気に入り
+            </span>
+          ) : null}
         </div>
         <CardTitle className="leading-snug group-hover:text-yellow-600 transition-colors line-clamp-2 pr-20">
           {prompt.title}
@@ -119,21 +138,39 @@ function PromptCard({ prompt }: { prompt: Prompt }): React.ReactElement {
           )}
         </div>
 
-        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
+          {/* Like button - always visible */}
           <button
-            className="p-1.5 rounded-md text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all"
-            onClick={handleEdit}
-            title="編集"
+            className={cn(
+              "flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-all",
+              liked
+                ? "text-pink-500 bg-pink-50"
+                : "text-slate-300 hover:text-pink-500 hover:bg-pink-50"
+            )}
+            onClick={handleLike}
+            title="いいね！"
           >
-            <Pencil className="w-3.5 h-3.5" />
+            <Heart className={cn("w-3.5 h-3.5", liked && "fill-pink-400")} />
+            <span className="font-medium tabular-nums">{prompt.likeCount}</span>
           </button>
-          <button
-            className="p-1.5 rounded-md text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all"
-            onClick={handleDelete}
-            title="削除"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
+
+          {/* Edit/Delete - hover only */}
+          <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <button
+              className="p-1.5 rounded-md text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all"
+              onClick={handleEdit}
+              title="編集"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+            <button
+              className="p-1.5 rounded-md text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all"
+              onClick={handleDelete}
+              title="削除"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </CardFooter>
     </Card>

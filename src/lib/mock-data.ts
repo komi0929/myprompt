@@ -8,6 +8,8 @@ export interface Prompt {
   phase: Exclude<Phase, "All">;
   visibility: "Private" | "Public";
   updatedAt: string;
+  likeCount: number;
+  authorId?: string;
   lineage: {
     parent?: string;
     children?: string[];
@@ -24,6 +26,8 @@ export const MOCK_PROMPTS: Prompt[] = [
     phase: "Implementation",
     visibility: "Private",
     updatedAt: "2026-02-07T10:00:00",
+    likeCount: 3,
+    authorId: "mock-user",
     lineage: {
       isOriginal: true,
     },
@@ -36,6 +40,8 @@ export const MOCK_PROMPTS: Prompt[] = [
     phase: "Planning",
     visibility: "Public",
     updatedAt: "2026-02-06T15:30:00",
+    likeCount: 12,
+    authorId: "other-user",
     lineage: {
       parent: "Old PRD Gen",
       children: ["Fixed for SaaS", "Mobile App ver"],
@@ -50,6 +56,8 @@ export const MOCK_PROMPTS: Prompt[] = [
     phase: "Debug",
     visibility: "Public",
     updatedAt: "2026-02-05T09:00:00",
+    likeCount: 7,
+    authorId: "mock-user",
     lineage: {
       isOriginal: true,
     },

@@ -12,12 +12,26 @@ export interface HistoryEntry {
   content: string;
 }
 
+/* ─── Notification ─── */
+export interface AppNotification {
+  id: string;
+  type: "like" | "favorite";
+  promptId: string;
+  promptTitle: string;
+  actorName: string;
+  timestamp: string;
+  read: boolean;
+}
+
 /* ─── Store State ─── */
 interface PromptStoreState {
   prompts: Prompt[];
   favorites: string[];
+  likes: string[];
   history: Record<string, HistoryEntry[]>;
-  view: "library" | "trend" | "favorites";
+  notifications: AppNotification[];
+  unreadCount: number;
+  view: "library" | "trend";
   visibilityFilter: "all" | "Private" | "Public";
   searchQuery: string;
   selectedPromptId: string | null;
@@ -27,11 +41,14 @@ interface PromptStoreState {
 
 /* ─── Actions ─── */
 interface PromptStoreActions {
-  addPrompt: (prompt: Omit<Prompt, "id" | "updatedAt">) => Promise<string>;
+  addPrompt: (prompt: Omit<Prompt, "id" | "updatedAt" | "likeCount">) => Promise<string>;
   updatePrompt: (id: string, updates: Partial<Omit<Prompt, "id">>) => Promise<void>;
   deletePrompt: (id: string) => Promise<void>;
   duplicateAsArrangement: (sourceId: string) => void;
   toggleFavorite: (id: string) => Promise<void>;
+  toggleLike: (id: string) => void;
+  isFavorited: (id: string) => boolean;
+  isLiked: (id: string) => boolean;
   setView: (view: PromptStoreState["view"]) => void;
   setVisibilityFilter: (f: PromptStoreState["visibilityFilter"]) => void;
   setSearchQuery: (q: string) => void;
@@ -42,11 +59,28 @@ interface PromptStoreActions {
   getHistory: (id: string) => HistoryEntry[];
   getFilteredPrompts: () => Prompt[];
   refreshPrompts: () => Promise<void>;
+  markAllNotificationsRead: () => void;
 }
 
 type PromptStore = PromptStoreState & PromptStoreActions;
 
 const PromptStoreContext = createContext<PromptStore | null>(null);
+
+/* ─── LocalStorage helpers ─── */
+function loadJson<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) as T : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function saveJson(key: string, value: unknown): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(key, JSON.stringify(value));
+}
 
 /* ─── DB Row → Prompt ─── */
 interface DbPrompt {
@@ -71,6 +105,8 @@ function dbToPrompt(row: DbPrompt): Prompt {
     phase: row.phase as Prompt["phase"],
     visibility: row.visibility as Prompt["visibility"],
     updatedAt: row.updated_at,
+    likeCount: 0,
+    authorId: row.user_id,
     lineage: {
       parent: row.parent_id ?? undefined,
       isOriginal: !row.parent_id,
@@ -78,12 +114,17 @@ function dbToPrompt(row: DbPrompt): Prompt {
   };
 }
 
+/* ─── Current mock user ID ─── */
+const MOCK_USER_ID = "mock-user";
+
 export function PromptStoreProvider({ children }: { children: ReactNode }): ReactNode {
   const { user, isGuest } = useAuth();
 
   const [prompts, setPrompts] = useState<Prompt[]>(MOCK_PROMPTS);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [likes, setLikes] = useState<string[]>([]);
   const [history, setHistory] = useState<Record<string, HistoryEntry[]>>({});
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [view, setView] = useState<PromptStoreState["view"]>("library");
   const [visibilityFilter, setVisibilityFilter] = useState<PromptStoreState["visibilityFilter"]>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -92,11 +133,32 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  /* ─── Fetch prompts from Supabase ─── */
+  const currentUserId = user?.id ?? MOCK_USER_ID;
+
+  /* ─── Load from localStorage on mount ─── */
+  useEffect(() => {
+    setFavorites(loadJson<string[]>("myprompt-favorites", []));
+    setLikes(loadJson<string[]>("myprompt-likes", []));
+    setNotifications(loadJson<AppNotification[]>("myprompt-notifications", []));
+  }, []);
+
+  /* ─── Persist favorites/likes/notifications on change ─── */
+  useEffect(() => {
+    if (hydrated) saveJson("myprompt-favorites", favorites);
+  }, [favorites, hydrated]);
+  useEffect(() => {
+    if (hydrated) saveJson("myprompt-likes", likes);
+  }, [likes, hydrated]);
+  useEffect(() => {
+    if (hydrated) saveJson("myprompt-notifications", notifications);
+  }, [notifications, hydrated]);
+
+  const unreadCount = useMemo(() => notifications.filter(n => !n.read).length, [notifications]);
+
+  /* ─── Fetch prompts ─── */
   const refreshPrompts = useCallback(async (): Promise<void> => {
     try {
       if (isGuest) {
-        // Guest: only public prompts
         const { data, error } = await supabase
           .from("prompts")
           .select("*")
@@ -105,11 +167,9 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         if (!error && data) {
           setPrompts(data.map(dbToPrompt));
         } else {
-          // Fallback to mock data if DB not set up yet
           setPrompts(MOCK_PROMPTS);
         }
       } else {
-        // Logged in: public + own prompts
         const { data, error } = await supabase
           .from("prompts")
           .select("*")
@@ -121,7 +181,6 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         }
       }
     } catch {
-      // DB not configured yet, use mock data
       setPrompts(MOCK_PROMPTS);
     }
   }, [isGuest]);
@@ -159,9 +218,31 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     }
   }, [hydrated, prompts, selectedPromptId]);
 
+  /* ─── Push notification (local mock) ─── */
+  const pushNotification = useCallback((type: "like" | "favorite", promptId: string, promptTitle: string): void => {
+    const actorNames = ["田中さん", "鈴木さん", "佐藤さん", "山田さん", "伊藤さん"];
+    const n: AppNotification = {
+      id: crypto.randomUUID(),
+      type,
+      promptId,
+      promptTitle,
+      actorName: actorNames[Math.floor(Math.random() * actorNames.length)],
+      timestamp: new Date().toISOString(),
+      read: false,
+    };
+    setNotifications(prev => [n, ...prev].slice(0, 50)); // keep max 50
+  }, []);
+
   /* ─── CRUD Operations ─── */
-  const addPrompt = useCallback(async (input: Omit<Prompt, "id" | "updatedAt">): Promise<string> => {
-    if (!user) return "";
+  const addPrompt = useCallback(async (input: Omit<Prompt, "id" | "updatedAt" | "likeCount">): Promise<string> => {
+    if (!user) {
+      // Local-only fallback
+      const localId = crypto.randomUUID();
+      const newPrompt: Prompt = { ...input, id: localId, updatedAt: new Date().toISOString(), likeCount: 0, authorId: MOCK_USER_ID };
+      setPrompts(prev => [newPrompt, ...prev]);
+      setSelectedPromptId(localId);
+      return localId;
+    }
     const { data, error } = await supabase
       .from("prompts")
       .insert({
@@ -176,9 +257,8 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       .select()
       .single();
     if (error || !data) {
-      // Fallback: optimistic local-only
       const localId = crypto.randomUUID();
-      const newPrompt: Prompt = { ...input, id: localId, updatedAt: new Date().toISOString() };
+      const newPrompt: Prompt = { ...input, id: localId, updatedAt: new Date().toISOString(), likeCount: 0, authorId: currentUserId };
       setPrompts(prev => [newPrompt, ...prev]);
       setSelectedPromptId(localId);
       return localId;
@@ -187,7 +267,6 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     setPrompts(prev => [newPrompt, ...prev]);
     setSelectedPromptId(newPrompt.id);
 
-    // Save initial history
     await supabase.from("prompt_history").insert({
       prompt_id: newPrompt.id,
       title: newPrompt.title,
@@ -195,10 +274,9 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     });
 
     return newPrompt.id;
-  }, [user]);
+  }, [user, currentUserId]);
 
   const updatePrompt = useCallback(async (id: string, updates: Partial<Omit<Prompt, "id">>): Promise<void> => {
-    // Optimistic update
     setPrompts(prev =>
       prev.map(p => {
         if (p.id !== id) return p;
@@ -216,7 +294,6 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
 
       await supabase.from("prompts").update(dbUpdates).eq("id", id);
 
-      // Save history
       const prompt = prompts.find(p => p.id === id);
       if (prompt) {
         await supabase.from("prompt_history").insert({
@@ -231,6 +308,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   const deletePrompt = useCallback(async (id: string): Promise<void> => {
     setPrompts(prev => prev.filter(p => p.id !== id));
     setFavorites(prev => prev.filter(fid => fid !== id));
+    setLikes(prev => prev.filter(lid => lid !== id));
     if (selectedPromptId === id) setSelectedPromptId(null);
     if (user) {
       await supabase.from("prompts").delete().eq("id", id);
@@ -245,15 +323,25 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       id: crypto.randomUUID(),
       title: `${source.title} (アレンジ)`,
       updatedAt: new Date().toISOString(),
+      likeCount: 0,
+      authorId: currentUserId,
       lineage: { parent: source.title, isOriginal: false },
     };
     setEditingPrompt(newPrompt);
-  }, [prompts]);
+  }, [prompts, currentUserId]);
 
+  /* ─── Favorite toggle ─── */
   const toggleFavorite = useCallback(async (id: string): Promise<void> => {
     const isFav = favorites.includes(id);
-    // Optimistic
     setFavorites(prev => isFav ? prev.filter(fid => fid !== id) : [...prev, id]);
+
+    // Trigger notification for prompt author (mock)
+    if (!isFav) {
+      const prompt = prompts.find(p => p.id === id);
+      if (prompt && prompt.authorId && prompt.authorId !== currentUserId) {
+        pushNotification("favorite", id, prompt.title);
+      }
+    }
 
     if (user) {
       if (isFav) {
@@ -262,7 +350,30 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         await supabase.from("favorites").insert({ user_id: user.id, prompt_id: id });
       }
     }
-  }, [favorites, user]);
+  }, [favorites, user, prompts, currentUserId, pushNotification]);
+
+  /* ─── Like toggle ─── */
+  const toggleLike = useCallback((id: string): void => {
+    const isLiked = likes.includes(id);
+    setLikes(prev => isLiked ? prev.filter(lid => lid !== id) : [...prev, id]);
+
+    // Update likeCount on the prompt
+    setPrompts(prev => prev.map(p => {
+      if (p.id !== id) return p;
+      return { ...p, likeCount: p.likeCount + (isLiked ? -1 : 1) };
+    }));
+
+    // Trigger notification (mock)
+    if (!isLiked) {
+      const prompt = prompts.find(p => p.id === id);
+      if (prompt && prompt.authorId && prompt.authorId !== currentUserId) {
+        pushNotification("like", id, prompt.title);
+      }
+    }
+  }, [likes, prompts, currentUserId, pushNotification]);
+
+  const isFavorited = useCallback((id: string): boolean => favorites.includes(id), [favorites]);
+  const isLiked = useCallback((id: string): boolean => likes.includes(id), [likes]);
 
   const openEditor = useCallback((prompt?: Prompt): void => {
     if (prompt) {
@@ -277,10 +388,12 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         phase: defaultPhase,
         visibility: "Private",
         updatedAt: "",
+        likeCount: 0,
+        authorId: currentUserId,
         lineage: { isOriginal: true },
       });
     }
-  }, [currentPhase]);
+  }, [currentPhase, currentUserId]);
 
   const closeEditor = useCallback((): void => {
     setEditingPrompt(null);
@@ -290,33 +403,23 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     return history[id] ?? [];
   }, [history]);
 
-  // Fetch history from Supabase on demand
-  const getHistoryAsync = useCallback(async (id: string): Promise<void> => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("prompt_history")
-      .select("title, content, created_at")
-      .eq("prompt_id", id)
-      .order("created_at", { ascending: false });
-    if (data) {
-      setHistory(prev => ({
-        ...prev,
-        [id]: data.map(h => ({ timestamp: h.created_at, title: h.title, content: h.content })),
-      }));
-    }
-  }, [user]);
+  const markAllNotificationsRead = useCallback((): void => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  }, []);
 
   const getFilteredPrompts = useCallback((): Prompt[] => {
     let result = prompts;
 
-    // View filter
-    if (view === "trend") {
+    // View filter: library = owned + favorited, trend = public
+    if (view === "library") {
+      result = result.filter(p =>
+        p.authorId === currentUserId || favorites.includes(p.id)
+      );
+    } else if (view === "trend") {
       result = result.filter(p => p.visibility === "Public");
-    } else if (view === "favorites") {
-      result = result.filter(p => favorites.includes(p.id));
     }
 
-    // Phase filter (skip if "All")
+    // Phase filter
     if (currentPhase !== "All") {
       result = result.filter(p => p.phase === currentPhase);
     }
@@ -337,20 +440,22 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     }
 
     return result;
-  }, [prompts, view, currentPhase, visibilityFilter, searchQuery, favorites]);
+  }, [prompts, view, currentPhase, visibilityFilter, searchQuery, favorites, currentUserId]);
 
   const store = useMemo<PromptStore>(() => ({
-    prompts, favorites, history, view, visibilityFilter, searchQuery,
+    prompts, favorites, likes, history, notifications, unreadCount, view, visibilityFilter, searchQuery,
     selectedPromptId, currentPhase, editingPrompt,
     addPrompt, updatePrompt, deletePrompt, duplicateAsArrangement,
-    toggleFavorite, setView, setVisibilityFilter, setSearchQuery,
+    toggleFavorite, toggleLike, isFavorited, isLiked,
+    setView, setVisibilityFilter, setSearchQuery,
     setSelectedPromptId, setCurrentPhase, openEditor, closeEditor,
-    getHistory, getFilteredPrompts, refreshPrompts,
+    getHistory, getFilteredPrompts, refreshPrompts, markAllNotificationsRead,
   }), [
-    prompts, favorites, history, view, visibilityFilter, searchQuery,
+    prompts, favorites, likes, history, notifications, unreadCount, view, visibilityFilter, searchQuery,
     selectedPromptId, currentPhase, editingPrompt,
     addPrompt, updatePrompt, deletePrompt, duplicateAsArrangement,
-    toggleFavorite, openEditor, closeEditor, getHistory, getFilteredPrompts, refreshPrompts,
+    toggleFavorite, toggleLike, isFavorited, isLiked,
+    openEditor, closeEditor, getHistory, getFilteredPrompts, refreshPrompts, markAllNotificationsRead,
   ]);
 
   return (
