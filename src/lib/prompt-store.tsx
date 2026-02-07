@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { type Phase, type Prompt, MOCK_PROMPTS } from "@/lib/mock-data";
+import { type Phase, type Prompt } from "@/lib/mock-data";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -46,7 +46,7 @@ interface PromptStoreActions {
   deletePrompt: (id: string) => Promise<void>;
   duplicateAsArrangement: (sourceId: string) => void;
   toggleFavorite: (id: string) => Promise<void>;
-  toggleLike: (id: string) => void;
+  toggleLike: (id: string) => Promise<void>;
   isFavorited: (id: string) => boolean;
   isLiked: (id: string) => boolean;
   setView: (view: PromptStoreState["view"]) => void;
@@ -56,7 +56,7 @@ interface PromptStoreActions {
   setCurrentPhase: (p: Phase) => void;
   openEditor: (prompt?: Prompt) => void;
   closeEditor: () => void;
-  getHistory: (id: string) => HistoryEntry[];
+  getHistory: (id: string) => Promise<HistoryEntry[]>;
   getFilteredPrompts: () => Prompt[];
   refreshPrompts: () => Promise<void>;
   markAllNotificationsRead: () => void;
@@ -92,6 +92,7 @@ interface DbPrompt {
   phase: string;
   visibility: string;
   parent_id: string | null;
+  like_count?: number;
   created_at: string;
   updated_at: string;
   profiles?: { display_name: string | null; avatar_url: string | null } | null;
@@ -106,7 +107,7 @@ function dbToPrompt(row: DbPrompt): Prompt {
     phase: row.phase as Prompt["phase"],
     visibility: row.visibility as Prompt["visibility"],
     updatedAt: row.updated_at,
-    likeCount: 0,
+    likeCount: row.like_count ?? 0,
     authorId: row.user_id,
     authorName: row.profiles?.display_name ?? undefined,
     authorAvatarUrl: row.profiles?.avatar_url ?? undefined,
@@ -117,16 +118,13 @@ function dbToPrompt(row: DbPrompt): Prompt {
   };
 }
 
-/* ─── Current mock user ID ─── */
-const MOCK_USER_ID = "mock-user";
-
 export function PromptStoreProvider({ children }: { children: ReactNode }): ReactNode {
   const { user, isGuest } = useAuth();
 
-  const [prompts, setPrompts] = useState<Prompt[]>(MOCK_PROMPTS);
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [likes, setLikes] = useState<string[]>([]);
-  const [history, setHistory] = useState<Record<string, HistoryEntry[]>>({});
+  const [history] = useState<Record<string, HistoryEntry[]>>({});
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [view, setView] = useState<PromptStoreState["view"]>("library");
   const [visibilityFilter, setVisibilityFilter] = useState<PromptStoreState["visibilityFilter"]>("all");
@@ -138,20 +136,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
 
   const currentUserId = user?.id ?? "";
 
-  /* ─── Load from localStorage on mount ─── */
-  useEffect(() => {
-    setFavorites(loadJson<string[]>("myprompt-favorites", []));
-    setLikes(loadJson<string[]>("myprompt-likes", []));
-    setNotifications(loadJson<AppNotification[]>("myprompt-notifications", []));
-  }, []);
-
-  /* ─── Persist favorites/likes/notifications on change ─── */
-  useEffect(() => {
-    if (hydrated) saveJson("myprompt-favorites", favorites);
-  }, [favorites, hydrated]);
-  useEffect(() => {
-    if (hydrated) saveJson("myprompt-likes", likes);
-  }, [likes, hydrated]);
+  /* ─── Persist notifications on change ─── */
   useEffect(() => {
     if (hydrated) saveJson("myprompt-notifications", notifications);
   }, [notifications, hydrated]);
@@ -169,8 +154,6 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
           .order("updated_at", { ascending: false });
         if (!error && data) {
           setPrompts(data.map(dbToPrompt));
-        } else {
-          setPrompts(MOCK_PROMPTS);
         }
       } else {
         const { data, error } = await supabase
@@ -179,12 +162,10 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
           .order("updated_at", { ascending: false });
         if (!error && data) {
           setPrompts(data.map(dbToPrompt));
-        } else {
-          setPrompts(MOCK_PROMPTS);
         }
       }
     } catch {
-      setPrompts(MOCK_PROMPTS);
+      // Keep current prompts on error
     }
   }, [isGuest]);
 
@@ -204,15 +185,32 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     }
   }, [isGuest, user]);
 
+  /* ─── Fetch likes from Supabase ─── */
+  const refreshLikes = useCallback(async (): Promise<void> => {
+    if (isGuest || !user) return;
+    try {
+      const { data, error } = await supabase
+        .from("likes")
+        .select("prompt_id")
+        .eq("user_id", user.id);
+      if (!error && data) {
+        setLikes(data.map(l => l.prompt_id));
+      }
+    } catch {
+      // ignore
+    }
+  }, [isGuest, user]);
+
   // Hydrate on auth change
   useEffect(() => {
     const load = async (): Promise<void> => {
       await refreshPrompts();
       await refreshFavorites();
+      await refreshLikes();
       setHydrated(true);
     };
     load();
-  }, [refreshPrompts, refreshFavorites]);
+  }, [refreshPrompts, refreshFavorites, refreshLikes]);
 
   // Auto-select first prompt
   useEffect(() => {
@@ -221,30 +219,13 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     }
   }, [hydrated, prompts, selectedPromptId]);
 
-  /* ─── Push notification (local mock) ─── */
-  const pushNotification = useCallback((type: "like" | "favorite", promptId: string, promptTitle: string): void => {
-    const actorNames = ["田中さん", "鈴木さん", "佐藤さん", "山田さん", "伊藤さん"];
-    const n: AppNotification = {
-      id: crypto.randomUUID(),
-      type,
-      promptId,
-      promptTitle,
-      actorName: actorNames[Math.floor(Math.random() * actorNames.length)],
-      timestamp: new Date().toISOString(),
-      read: false,
-    };
-    setNotifications(prev => [n, ...prev].slice(0, 50)); // keep max 50
-  }, []);
+  /* ─── Notifications (placeholder - no mock data) ─── */
 
   /* ─── CRUD Operations ─── */
   const addPrompt = useCallback(async (input: Omit<Prompt, "id" | "updatedAt" | "likeCount">): Promise<string> => {
     if (!user) {
-      // Local-only fallback
-      const localId = crypto.randomUUID();
-      const newPrompt: Prompt = { ...input, id: localId, updatedAt: new Date().toISOString(), likeCount: 0, authorId: MOCK_USER_ID };
-      setPrompts(prev => [newPrompt, ...prev]);
-      setSelectedPromptId(localId);
-      return localId;
+      // Guests cannot create prompts
+      return "";
     }
     const { data, error } = await supabase
       .from("prompts")
@@ -257,14 +238,10 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         visibility: input.visibility,
         parent_id: input.lineage.parent ?? null,
       })
-      .select()
+      .select("*, profiles(display_name, avatar_url)")
       .single();
     if (error || !data) {
-      const localId = crypto.randomUUID();
-      const newPrompt: Prompt = { ...input, id: localId, updatedAt: new Date().toISOString(), likeCount: 0, authorId: currentUserId };
-      setPrompts(prev => [newPrompt, ...prev]);
-      setSelectedPromptId(localId);
-      return localId;
+      return "";
     }
     const newPrompt = dbToPrompt(data);
     setPrompts(prev => [newPrompt, ...prev]);
@@ -277,7 +254,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     });
 
     return newPrompt.id;
-  }, [user, currentUserId]);
+  }, [user]);
 
   const updatePrompt = useCallback(async (id: string, updates: Partial<Omit<Prompt, "id">>): Promise<void> => {
     setPrompts(prev =>
@@ -323,12 +300,12 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     if (!source) return;
     const newPrompt: Prompt = {
       ...source,
-      id: crypto.randomUUID(),
+      id: "",
       title: `${source.title} (アレンジ)`,
       updatedAt: new Date().toISOString(),
       likeCount: 0,
       authorId: currentUserId,
-      lineage: { parent: source.title, isOriginal: false },
+      lineage: { parent: source.id, isOriginal: false },
     };
     setEditingPrompt(newPrompt);
   }, [prompts, currentUserId]);
@@ -338,14 +315,6 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     const isFav = favorites.includes(id);
     setFavorites(prev => isFav ? prev.filter(fid => fid !== id) : [...prev, id]);
 
-    // Trigger notification for prompt author (mock)
-    if (!isFav) {
-      const prompt = prompts.find(p => p.id === id);
-      if (prompt && prompt.authorId && prompt.authorId !== currentUserId) {
-        pushNotification("favorite", id, prompt.title);
-      }
-    }
-
     if (user) {
       if (isFav) {
         await supabase.from("favorites").delete().eq("user_id", user.id).eq("prompt_id", id);
@@ -353,27 +322,25 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         await supabase.from("favorites").insert({ user_id: user.id, prompt_id: id });
       }
     }
-  }, [favorites, user, prompts, currentUserId, pushNotification]);
+  }, [favorites, user]);
 
-  /* ─── Like toggle ─── */
-  const toggleLike = useCallback((id: string): void => {
-    const isLiked = likes.includes(id);
-    setLikes(prev => isLiked ? prev.filter(lid => lid !== id) : [...prev, id]);
-
-    // Update likeCount on the prompt
+  /* ─── Like toggle (DB-persisted) ─── */
+  const toggleLike = useCallback(async (id: string): Promise<void> => {
+    if (!user) return;
+    const alreadyLiked = likes.includes(id);
+    // Optimistic update
+    setLikes(prev => alreadyLiked ? prev.filter(lid => lid !== id) : [...prev, id]);
     setPrompts(prev => prev.map(p => {
       if (p.id !== id) return p;
-      return { ...p, likeCount: p.likeCount + (isLiked ? -1 : 1) };
+      return { ...p, likeCount: p.likeCount + (alreadyLiked ? -1 : 1) };
     }));
 
-    // Trigger notification (mock)
-    if (!isLiked) {
-      const prompt = prompts.find(p => p.id === id);
-      if (prompt && prompt.authorId && prompt.authorId !== currentUserId) {
-        pushNotification("like", id, prompt.title);
-      }
+    if (alreadyLiked) {
+      await supabase.from("likes").delete().eq("user_id", user.id).eq("prompt_id", id);
+    } else {
+      await supabase.from("likes").insert({ user_id: user.id, prompt_id: id });
     }
-  }, [likes, prompts, currentUserId, pushNotification]);
+  }, [likes, user]);
 
   const isFavorited = useCallback((id: string): boolean => favorites.includes(id), [favorites]);
   const isLiked = useCallback((id: string): boolean => likes.includes(id), [likes]);
@@ -402,9 +369,22 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     setEditingPrompt(null);
   }, []);
 
-  const getHistory = useCallback((id: string): HistoryEntry[] => {
+  const getHistory = useCallback(async (id: string): Promise<HistoryEntry[]> => {
+    if (!user) return history[id] ?? [];
+    try {
+      const { data, error } = await supabase
+        .from("prompt_history")
+        .select("title, content, created_at")
+        .eq("prompt_id", id)
+        .order("created_at", { ascending: true });
+      if (!error && data) {
+        return data.map(d => ({ title: d.title, content: d.content, timestamp: d.created_at }));
+      }
+    } catch {
+      // fallback
+    }
     return history[id] ?? [];
-  }, [history]);
+  }, [history, user]);
 
   const markAllNotificationsRead = useCallback((): void => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));

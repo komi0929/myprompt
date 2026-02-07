@@ -94,13 +94,32 @@ function AccountContent(): React.ReactElement {
 
   const handleDeleteAccount = async (): Promise<void> => {
     setDeleting(true);
-    if (user?.id) {
-      await supabase.from("favorites").delete().eq("user_id", user.id);
-      await supabase.from("prompts").delete().eq("user_id", user.id);
-      await supabase.from("profiles").delete().eq("id", user.id);
+    try {
+      if (user?.id) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (token) {
+          const res = await fetch("/api/delete-account", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify({ userId: user.id }),
+          });
+          if (!res.ok) {
+            showToast("アカウント削除に失敗しました");
+            setDeleting(false);
+            return;
+          }
+        }
+      }
+      await signOut();
+      window.location.href = "/";
+    } catch {
+      showToast("エラーが発生しました");
+      setDeleting(false);
     }
-    await signOut();
-    window.location.href = "/";
   };
 
   return (

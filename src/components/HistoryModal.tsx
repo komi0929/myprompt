@@ -2,13 +2,30 @@
 
 import { Button } from "@/components/ui/Button";
 import { usePromptStore, type HistoryEntry } from "@/lib/prompt-store";
-import { X, Clock } from "lucide-react";
-import { useState } from "react";
+import { X, Clock, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function HistoryModal({ promptId, onClose }: { promptId: string; onClose: () => void }): React.ReactElement {
   const { getHistory } = usePromptStore();
-  const entries = getHistory(promptId);
+  const [entries, setEntries] = useState<HistoryEntry[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async (): Promise<void> => {
+      try {
+        const data = await getHistory(promptId);
+        if (!cancelled) setEntries(data);
+      } catch {
+        // ignore
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [promptId, getHistory]);
 
   const selectedEntry: HistoryEntry | null = selectedIndex !== null ? entries[selectedIndex] ?? null : null;
 
@@ -31,7 +48,12 @@ export default function HistoryModal({ promptId, onClose }: { promptId: string; 
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-2">
-          {entries.length === 0 ? (
+          {loading ? (
+            <div className="text-center text-slate-400 py-10">
+              <Loader2 className="w-10 h-10 mx-auto mb-3 text-slate-200 animate-spin" />
+              <p className="font-semibold text-sm">履歴を読み込み中…</p>
+            </div>
+          ) : entries.length === 0 ? (
             <div className="text-center text-slate-400 py-10">
               <Clock className="w-10 h-10 mx-auto mb-3 text-slate-200" />
               <p className="font-semibold text-sm">まだ履歴がありません</p>
