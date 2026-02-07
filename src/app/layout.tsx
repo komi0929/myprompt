@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "マイプロンプト — プロンプト管理ツール",
-  description: "AIプロンプトを保存・整理・共有できるツール",
+  title: "マイプロンプト — バイブコーダーのためのプロンプト簡単メモサイト",
+  description: "バイブコーダーのためのプロンプト簡単メモサイト。AIプロンプトを保存・整理・共有できるツール",
 };
 
 export default function RootLayout({
