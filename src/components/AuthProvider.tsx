@@ -43,14 +43,18 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
   };
 
   const fetchProfile = async (userId: string): Promise<void> => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("display_name, avatar_url")
-      .eq("id", userId)
-      .single();
-    if (data) {
-      if (data.display_name) setDisplayName(data.display_name);
-      if (data.avatar_url) setAvatarUrl(data.avatar_url);
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url")
+        .eq("id", userId)
+        .single();
+      if (data) {
+        if (data.display_name) setDisplayName(data.display_name);
+        if (data.avatar_url) setAvatarUrl(data.avatar_url);
+      }
+    } catch {
+      // Silently handle abort/network errors
     }
   };
 
@@ -77,15 +81,19 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       if (cancelled) return;
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-      if (newSession?.user) {
-        extractUserMeta(newSession.user);
-        await fetchProfile(newSession.user.id);
-      } else {
-        setDisplayName("");
-        setAvatarUrl("");
-        setEmail("");
+      try {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        if (newSession?.user) {
+          extractUserMeta(newSession.user);
+          await fetchProfile(newSession.user.id);
+        } else {
+          setDisplayName("");
+          setAvatarUrl("");
+          setEmail("");
+        }
+      } catch {
+        // Silently handle abort errors during auth state changes
       }
     });
 
