@@ -20,6 +20,7 @@ interface AuthActions {
   signInWithGitHub: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  updateProfile: (name: string, avatarUrl: string) => Promise<{ error: string | null }>;
 }
 
 type AuthContext = AuthState & AuthActions;
@@ -126,12 +127,23 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
     await supabase.auth.signOut();
   }, []);
 
+  const updateProfile = useCallback(async (name: string, newAvatarUrl: string): Promise<{ error: string | null }> => {
+    if (!user) return { error: "ログインが必要です" };
+    const { error } = await supabase
+      .from("profiles")
+      .upsert({ id: user.id, display_name: name, avatar_url: newAvatarUrl }, { onConflict: "id" });
+    if (error) return { error: error.message };
+    setDisplayName(name);
+    setAvatarUrl(newAvatarUrl);
+    return { error: null };
+  }, [user]);
+
   const isGuest = !isLoading && !user;
 
   const value: AuthContext = {
     user, session, isLoading, isGuest,
     displayName, avatarUrl, email,
-    signInWithEmail, signUpWithEmail, signInWithGitHub, signInWithGoogle, signOut,
+    signInWithEmail, signUpWithEmail, signInWithGitHub, signInWithGoogle, signOut, updateProfile,
   };
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;

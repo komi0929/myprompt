@@ -94,6 +94,7 @@ interface DbPrompt {
   parent_id: string | null;
   created_at: string;
   updated_at: string;
+  profiles?: { display_name: string | null; avatar_url: string | null } | null;
 }
 
 function dbToPrompt(row: DbPrompt): Prompt {
@@ -107,6 +108,8 @@ function dbToPrompt(row: DbPrompt): Prompt {
     updatedAt: row.updated_at,
     likeCount: 0,
     authorId: row.user_id,
+    authorName: row.profiles?.display_name ?? undefined,
+    authorAvatarUrl: row.profiles?.avatar_url ?? undefined,
     lineage: {
       parent: row.parent_id ?? undefined,
       isOriginal: !row.parent_id,
@@ -161,7 +164,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       if (isGuest) {
         const { data, error } = await supabase
           .from("prompts")
-          .select("*")
+          .select("*, profiles(display_name, avatar_url)")
           .eq("visibility", "Public")
           .order("updated_at", { ascending: false });
         if (!error && data) {
@@ -172,7 +175,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       } else {
         const { data, error } = await supabase
           .from("prompts")
-          .select("*")
+          .select("*, profiles(display_name, avatar_url)")
           .order("updated_at", { ascending: false });
         if (!error && data) {
           setPrompts(data.map(dbToPrompt));

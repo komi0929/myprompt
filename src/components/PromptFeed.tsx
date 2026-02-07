@@ -8,6 +8,7 @@ import { usePromptStore } from "@/lib/prompt-store";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { copyToClipboard, showToast } from "@/components/ui/Toast";
 import { type Prompt, PHASES } from "@/lib/mock-data";
+import { useAuth } from "@/components/AuthProvider";
 
 export function PromptFeed(): React.ReactElement {
   const { getFilteredPrompts, favorites } = usePromptStore();
@@ -25,13 +26,13 @@ export function PromptFeed(): React.ReactElement {
 function PromptCard({ prompt, isFavoritedByMe }: { prompt: Prompt; isFavoritedByMe: boolean }): React.ReactElement {
   const { setSelectedPromptId, selectedPromptId, deletePrompt, toggleFavorite, toggleLike, isLiked, openEditor } = usePromptStore();
   const { requireAuth } = useAuthGuard();
+  const { user } = useAuth();
   const isSelected = selectedPromptId === prompt.id;
   const liked = isLiked(prompt.id);
   const phaseInfo = PHASES.find(p => p.id === prompt.phase);
 
-  // Determine origin badge for マイライブラリ view
-  const MOCK_USER_ID = "mock-user";
-  const isOwned = prompt.authorId === MOCK_USER_ID;
+  // Determine origin badge
+  const isOwned = !!user && prompt.authorId === user.id;
 
   const handleFavorite = (e: React.MouseEvent): void => {
     e.stopPropagation();
@@ -137,6 +138,20 @@ function PromptCard({ prompt, isFavoritedByMe }: { prompt: Prompt; isFavoritedBy
             <span className="text-[10px] text-slate-300">+{prompt.tags.length - 3}</span>
           )}
         </div>
+
+        {/* Author info */}
+        {!isOwned && prompt.authorName && (
+          <div className="flex items-center gap-1.5 shrink-0 ml-2">
+            {prompt.authorAvatarUrl ? (
+              <img src={prompt.authorAvatarUrl} alt="" className="h-5 w-5 rounded-full object-cover" />
+            ) : (
+              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-slate-500 text-[9px] font-semibold">
+                {prompt.authorName.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <span className="text-[10px] text-slate-400 truncate max-w-[80px]">{prompt.authorName}</span>
+          </div>
+        )}
 
         <div className="flex items-center gap-1 shrink-0">
           {/* Like button - always visible */}

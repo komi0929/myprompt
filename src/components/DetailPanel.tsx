@@ -98,6 +98,24 @@ export function DetailPanel(): React.ReactElement {
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         
         {/* Header */}
+        {/* Author section */}
+        <div className="flex items-center gap-3">
+          {prompt.authorAvatarUrl ? (
+            <img src={prompt.authorAvatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
+          ) : prompt.authorName ? (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400 text-white text-sm font-semibold">
+              {prompt.authorName.charAt(0).toUpperCase()}
+            </div>
+          ) : null}
+          <div className="flex-1 min-w-0">
+            {prompt.authorName && (
+              <p className="text-sm font-semibold text-slate-700 truncate">{prompt.authorName}</p>
+            )}
+            <p className="text-[10px] text-slate-400">
+              {new Date(prompt.updatedAt).toLocaleDateString("ja-JP")}に更新
+            </p>
+          </div>
+        </div>
         <div className="space-y-3">
           <div className="flex gap-1.5 flex-wrap">
             {prompt.visibility === "Private" && (

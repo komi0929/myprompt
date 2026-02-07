@@ -10,6 +10,8 @@ export interface Prompt {
   updatedAt: string;
   likeCount: number;
   authorId?: string;
+  authorName?: string;
+  authorAvatarUrl?: string;
   lineage: {
     parent?: string;
     children?: string[];

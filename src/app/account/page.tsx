@@ -7,14 +7,19 @@ import type { AppNotification } from "@/lib/prompt-store";
 import { AuthGuardProvider } from "@/lib/useAuthGuard";
 import Link from "next/link";
 import { useState } from "react";
-import { LogOut, Trash2, Bell, ChevronRight, ArrowLeft, AlertTriangle } from "lucide-react";
+import { LogOut, Trash2, Bell, ChevronRight, ArrowLeft, AlertTriangle, Camera, Pencil } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { showToast } from "@/components/ui/Toast";
 
 function AccountContent(): React.ReactElement {
-  const { user, isGuest, displayName, avatarUrl, email, signOut } = useAuth();
+  const { user, isGuest, displayName, avatarUrl, email, signOut, updateProfile } = useAuth();
   const { notifications, unreadCount, markAllNotificationsRead } = usePromptStore();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(displayName);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   // Mark all as read on mount
   if (unreadCount > 0) {
@@ -35,15 +40,65 @@ function AccountContent(): React.ReactElement {
     );
   }
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      showToast("画像サイズは2MB以下にしてください");
+      return;
+    }
+
+    setUploading(true);
+    const ext = file.name.split(".").pop() ?? "jpg";
+    const path = `${user.id}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, { upsert: true, contentType: file.type });
+
+    if (uploadError) {
+      showToast("アップロードに失敗しました");
+      setUploading(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+    const newUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+    const { error } = await updateProfile(displayName, newUrl);
+    setUploading(false);
+    if (error) {
+      showToast("プロフィールの更新に失敗しました");
+    } else {
+      showToast("アバターを更新しました ✨");
+    }
+  };
+
+  const handleNameSave = async (): Promise<void> => {
+    const trimmed = nameInput.trim();
+    if (!trimmed) {
+      showToast("名前を入力してください");
+      return;
+    }
+    setSaving(true);
+    const { error } = await updateProfile(trimmed, avatarUrl);
+    setSaving(false);
+    if (error) {
+      showToast("更新に失敗しました");
+    } else {
+      showToast("名前を更新しました ✨");
+      setEditingName(false);
+    }
+  };
+
   const handleDeleteAccount = async (): Promise<void> => {
     setDeleting(true);
-    // Delete user data first
     if (user?.id) {
       await supabase.from("favorites").delete().eq("user_id", user.id);
       await supabase.from("prompts").delete().eq("user_id", user.id);
       await supabase.from("profiles").delete().eq("id", user.id);
     }
-    // Sign out (actual auth.users deletion requires admin API or Edge Function)
     await signOut();
     window.location.href = "/";
   };
@@ -60,19 +115,76 @@ function AccountContent(): React.ReactElement {
           マイプロンプトに戻る
         </Link>
 
-        {/* Profile Card */}
+        {/* Profile Card - Editable */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm mb-6">
           <div className="flex items-center gap-4">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="h-14 w-14 rounded-full" />
-            ) : (
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-yellow-400 text-white text-2xl font-bold">
-                {displayName.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div>
-              <h1 className="text-lg font-bold text-slate-800">{displayName || "ユーザー"}</h1>
-              <p className="text-sm text-slate-400">{email}</p>
+            {/* Avatar with upload overlay */}
+            <div className="relative group">
+              <label className="cursor-pointer block">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarUpload}
+                  disabled={uploading}
+                />
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" className="h-14 w-14 rounded-full object-cover" />
+                ) : (
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-yellow-400 text-white text-2xl font-bold">
+                    {displayName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                {/* Camera overlay */}
+                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {uploading ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  ) : (
+                    <Camera className="w-5 h-5 text-white" />
+                  )}
+                </div>
+              </label>
+            </div>
+
+            {/* Name + Email */}
+            <div className="flex-1 min-w-0">
+              {editingName ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={nameInput}
+                    onChange={e => setNameInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") handleNameSave(); }}
+                    className="flex-1 h-9 px-3 rounded-lg border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-400 transition-all"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleNameSave}
+                    disabled={saving}
+                    className="px-3 py-1.5 rounded-lg bg-yellow-400 hover:bg-yellow-500 text-slate-800 text-xs font-semibold transition-colors disabled:opacity-50"
+                  >
+                    {saving ? "..." : "保存"}
+                  </button>
+                  <button
+                    onClick={() => { setEditingName(false); setNameInput(displayName); }}
+                    className="px-2 py-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    取消
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg font-bold text-slate-800">{displayName || "ユーザー"}</h1>
+                  <button
+                    onClick={() => { setNameInput(displayName); setEditingName(true); }}
+                    className="p-1 rounded-md text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all"
+                    title="名前を編集"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+              <p className="text-sm text-slate-400 mt-0.5">{email}</p>
             </div>
           </div>
         </div>
