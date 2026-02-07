@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { PHASES } from "@/lib/mock-data";
 import { usePromptStore } from "@/lib/prompt-store";
+import { useAuthGuard } from "@/lib/useAuthGuard";
 import { copyToClipboard } from "@/components/ui/Toast";
 import { ArrowRight, Copy, GitBranch, History, Share2, Sparkles, Edit3, Pencil } from "lucide-react";
 import { useState } from "react";
@@ -11,6 +12,7 @@ import HistoryModal from "@/components/HistoryModal";
 
 export function DetailPanel(): React.ReactElement {
   const { selectedPromptId, prompts, openEditor, duplicateAsArrangement } = usePromptStore();
+  const { requireAuth } = useAuthGuard();
   const prompt = prompts.find(p => p.id === selectedPromptId) ?? null;
   const [historyOpen, setHistoryOpen] = useState(false);
 
@@ -39,11 +41,18 @@ export function DetailPanel(): React.ReactElement {
   };
 
   const handleArrange = (): void => {
+    if (!requireAuth("プロンプトのアレンジ")) return;
     duplicateAsArrangement(prompt.id);
   };
 
   const handleEdit = (): void => {
+    if (!requireAuth("プロンプトの編集")) return;
     openEditor(prompt);
+  };
+
+  const handleHistory = (): void => {
+    if (!requireAuth("履歴の閲覧")) return;
+    setHistoryOpen(true);
   };
 
   return (
@@ -130,7 +139,7 @@ export function DetailPanel(): React.ReactElement {
             )}
           </div>
 
-          {/* Big Copy Button */}
+          {/* Big Copy Button — available to guests */}
           <Button
             className="w-full rounded-[20px]"
             variant="secondary"
@@ -141,7 +150,7 @@ export function DetailPanel(): React.ReactElement {
           </Button>
         </div>
 
-        {/* Actions */}
+        {/* Actions — auth guarded */}
         <div className="space-y-4 pt-2">
           <Button className="w-full text-base shadow-lg shadow-yellow-200 hover:shadow-yellow-300 transition-shadow rounded-[20px]" onClick={handleArrange}>
             <Sparkles className="w-5 h-5 mr-2" />
@@ -152,7 +161,7 @@ export function DetailPanel(): React.ReactElement {
             <Button variant="secondary" className="w-full rounded-[16px]" onClick={handleShare}>
               <Share2 className="w-4 h-4 mr-2" /> シェアする
             </Button>
-            <Button variant="secondary" className="w-full rounded-[16px]" onClick={() => setHistoryOpen(true)}>
+            <Button variant="secondary" className="w-full rounded-[16px]" onClick={handleHistory}>
               <History className="w-4 h-4 mr-2" /> 履歴を見る
             </Button>
           </div>

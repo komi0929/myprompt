@@ -46,7 +46,7 @@ export default function PromptModal(): React.ReactElement | null {
     setTags(prev => prev.filter(t => t !== tag));
   };
 
-  const handleSave = (): void => {
+  const handleSave = async (): Promise<void> => {
     if (!title.trim()) {
       showToast("タイトルを入力してください");
       return;
@@ -57,7 +57,7 @@ export default function PromptModal(): React.ReactElement | null {
     }
 
     if (isNew) {
-      addPrompt({
+      await addPrompt({
         title: title.trim(),
         content: content.trim(),
         tags,
@@ -67,7 +67,7 @@ export default function PromptModal(): React.ReactElement | null {
       });
       showToast("プロンプトを保存しました");
     } else {
-      updatePrompt(editingPrompt.id, {
+      await updatePrompt(editingPrompt.id, {
         title: title.trim(),
         content: content.trim(),
         tags,

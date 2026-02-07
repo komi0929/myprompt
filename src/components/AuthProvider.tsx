@@ -1,0 +1,114 @@
+"use client";
+
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { supabase } from "@/lib/supabase";
+import type { User, Session } from "@supabase/supabase-js";
+
+interface AuthState {
+  user: User | null;
+  session: Session | null;
+  isLoading: boolean;
+  isGuest: boolean;
+  displayName: string;
+  avatarUrl: string;
+}
+
+interface AuthActions {
+  signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUpWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
+  signInWithGitHub: () => Promise<void>;
+  signOut: () => Promise<void>;
+}
+
+type AuthContext = AuthState & AuthActions;
+
+const AuthCtx = createContext<AuthContext | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }): React.ReactElement {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [displayName, setDisplayName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+
+  // Initial session check
+  useEffect(() => {
+    const init = async (): Promise<void> => {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+      setUser(data.session?.user ?? null);
+      if (data.session?.user) {
+        await fetchProfile(data.session.user.id);
+      }
+      setIsLoading(false);
+    };
+    init();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+      if (newSession?.user) {
+        await fetchProfile(newSession.user.id);
+      } else {
+        setDisplayName("");
+        setAvatarUrl("");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchProfile = async (userId: string): Promise<void> => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("display_name, avatar_url")
+      .eq("id", userId)
+      .single();
+    if (data) {
+      setDisplayName(data.display_name ?? "");
+      setAvatarUrl(data.avatar_url ?? "");
+    }
+  };
+
+  const signInWithEmail = useCallback(async (email: string, password: string): Promise<{ error: string | null }> => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error: error?.message ?? null };
+  }, []);
+
+  const signUpWithEmail = useCallback(async (email: string, password: string): Promise<{ error: string | null }> => {
+    const { error } = await supabase.auth.signUp({ email, password });
+    return { error: error?.message ?? null };
+  }, []);
+
+  const signInWithGitHub = useCallback(async (): Promise<void> => {
+    await supabase.auth.signInWithOAuth({
+      provider: "github",
+      options: { redirectTo: `${window.location.origin}/` },
+    });
+  }, []);
+
+  const signOut = useCallback(async (): Promise<void> => {
+    await supabase.auth.signOut();
+  }, []);
+
+  const value: AuthContext = {
+    user,
+    session,
+    isLoading,
+    isGuest: !user,
+    displayName,
+    avatarUrl,
+    signInWithEmail,
+    signUpWithEmail,
+    signInWithGitHub,
+    signOut,
+  };
+
+  return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
+}
+
+export function useAuth(): AuthContext {
+  const ctx = useContext(AuthCtx);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
+}

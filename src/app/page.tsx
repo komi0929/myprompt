@@ -5,39 +5,58 @@ import { PhaseCompass } from "@/components/PhaseCompass";
 import { PromptFeed } from "@/components/PromptFeed";
 import { DetailPanel } from "@/components/DetailPanel";
 import { PromptStoreProvider, usePromptStore } from "@/lib/prompt-store";
+import { AuthProvider } from "@/components/AuthProvider";
+import { AuthGuardProvider } from "@/lib/useAuthGuard";
 import { PHASES } from "@/lib/mock-data";
 import ToastContainer from "@/components/ui/Toast";
 import PromptModal from "@/components/PromptModal";
+import LoginModal from "@/components/LoginModal";
+import LoginPromptBar from "@/components/LoginPromptBar";
 import WelcomeOverlay from "@/components/WelcomeOverlay";
 import FloatingCreateButton from "@/components/FloatingCreateButton";
+import { useAuth } from "@/components/AuthProvider";
+import { useAuthGuard } from "@/lib/useAuthGuard";
 import { Search, Plus, Sparkles } from "lucide-react";
 
 export default function Page(): React.ReactElement {
   return (
-    <PromptStoreProvider>
-      <PageContent />
-      <PromptModal />
-      <ToastContainer />
-    </PromptStoreProvider>
+    <AuthProvider>
+      <AuthGuardProvider>
+        <PromptStoreProvider>
+          <PageContent />
+          <PromptModal />
+          <LoginModal />
+          <ToastContainer />
+        </PromptStoreProvider>
+      </AuthGuardProvider>
+    </AuthProvider>
   );
 }
 
 function PageContent(): React.ReactElement {
   const { currentPhase, setCurrentPhase, getFilteredPrompts, searchQuery, setSearchQuery, openEditor } = usePromptStore();
+  const { isGuest } = useAuth();
+  const { requireAuth } = useAuthGuard();
   const filteredPrompts = getFilteredPrompts();
   const currentPhaseData = PHASES.find(p => p.id === currentPhase);
+
+  const handleCreateNew = (): void => {
+    if (requireAuth("プロンプトの作成")) {
+      openEditor();
+    }
+  };
 
   return (
     <div className="flex h-screen w-full bg-slate-50 overflow-hidden font-sans">
       {/* Welcome Overlay (first visit only) */}
-      <WelcomeOverlay onCreateFirst={() => openEditor()} />
+      <WelcomeOverlay onCreateFirst={handleCreateNew} />
 
       {/* 1. Left Sidebar */}
       <Sidebar className="hidden md:flex shrink-0 z-30" />
 
       {/* 2. Center Main Feed */}
       <main className="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
-        {/* Search Bar — always visible at top */}
+        {/* Search Bar */}
         <div className="px-8 pt-6 pb-2 z-20">
           <div className="relative max-w-4xl mx-auto">
             <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
@@ -57,7 +76,7 @@ function PageContent(): React.ReactElement {
             <PhaseCompass currentPhase={currentPhase} onPhaseChange={setCurrentPhase} />
           </div>
         </div>
-        
+
         {/* Scrollable Feed */}
         <div className="flex-1 overflow-y-auto px-8 pb-10 scroll-smooth">
           <div className="max-w-4xl mx-auto py-4">
@@ -71,11 +90,11 @@ function PageContent(): React.ReactElement {
                 </p>
               </div>
             </div>
-            
+
             {filteredPrompts.length > 0 ? (
               <PromptFeed />
             ) : (
-              <EmptyState onCreateFirst={() => openEditor()} />
+              <EmptyState onCreateFirst={handleCreateNew} />
             )}
           </div>
         </div>
@@ -86,8 +105,11 @@ function PageContent(): React.ReactElement {
         <DetailPanel />
       </aside>
 
-      {/* Floating Create Button */}
-      <FloatingCreateButton />
+      {/* Floating Create Button (auth-guarded) */}
+      {!isGuest && <FloatingCreateButton />}
+
+      {/* Login Prompt Bar (guests only) */}
+      <LoginPromptBar />
     </div>
   );
 }
