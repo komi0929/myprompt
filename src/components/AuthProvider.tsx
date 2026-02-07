@@ -140,7 +140,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
     if (!user) return { error: "ログインが必要です" };
     const { error } = await supabase
       .from("profiles")
-      .upsert({ id: user.id, display_name: name, avatar_url: newAvatarUrl }, { onConflict: "id" });
+      .update({ display_name: name, avatar_url: newAvatarUrl })
+      .eq("id", user.id);
     if (error) return { error: error.message };
     setDisplayName(name);
     setAvatarUrl(newAvatarUrl);
