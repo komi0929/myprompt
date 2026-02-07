@@ -52,16 +52,12 @@ function PromptCard({ prompt }: { prompt: Prompt }): React.ReactElement {
   return (
     <Card
       className={cn(
-        "group relative flex flex-col justify-between hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer",
-        isSelected && "ring-2 ring-yellow-400 shadow-md shadow-yellow-100/50"
+        "group relative flex flex-col justify-between hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer border-l-3 border-l-transparent",
+        isSelected && "border-l-yellow-400 bg-yellow-50/30 shadow-md"
       )}
       onClick={() => setSelectedPromptId(prompt.id)}
     >
-      {/* Top Decor Bar */}
-      <div className={cn(
-        "absolute top-0 left-0 w-full h-[3px] rounded-t-xl",
-        prompt.visibility === "Private" ? "bg-slate-200" : "bg-yellow-400"
-      )} />
+
 
       {/* Always-visible action bar */}
       <div className="absolute top-3 right-3 flex items-center gap-1 z-10">
@@ -108,10 +104,7 @@ function PromptCard({ prompt }: { prompt: Prompt }): React.ReactElement {
       </CardHeader>
 
       <CardContent className="pb-2">
-        <div className={cn(
-          "relative bg-slate-50 p-3.5 rounded-lg text-sm text-slate-600 font-mono leading-relaxed line-clamp-3 border border-slate-100",
-          "group-hover:bg-white group-hover:border-yellow-200 transition-colors"
-        )}>
+        <div className="relative bg-slate-50 p-3.5 rounded-lg text-sm text-slate-600 font-mono leading-relaxed line-clamp-3 border border-slate-100 transition-colors">
           {prompt.content}
         </div>
       </CardContent>

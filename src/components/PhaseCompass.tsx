@@ -30,17 +30,17 @@ export function PhaseCompass({
                 className={cn(
                   "relative flex w-full flex-col items-center gap-0.5 rounded-lg py-2 transition-all duration-200 border",
                   isActive
-                    ? "bg-slate-800 text-white shadow-md border-slate-800 z-10"
-                    : "bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700 border-slate-200/80 hover:border-slate-300"
+                    ? "bg-yellow-50 text-yellow-700 shadow-sm border-yellow-300 z-10"
+                    : "bg-white text-slate-400 hover:bg-slate-50 hover:text-slate-600 border-slate-200/60 hover:border-slate-300"
                 )}
               >
                 <span className="text-base">{phase.icon}</span>
-                <span className={cn("font-semibold whitespace-nowrap text-[11px] transition-colors", isActive ? "text-white" : "text-slate-500")}>
+                <span className={cn("font-semibold whitespace-nowrap text-[11px] transition-colors", isActive ? "text-yellow-700" : "text-slate-400")}>
                   {phase.label}
                 </span>
                 
                 {isActive && (
-                  <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-yellow-400 border-2 border-white" />
+                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-yellow-400 border border-white" />
                 )}
               </button>
 
