@@ -134,14 +134,6 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
     signInWithEmail, signUpWithEmail, signInWithGitHub, signInWithGoogle, signOut,
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-slate-50">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-yellow-400 border-t-transparent" />
-      </div>
-    );
-  }
-
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
 
