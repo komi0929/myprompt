@@ -1,21 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Sparkles, X, BookOpen, Search, Star } from "lucide-react";
 
-function getInitialVisibility(): boolean {
-  if (typeof window === "undefined") return false;
-  return !localStorage.getItem("myprompt-welcomed");
-}
+const emptySubscribe = (): (() => void) => () => {};
 
 export default function WelcomeOverlay({ onCreateFirst }: { onCreateFirst: () => void }): React.ReactElement | null {
-  const [visible, setVisible] = useState(getInitialVisibility());
+  const wasWelcomed = useSyncExternalStore(
+    emptySubscribe,
+    () => localStorage.getItem("myprompt-welcomed") === "true",
+    () => true // server snapshot: pretend welcomed (don't render)
+  );
+  const [dismissed, setDismissed] = useState(false);
 
-  if (!visible) return null;
+  if (wasWelcomed || dismissed) return null;
 
   const handleDismiss = (): void => {
     localStorage.setItem("myprompt-welcomed", "true");
-    setVisible(false);
+    setDismissed(true);
   };
 
   const handleCreate = (): void => {
@@ -27,7 +29,7 @@ export default function WelcomeOverlay({ onCreateFirst }: { onCreateFirst: () =>
     <div className="fixed inset-0 z-200 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="bg-gradient-to-br from-yellow-400 via-yellow-300 to-amber-200 px-6 pt-8 pb-6 text-center relative">
+        <div className="bg-linear-to-br from-yellow-400 via-yellow-300 to-amber-200 px-6 pt-8 pb-6 text-center relative">
           <button onClick={handleDismiss} className="absolute top-3 right-3 p-1.5 rounded-md hover:bg-black/10 transition-colors">
             <X className="w-4 h-4 text-slate-700" />
           </button>
