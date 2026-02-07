@@ -68,7 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
           await fetchProfile(data.session.user.id);
         }
       } catch (e) {
-        if ((e as Error).name === "AbortError") return;
+        const name = (e as Error)?.name ?? "";
+        if (name === "AbortError" || cancelled) return;
       }
       if (!cancelled) setIsLoading(false);
     };
