@@ -2,18 +2,17 @@
 
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
-import { Home, Flame, Lock, Globe, LogOut, User, Bell, Settings } from "lucide-react";
+import { Home, Flame, User, Bell } from "lucide-react";
 import Link from "next/link";
 import { usePromptStore } from "@/lib/prompt-store";
 import { useAuth } from "@/components/AuthProvider";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useState } from "react";
 import type { AppNotification } from "@/lib/prompt-store";
-import LoginPromptBar from "@/components/LoginPromptBar";
 
 export function Sidebar({ className }: { className?: string }): React.ReactElement {
-  const { view, setView, visibilityFilter, setVisibilityFilter, notifications, unreadCount, markAllNotificationsRead } = usePromptStore();
-  const { isGuest, displayName, avatarUrl, signOut } = useAuth();
+  const { view, setView, notifications, unreadCount, markAllNotificationsRead } = usePromptStore();
+  const { isGuest, displayName, avatarUrl } = useAuth();
   const { openLoginModal } = useAuthGuard();
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -60,8 +59,14 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
         />
       )}
 
-      {/* User Info */}
-      <div className="mb-5 px-1">
+      {/* Main Navigation */}
+      <div className="space-y-1">
+        <NavButton icon={Home} label="マイライブラリ" hint="自分のメモ＋お気に入り" active={view === "library"} onClick={() => setView("library")} />
+        <NavButton icon={Flame} label="みんなのプロンプト" hint="公開されたプロンプト" active={view === "trend"} onClick={() => setView("trend")} />
+      </div>
+
+      {/* Bottom: User Info pushed to bottom */}
+      <div className="mt-auto pt-6 px-1">
         {isGuest ? (
           <button
             onClick={() => openLoginModal()}
@@ -91,50 +96,13 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-slate-700 truncate">{displayName || "ユーザー"}</p>
-              <p className="text-[10px] text-slate-400">{unreadCount > 0 ? `${unreadCount}件の通知` : "アカウント設定"}</p>
+              {unreadCount > 0 && (
+                <p className="text-[10px] text-pink-500 font-medium">{unreadCount}件の通知</p>
+              )}
             </div>
-            <Settings className="w-3.5 h-3.5 text-slate-300" />
           </Link>
         )}
       </div>
-
-      {/* Main Navigation */}
-      <div className="space-y-1">
-        <NavButton icon={Home} label="マイライブラリ" hint="自分のメモ＋お気に入り" active={view === "library"} onClick={() => setView("library")} />
-        <NavButton icon={Flame} label="みんなのプロンプト" hint="公開されたプロンプト" active={view === "trend"} onClick={() => setView("trend")} />
-      </div>
-
-      <div className="my-6 h-px w-full bg-slate-200/60" />
-
-      {/* Filters */}
-      <div className="px-3 mb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
-        絞り込み
-      </div>
-      <div className="space-y-1">
-        <NavButton
-          icon={Lock}
-          label="自分のみ"
-          active={visibilityFilter === "Private"}
-          onClick={() => setVisibilityFilter(visibilityFilter === "Private" ? "all" : "Private")}
-          className="opacity-70 hover:opacity-100"
-        />
-        <NavButton
-          icon={Globe}
-          label="みんなに公開"
-          active={visibilityFilter === "Public"}
-          onClick={() => setVisibilityFilter(visibilityFilter === "Public" ? "all" : "Public")}
-          className="opacity-70 hover:opacity-100"
-        />
-      </div>
-
-      {/* Bottom: Login CTA for guests, credit for members */}
-      {isGuest ? (
-        <LoginPromptBar />
-      ) : (
-        <div className="mt-auto pt-6 px-2">
-          <p className="text-[10px] text-slate-300 font-mono">v0.3 — Made with ❤️</p>
-        </div>
-      )}
     </div>
   );
 }

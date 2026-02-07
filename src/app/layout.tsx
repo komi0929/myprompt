@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "MyPrompt — プロンプト管理ツール",
+  title: "マイプロンプト — プロンプト管理ツール",
   description: "AIプロンプトを保存・整理・共有できるツール",
 };
 

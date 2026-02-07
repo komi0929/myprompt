@@ -37,7 +37,7 @@ export default function WelcomeOverlay({ onCreateFirst }: { onCreateFirst: () =>
             <span className="text-2xl">✨</span>
           </div>
           <h2 className="text-xl font-semibold text-slate-800 mb-1">
-            MyPromptへようこそ！
+            マイプロンプトへようこそ！
           </h2>
           <p className="text-sm text-slate-600">
             AIプロンプトを保存・整理・共有できるツール

@@ -57,7 +57,7 @@ function AccountContent(): React.ReactElement {
           className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-slate-600 transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
-          MyPromptに戻る
+          マイプロンプトに戻る
         </Link>
 
         {/* Profile Card */}

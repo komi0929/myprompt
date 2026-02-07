@@ -96,7 +96,7 @@ function AdminContent(): React.ReactElement {
           <h1 className="text-xl font-bold text-slate-800 mb-2">アクセス権がありません</h1>
           <p className="text-sm text-slate-500 mb-6">このページは管理者専用です。</p>
           <Link href="/" className="text-sm text-yellow-600 hover:text-yellow-700 font-medium">
-            ← MyPromptに戻る
+            ← マイプロンプトに戻る
           </Link>
         </div>
       </div>
@@ -113,7 +113,7 @@ function AdminContent(): React.ReactElement {
         <div className="flex items-center justify-between mb-8">
           <div>
             <Link href="/" className="text-sm text-slate-400 hover:text-slate-600 transition-colors mb-2 inline-block">
-              ← MyPromptに戻る
+              ← マイプロンプトに戻る
             </Link>
             <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
               <Mail className="w-6 h-6 text-yellow-500" />

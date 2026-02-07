@@ -18,9 +18,9 @@ export function DetailPanel(): React.ReactElement {
   const prompt = prompts.find(p => p.id === selectedPromptId) ?? null;
   const [historyOpen, setHistoryOpen] = useState(false);
 
-  if (!prompt) {
+   if (!prompt) {
     return (
-      <div className="flex h-full flex-col items-center justify-center p-8 text-center text-slate-400 bg-slate-50/50">
+      <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center text-slate-400 bg-slate-50/50">
         <Sparkles className="h-10 w-10 mb-3 text-slate-200" />
         <p className="font-semibold text-sm">左のカードをクリックして</p>
         <p className="font-semibold text-sm">プロンプトの詳細を表示 👈</p>

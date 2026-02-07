@@ -6,15 +6,15 @@ export default function Footer(): React.ReactElement {
       <div className="max-w-4xl mx-auto px-6 py-5">
         {/* Links */}
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-400">
-          <Link href="/terms" className="hover:text-slate-600 transition-colors">
+          <Link href="/legal" className="hover:text-slate-600 transition-colors">
             利用規約
           </Link>
           <span className="text-slate-200">|</span>
-          <Link href="/privacy" className="hover:text-slate-600 transition-colors">
+          <Link href="/legal" className="hover:text-slate-600 transition-colors">
             プライバシーポリシー
           </Link>
           <span className="text-slate-200">|</span>
-          <Link href="/contact" className="hover:text-slate-600 transition-colors">
+          <Link href="/legal" className="hover:text-slate-600 transition-colors">
             お問い合わせ
           </Link>
         </div>
