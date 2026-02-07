@@ -63,7 +63,7 @@ function PageContent(): React.ReactElement {
             alt="マイプロンプト"
             width={200}
             height={200}
-            className="h-14 w-14 object-contain drop-shadow-md"
+            className="h-[73px] w-[73px] object-contain drop-shadow-md"
           />
           <p className="text-center text-sm font-bold text-slate-700 leading-relaxed tracking-wide">
             バイブコーダーのための<br />
