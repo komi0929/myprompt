@@ -36,7 +36,7 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
           alt="マイプロンプト"
           width={400}
           height={100}
-          className="h-12 w-auto"
+          className="h-10 w-auto"
           priority
         />
         {/* Notification bell */}

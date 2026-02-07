@@ -11,6 +11,7 @@ import ToastContainer from "@/components/ui/Toast";
 import PromptModal from "@/components/PromptModal";
 import LoginModal from "@/components/LoginModal";
 import Footer from "@/components/Footer";
+import Image from "next/image";
 
 import WelcomeOverlay from "@/components/WelcomeOverlay";
 import FloatingCreateButton from "@/components/FloatingCreateButton";
@@ -55,9 +56,19 @@ function PageContent(): React.ReactElement {
 
       {/* 2. Center Main Feed */}
       <main className="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
-        {/* Shoulder Copy */}
-        <div className="px-6 pt-5 pb-0 z-20">
-          <p className="text-center text-xs text-slate-400 tracking-wide">バイブコーダーのためのプロンプト簡単メモサイト</p>
+        {/* Nani-style Hero Header */}
+        <div className="px-6 pt-6 pb-2 z-20 flex flex-col items-center gap-2">
+          <Image
+            src="/icon.png"
+            alt="マイプロンプト"
+            width={200}
+            height={200}
+            className="h-12 w-12 object-contain drop-shadow-md"
+          />
+          <p className="text-center text-sm font-bold text-slate-700 leading-relaxed tracking-wide">
+            バイブコーダーのための<br />
+            プロンプト簡単メモサイト
+          </p>
         </div>
 
         {/* Search Bar */}
