@@ -36,7 +36,7 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
           alt="マイプロンプト"
           width={400}
           height={100}
-          className="h-8 w-auto"
+          className="h-12 w-auto"
           priority
         />
         {/* Notification bell */}
@@ -64,7 +64,7 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
 
       {/* Main Navigation */}
       <div className="space-y-1">
-        <NavButton icon={Home} label="マイライブラリ" hint="自分のメモとお気に入り" active={view === "library"} onClick={() => setView("library")} />
+        <NavButton icon={Home} label="ライブラリ" hint="自分のメモとお気に入り" active={view === "library"} onClick={() => setView("library")} />
         <NavButton icon={Flame} label="みんなのプロンプト" hint="公開されたプロンプト" active={view === "trend"} onClick={() => setView("trend")} />
       </div>
 
