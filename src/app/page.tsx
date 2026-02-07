@@ -11,6 +11,7 @@ import { PHASES } from "@/lib/mock-data";
 import ToastContainer from "@/components/ui/Toast";
 import PromptModal from "@/components/PromptModal";
 import LoginModal from "@/components/LoginModal";
+import Footer from "@/components/Footer";
 
 import WelcomeOverlay from "@/components/WelcomeOverlay";
 import FloatingCreateButton from "@/components/FloatingCreateButton";
@@ -97,6 +98,7 @@ function PageContent(): React.ReactElement {
               <EmptyState onCreateFirst={handleCreateNew} />
             )}
           </div>
+          <Footer />
         </div>
       </main>
 
