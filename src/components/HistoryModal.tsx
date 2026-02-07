@@ -13,28 +13,28 @@ export default function HistoryModal({ promptId, onClose }: { promptId: string; 
   const selectedEntry: HistoryEntry | null = selectedIndex !== null ? entries[selectedIndex] ?? null : null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="w-full max-w-xl max-h-[80vh] bg-white rounded-[32px] shadow-2xl overflow-hidden flex flex-col"
+        className="w-full max-w-xl max-h-[80vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
-          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-yellow-500" />
+        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+          <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-yellow-500" />
             編集履歴
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-            <X className="w-5 h-5 text-slate-400" />
+          <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-md transition-colors">
+            <X className="w-4 h-4 text-slate-400" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-3">
+        <div className="flex-1 overflow-y-auto p-5 space-y-2">
           {entries.length === 0 ? (
-            <div className="text-center text-slate-400 py-12">
-              <Clock className="w-12 h-12 mx-auto mb-4 text-slate-200" />
-              <p className="font-bold">まだ履歴がありません</p>
+            <div className="text-center text-slate-400 py-10">
+              <Clock className="w-10 h-10 mx-auto mb-3 text-slate-200" />
+              <p className="font-semibold text-sm">まだ履歴がありません</p>
             </div>
           ) : (
             entries.slice().reverse().map((entry, idx) => {
@@ -44,14 +44,14 @@ export default function HistoryModal({ promptId, onClose }: { promptId: string; 
                 <button
                   key={idx}
                   onClick={() => setSelectedIndex(isSelected ? null : reverseIdx)}
-                  className={`w-full text-left p-4 rounded-[20px] border transition-all ${
+                  className={`w-full text-left p-3 rounded-lg border transition-all ${
                     isSelected
                       ? "bg-yellow-50 border-yellow-300 shadow-sm"
                       : "bg-slate-50 border-slate-100 hover:bg-white hover:border-slate-200"
                   }`}
                 >
                   <div className="flex justify-between items-center mb-1">
-                    <span className="font-bold text-sm text-slate-700 truncate">{entry.title}</span>
+                    <span className="font-semibold text-sm text-slate-700 truncate">{entry.title}</span>
                     <span className="text-[10px] text-slate-400 font-mono shrink-0 ml-2">
                       {new Date(entry.timestamp).toLocaleString("ja-JP")}
                     </span>
@@ -65,17 +65,17 @@ export default function HistoryModal({ promptId, onClose }: { promptId: string; 
 
         {/* Preview */}
         {selectedEntry && (
-          <div className="border-t border-slate-100 p-6">
-            <h3 className="text-sm font-bold text-slate-400 mb-2">プレビュー</h3>
-            <div className="bg-slate-50 rounded-[16px] p-4 border border-slate-100 font-mono text-sm text-slate-700 max-h-40 overflow-y-auto whitespace-pre-wrap">
+          <div className="border-t border-slate-100 p-5">
+            <h3 className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">プレビュー</h3>
+            <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-100 font-mono text-sm text-slate-700 max-h-36 overflow-y-auto whitespace-pre-wrap">
               {selectedEntry.content}
             </div>
           </div>
         )}
 
         {/* Footer */}
-        <div className="p-6 border-t border-slate-100 flex justify-end">
-          <Button variant="secondary" onClick={onClose} className="rounded-[20px]">
+        <div className="p-5 border-t border-slate-100 flex justify-end">
+          <Button variant="secondary" onClick={onClose}>
             閉じる
           </Button>
         </div>

@@ -57,35 +57,35 @@ function PageContent(): React.ReactElement {
       {/* 2. Center Main Feed */}
       <main className="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
         {/* Search Bar */}
-        <div className="px-8 pt-6 pb-2 z-20">
+        <div className="px-6 pt-5 pb-2 z-20">
           <div className="relative max-w-4xl mx-auto">
-            <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="プロンプトを検索..."
-              className="h-14 w-full rounded-[24px] bg-white border border-slate-100 pl-14 pr-6 text-base text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-300 transition-all shadow-sm hover:shadow"
+              className="h-10 w-full rounded-lg bg-white border border-slate-200 pl-11 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-300 transition-all shadow-sm hover:shadow"
             />
           </div>
         </div>
 
         {/* Phase Compass */}
-        <div className="px-8 pb-2 z-20">
+        <div className="px-6 pb-1 z-20">
           <div className="max-w-4xl mx-auto">
             <PhaseCompass currentPhase={currentPhase} onPhaseChange={setCurrentPhase} />
           </div>
         </div>
 
         {/* Scrollable Feed */}
-        <div className="flex-1 overflow-y-auto px-8 pb-10 scroll-smooth">
-          <div className="max-w-4xl mx-auto py-4">
-            <div className="mb-6 pl-2 flex items-end justify-between">
+        <div className="flex-1 overflow-y-auto px-6 pb-10 scroll-smooth">
+          <div className="max-w-4xl mx-auto py-3">
+            <div className="mb-4 pl-1 flex items-end justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
+                <h2 className="text-xl font-semibold text-slate-800">
                   {currentPhaseData ? `${currentPhaseData.icon} ${currentPhaseData.label}` : "プロンプト"}
                 </h2>
-                <p className="text-slate-400 mt-1 text-sm">
+                <p className="text-slate-400 mt-0.5 text-xs">
                   {filteredPrompts.length} 件のプロンプト
                 </p>
               </div>
@@ -101,7 +101,7 @@ function PageContent(): React.ReactElement {
       </main>
 
       {/* 3. Right Detail Panel */}
-      <aside className="hidden lg:flex w-[420px] xl:w-[480px] h-full shrink-0 z-40">
+      <aside className="hidden lg:flex w-[400px] xl:w-[440px] h-full shrink-0 z-40">
         <DetailPanel />
       </aside>
 
@@ -116,21 +116,21 @@ function PageContent(): React.ReactElement {
 
 function EmptyState({ onCreateFirst }: { onCreateFirst: () => void }): React.ReactElement {
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="w-20 h-20 rounded-full bg-yellow-50 flex items-center justify-center mb-6">
-        <Sparkles className="w-10 h-10 text-yellow-400" />
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="w-16 h-16 rounded-xl bg-yellow-50 flex items-center justify-center mb-5">
+        <Sparkles className="w-8 h-8 text-yellow-400" />
       </div>
-      <h3 className="text-xl font-bold text-slate-600 mb-2">
+      <h3 className="text-lg font-semibold text-slate-600 mb-1.5">
         まだプロンプトはありません
       </h3>
-      <p className="text-slate-400 mb-6 max-w-xs leading-relaxed">
+      <p className="text-slate-400 text-sm mb-5 max-w-xs leading-relaxed">
         ChatGPTやCursorで使えるプロンプトを<br />保存してみましょう！
       </p>
       <button
         onClick={onCreateFirst}
-        className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-slate-800 font-bold px-8 py-4 rounded-[20px] shadow-lg shadow-yellow-200 transition-all hover:scale-105 active:scale-95"
+        className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-slate-800 font-semibold px-6 py-3 rounded-xl shadow-md shadow-yellow-200 transition-all hover:scale-105 active:scale-[0.97] text-sm"
       >
-        <Plus className="w-5 h-5" />
+        <Plus className="w-4 h-4" />
         最初のプロンプトを作成する
       </button>
     </div>

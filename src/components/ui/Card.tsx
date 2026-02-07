@@ -6,7 +6,7 @@ const Card = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
     <div
       ref={ref}
       className={cn(
-        "rounded-[32px] border border-slate-100 bg-white text-slate-700 shadow-sm transition-all duration-300 hover:shadow-md",
+        "rounded-xl border border-slate-200/80 bg-white text-slate-700 shadow-sm transition-all duration-200 hover:shadow-md",
         className
       )}
       {...props}
@@ -19,7 +19,7 @@ const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("flex flex-col space-y-1.5 p-6 pb-2", className)}
+      className={cn("flex flex-col space-y-1.5 p-5 pb-2", className)}
       {...props}
     />
   )
@@ -30,7 +30,7 @@ const CardTitle = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLHeadingEle
   ({ className, ...props }, ref) => (
     <h3
       ref={ref}
-      className={cn("font-bold leading-none tracking-tight text-lg text-slate-800", className)}
+      className={cn("font-semibold leading-tight text-base text-slate-800", className)}
       {...props}
     />
   )
@@ -39,7 +39,7 @@ CardTitle.displayName = "CardTitle";
 
 const CardContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("p-6 pt-2 font-medium text-slate-600", className)} {...props} />
+    <div ref={ref} className={cn("p-5 pt-2 text-slate-600", className)} {...props} />
   )
 );
 CardContent.displayName = "CardContent";
@@ -48,7 +48,7 @@ const CardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("flex items-center p-6 pt-0", className)}
+      className={cn("flex items-center p-5 pt-0", className)}
       {...props}
     />
   )
