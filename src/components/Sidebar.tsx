@@ -31,10 +31,10 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
       {/* Logo Area */}
       <div className="mb-8 flex items-center justify-between px-1">
         <div className="flex items-center space-x-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-yellow-400 font-bold text-slate-800 shadow-sm text-lg">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-yellow-400 font-bold text-slate-800 shadow-sm text-lg">
             M
           </div>
-          <span className="text-lg font-semibold text-slate-800">MyPrompt</span>
+          <span className="text-lg font-semibold text-slate-800">マイプロンプト</span>
         </div>
         {/* Notification bell */}
         <button
@@ -61,7 +61,7 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
 
       {/* Main Navigation */}
       <div className="space-y-1">
-        <NavButton icon={Home} label="マイライブラリ" hint="自分のメモ＋お気に入り" active={view === "library"} onClick={() => setView("library")} />
+        <NavButton icon={Home} label="マイライブラリ" hint="自分のメモとお気に入り" active={view === "library"} onClick={() => setView("library")} />
         <NavButton icon={Flame} label="みんなのプロンプト" hint="公開されたプロンプト" active={view === "trend"} onClick={() => setView("trend")} />
       </div>
 
@@ -72,7 +72,7 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
             onClick={() => openLoginModal()}
             className="flex items-center gap-3 w-full p-3 rounded-lg bg-yellow-50 border border-yellow-200 hover:bg-yellow-100 transition-colors"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-400 text-white">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400 text-white">
               <User className="w-4 h-4" />
             </div>
             <div className="text-left">
@@ -84,9 +84,9 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
           <Link href="/account" className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-200/80 hover:bg-slate-100 transition-colors w-full">
             <div className="relative">
               {avatarUrl ? (
-                <img src={avatarUrl} alt="" className="h-8 w-8 rounded-lg" />
+                <img src={avatarUrl} alt="" className="h-8 w-8 rounded-full" />
               ) : (
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-400 text-white text-sm font-semibold">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400 text-white text-sm font-semibold">
                   {displayName.charAt(0).toUpperCase()}
                 </div>
               )}

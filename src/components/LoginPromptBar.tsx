@@ -14,7 +14,7 @@ export default function LoginPromptBar(): React.ReactElement | null {
     <div className="mt-auto px-1 pb-1 pt-4">
       <div className="rounded-xl bg-slate-50 border border-slate-200/80 p-4 space-y-3">
         <p className="text-xs text-slate-400 leading-relaxed">
-          ログインすれば無料でもっと使えます
+          ログインすれば無料ですべての機能が使えます
         </p>
         <button
           onClick={() => openLoginModal()}

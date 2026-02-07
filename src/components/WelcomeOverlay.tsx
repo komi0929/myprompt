@@ -40,7 +40,7 @@ export default function WelcomeOverlay({ onCreateFirst }: { onCreateFirst: () =>
             マイプロンプトへようこそ！
           </h2>
           <p className="text-sm text-slate-600">
-            AIプロンプトを保存・整理・共有できるツール
+            バイブコーダーのためのプロンプト簡単メモサイト
           </p>
         </div>
 
@@ -48,8 +48,8 @@ export default function WelcomeOverlay({ onCreateFirst }: { onCreateFirst: () =>
         <div className="p-5 space-y-3">
           <FeatureRow
             icon={<BookOpen className="w-4 h-4 text-yellow-500" />}
-            title="プロンプトを保存"
-            description="ChatGPT、Cursor、Claudeで使うプロンプトをまとめて管理"
+            title="プロンプトをメモ"
+            description="ChatGPT、Cursor、Claudeで使うプロンプトをまとめて整理"
           />
           <FeatureRow
             icon={<Search className="w-4 h-4 text-yellow-500" />}
@@ -58,7 +58,7 @@ export default function WelcomeOverlay({ onCreateFirst }: { onCreateFirst: () =>
           />
           <FeatureRow
             icon={<Star className="w-4 h-4 text-yellow-500" />}
-            title="アレンジ＆共有"
+            title="参考にしてカスタマイズ"
             description="他の人のプロンプトを参考に、自分用にカスタマイズ"
           />
         </div>
@@ -70,7 +70,7 @@ export default function WelcomeOverlay({ onCreateFirst }: { onCreateFirst: () =>
             className="w-full flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-slate-800 font-semibold py-3 rounded-xl shadow-md shadow-yellow-200 transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
           >
             <Sparkles className="w-4 h-4" />
-            最初のプロンプトを作成する
+            最初のプロンプトをメモする
           </button>
           <button
             onClick={handleDismiss}

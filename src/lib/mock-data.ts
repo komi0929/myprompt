@@ -72,7 +72,7 @@ export interface PhaseInfo {
 }
 
 export const PHASES: PhaseInfo[] = [
-  { id: "All", label: "すべて", icon: "📋", hint: "全フェーズのプロンプト" },
+  { id: "All", label: "すべて", icon: "🏠", hint: "全フェーズのプロンプト" },
   { id: "Planning", label: "企画", icon: "🌱", hint: "アイデアを整理するとき" },
   { id: "Design", label: "設計", icon: "🎨", hint: "画面や構成を考えるとき" },
   { id: "Implementation", label: "実装", icon: "💻", hint: "コードを書くとき" },

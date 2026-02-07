@@ -64,9 +64,9 @@ function AccountContent(): React.ReactElement {
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm mb-6">
           <div className="flex items-center gap-4">
             {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="h-14 w-14 rounded-xl" />
+              <img src={avatarUrl} alt="" className="h-14 w-14 rounded-full" />
             ) : (
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-yellow-400 text-white text-2xl font-bold">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-yellow-400 text-white text-2xl font-bold">
                 {displayName.charAt(0).toUpperCase()}
               </div>
             )}

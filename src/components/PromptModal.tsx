@@ -89,7 +89,7 @@ export default function PromptModal(): React.ReactElement | null {
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <h2 className="text-lg font-semibold text-slate-800">
-            {isNew ? "新しいプロンプトを作成" : "プロンプトを編集"}
+            {isNew ? "新しいプロンプトをメモ" : "プロンプトを編集"}
           </h2>
           <button onClick={closeEditor} className="p-1.5 hover:bg-slate-100 rounded-md transition-colors">
             <X className="w-5 h-5 text-slate-400" />
@@ -112,7 +112,7 @@ export default function PromptModal(): React.ReactElement | null {
 
           {/* Content */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">プロンプト内容</label>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">プロンプト本文</label>
             <textarea
               value={content}
               onChange={e => setContent(e.target.value)}
@@ -188,7 +188,7 @@ export default function PromptModal(): React.ReactElement | null {
           </Button>
           <Button onClick={handleSave} className="shadow-md shadow-yellow-200">
             <Save className="w-4 h-4 mr-1.5" />
-            {isNew ? "保存する" : "更新する"}
+            {isNew ? "メモする" : "更新する"}
           </Button>
         </div>
       </div>

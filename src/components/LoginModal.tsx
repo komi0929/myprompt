@@ -156,9 +156,9 @@ export default function LoginModal(): React.ReactElement | null {
               </div>
               <CompRow icon={<Eye className="w-3 h-3" />} label="閲覧" guest check />
               <CompRow icon={<Copy className="w-3 h-3" />} label="コピー" guest check />
-              <CompRow icon={<Pencil className="w-3 h-3" />} label="作成・編集" check />
+              <CompRow icon={<Pencil className="w-3 h-3" />} label="メモ・編集" check />
               <CompRow icon={<Star className="w-3 h-3" />} label="お気に入り" check />
-              <CompRow icon={<GitBranch className="w-3 h-3" />} label="アレンジ" check />
+              <CompRow icon={<GitBranch className="w-3 h-3" />} label="カスタマイズ" check />
               <CompRow icon={<History className="w-3 h-3" />} label="履歴" check last />
             </div>
           </details>

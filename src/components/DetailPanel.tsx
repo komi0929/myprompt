@@ -22,8 +22,8 @@ export function DetailPanel(): React.ReactElement {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center text-slate-400 bg-slate-50/50">
         <Sparkles className="h-10 w-10 mb-3 text-slate-200" />
-        <p className="font-semibold text-sm">左のカードをクリックして</p>
-        <p className="font-semibold text-sm">プロンプトの詳細を表示 👈</p>
+        <p className="font-semibold text-sm">プロンプトを選んで</p>
+        <p className="font-semibold text-sm">詳細を確認しましょう ✨</p>
       </div>
     );
   }
@@ -41,7 +41,7 @@ export function DetailPanel(): React.ReactElement {
   };
 
   const handleArrange = (): void => {
-    if (!requireAuth("プロンプトのアレンジ")) return;
+    if (!requireAuth("プロンプトの派生メモ")) return;
     duplicateAsArrangement(prompt.id);
   };
 
@@ -193,7 +193,7 @@ export function DetailPanel(): React.ReactElement {
         <div className="space-y-3 pt-1">
           <Button className="w-full shadow-md shadow-yellow-200 hover:shadow-yellow-300 transition-shadow" size="lg" onClick={handleArrange}>
             <Sparkles className="w-4 h-4 mr-2" />
-            このプロンプトをアレンジ
+            このプロンプトをもとにメモ
           </Button>
           
           <div className="grid grid-cols-2 gap-2">

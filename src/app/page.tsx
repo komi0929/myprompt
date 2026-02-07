@@ -7,7 +7,6 @@ import { DetailPanel } from "@/components/DetailPanel";
 import { PromptStoreProvider, usePromptStore } from "@/lib/prompt-store";
 import { AuthProvider } from "@/components/AuthProvider";
 import { AuthGuardProvider } from "@/lib/useAuthGuard";
-import { PHASES } from "@/lib/mock-data";
 import ToastContainer from "@/components/ui/Toast";
 import PromptModal from "@/components/PromptModal";
 import LoginModal from "@/components/LoginModal";
@@ -39,10 +38,9 @@ function PageContent(): React.ReactElement {
   const { isGuest } = useAuth();
   const { requireAuth } = useAuthGuard();
   const filteredPrompts = getFilteredPrompts();
-  const currentPhaseData = PHASES.find(p => p.id === currentPhase);
 
   const handleCreateNew = (): void => {
-    if (requireAuth("プロンプトの作成")) {
+    if (requireAuth("プロンプトのメモ")) {
       openEditor();
     }
   };
@@ -86,16 +84,6 @@ function PageContent(): React.ReactElement {
         {/* Scrollable Feed */}
         <div className="flex-1 overflow-y-auto px-6 pb-10 scroll-smooth">
           <div className="max-w-4xl mx-auto py-3">
-            <div className="mb-4 pl-1 flex items-end justify-between">
-              <div>
-                <h2 className="text-xl font-semibold text-slate-800">
-                  {currentPhaseData ? `${currentPhaseData.icon} ${currentPhaseData.label}` : "プロンプト"}
-                </h2>
-                <p className="text-slate-400 mt-0.5 text-xs">
-                  {filteredPrompts.length} 件のプロンプト
-                </p>
-              </div>
-            </div>
 
             {filteredPrompts.length > 0 ? (
               <PromptFeed />
@@ -130,14 +118,14 @@ function EmptyState({ onCreateFirst }: { onCreateFirst: () => void }): React.Rea
         まだプロンプトはありません
       </h3>
       <p className="text-slate-400 text-sm mb-5 max-w-xs leading-relaxed">
-        ChatGPTやCursorで使えるプロンプトを<br />保存してみましょう！
+        ChatGPTやCursorで使えるプロンプトを<br />メモしてみましょう！
       </p>
       <button
         onClick={onCreateFirst}
         className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-slate-800 font-semibold px-6 py-3 rounded-xl shadow-md shadow-yellow-200 transition-all hover:scale-105 active:scale-[0.97] text-sm"
       >
         <Plus className="w-4 h-4" />
-        最初のプロンプトを作成する
+        最初のプロンプトをメモする
       </button>
     </div>
   );
