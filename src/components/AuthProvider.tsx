@@ -41,20 +41,40 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
     setEmail(u.email ?? "");
   };
 
+  const fetchProfile = async (userId: string): Promise<void> => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("display_name, avatar_url")
+      .eq("id", userId)
+      .single();
+    if (data) {
+      if (data.display_name) setDisplayName(data.display_name);
+      if (data.avatar_url) setAvatarUrl(data.avatar_url);
+    }
+  };
+
   useEffect(() => {
+    let cancelled = false;
+
     const init = async (): Promise<void> => {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      if (data.session?.user) {
-        extractUserMeta(data.session.user);
-        await fetchProfile(data.session.user.id);
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (cancelled) return;
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
+        if (data.session?.user) {
+          extractUserMeta(data.session.user);
+          await fetchProfile(data.session.user.id);
+        }
+      } catch (e) {
+        if ((e as Error).name === "AbortError") return;
       }
-      setIsLoading(false);
+      if (!cancelled) setIsLoading(false);
     };
     init();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      if (cancelled) return;
       setSession(newSession);
       setUser(newSession?.user ?? null);
       if (newSession?.user) {
@@ -67,20 +87,11 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
-
-  const fetchProfile = async (userId: string): Promise<void> => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("display_name, avatar_url")
-      .eq("id", userId)
-      .single();
-    if (data) {
-      if (data.display_name) setDisplayName(data.display_name);
-      if (data.avatar_url) setAvatarUrl(data.avatar_url);
-    }
-  };
 
   const signInWithEmail = useCallback(async (email: string, password: string): Promise<{ error: string | null }> => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
