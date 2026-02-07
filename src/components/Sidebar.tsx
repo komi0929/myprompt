@@ -87,7 +87,13 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
           <Link href="/account" className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-200/80 hover:bg-slate-100 transition-colors w-full">
             <div className="relative">
               {avatarUrl ? (
-                <img src={avatarUrl} alt="" className="h-8 w-8 rounded-full" />
+                avatarUrl.startsWith("http") ? (
+                  <img src={avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
+                ) : (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-50 border border-yellow-200 text-lg">
+                    {avatarUrl}
+                  </div>
+                )
               ) : (
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400 text-white text-sm font-semibold">
                   {displayName.charAt(0).toUpperCase()}

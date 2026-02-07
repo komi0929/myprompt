@@ -143,7 +143,13 @@ function PromptCard({ prompt, isFavoritedByMe }: { prompt: Prompt; isFavoritedBy
         {!isOwned && prompt.authorName && (
           <div className="flex items-center gap-1.5 shrink-0 ml-2">
             {prompt.authorAvatarUrl ? (
-              <img src={prompt.authorAvatarUrl} alt="" className="h-5 w-5 rounded-full object-cover" />
+              prompt.authorAvatarUrl.startsWith("http") ? (
+                <img src={prompt.authorAvatarUrl} alt="" className="h-5 w-5 rounded-full object-cover" />
+              ) : (
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-yellow-50 border border-yellow-200 text-[10px]">
+                  {prompt.authorAvatarUrl}
+                </div>
+              )
             ) : (
               <div className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-slate-500 text-[9px] font-semibold">
                 {prompt.authorName.charAt(0).toUpperCase()}

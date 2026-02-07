@@ -7,9 +7,10 @@ import type { AppNotification } from "@/lib/prompt-store";
 import { AuthGuardProvider } from "@/lib/useAuthGuard";
 import Link from "next/link";
 import { useState } from "react";
-import { LogOut, Trash2, Bell, ChevronRight, ArrowLeft, AlertTriangle, Camera, Pencil } from "lucide-react";
+import { LogOut, Trash2, Bell, ChevronRight, ArrowLeft, AlertTriangle, Pencil } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { showToast } from "@/components/ui/Toast";
+import AvatarPicker from "@/components/AvatarPicker";
 
 function AccountContent(): React.ReactElement {
   const { user, isGuest, displayName, avatarUrl, email, signOut, updateProfile } = useAuth();
@@ -75,6 +76,15 @@ function AccountContent(): React.ReactElement {
     }
   };
 
+  const handleSelectEmoji = async (emoji: string): Promise<void> => {
+    const { error } = await updateProfile(displayName, emoji);
+    if (error) {
+      showToast("アイコンの更新に失敗しました");
+    } else {
+      showToast("アイコンを更新しました ✨");
+    }
+  };
+
   const handleNameSave = async (): Promise<void> => {
     const trimmed = nameInput.trim();
     if (!trimmed) {
@@ -137,33 +147,14 @@ function AccountContent(): React.ReactElement {
         {/* Profile Card - Editable */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm mb-6">
           <div className="flex items-center gap-4">
-            {/* Avatar with upload overlay */}
-            <div className="relative group">
-              <label className="cursor-pointer block">
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarUpload}
-                  disabled={uploading}
-                />
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="" className="h-14 w-14 rounded-full object-cover" />
-                ) : (
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-yellow-400 text-white text-2xl font-bold">
-                    {displayName.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                {/* Camera overlay */}
-                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {uploading ? (
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  ) : (
-                    <Camera className="w-5 h-5 text-white" />
-                  )}
-                </div>
-              </label>
-            </div>
+            {/* Avatar Picker */}
+            <AvatarPicker
+              currentAvatar={avatarUrl}
+              displayName={displayName}
+              uploading={uploading}
+              onSelectEmoji={handleSelectEmoji}
+              onUploadPhoto={handleAvatarUpload}
+            />
 
             {/* Name + Email */}
             <div className="flex-1 min-w-0">

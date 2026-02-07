@@ -103,7 +103,13 @@ export function DetailPanel(): React.ReactElement {
         {/* Author section */}
         <div className="flex items-center gap-3">
           {prompt.authorAvatarUrl ? (
-            <img src={prompt.authorAvatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
+            prompt.authorAvatarUrl.startsWith("http") ? (
+              <img src={prompt.authorAvatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-50 border border-yellow-200 text-lg">
+                {prompt.authorAvatarUrl}
+              </div>
+            )
           ) : prompt.authorName ? (
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400 text-white text-sm font-semibold">
               {prompt.authorName.charAt(0).toUpperCase()}
