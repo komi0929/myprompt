@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
-import { Home, Flame, Lock, Globe, LogOut, User, Bell } from "lucide-react";
+import { Home, Flame, Lock, Globe, LogOut, User, Bell, Settings } from "lucide-react";
+import Link from "next/link";
 import { usePromptStore } from "@/lib/prompt-store";
 import { useAuth } from "@/components/AuthProvider";
 import { useAuthGuard } from "@/lib/useAuthGuard";
@@ -75,22 +76,25 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
             </div>
           </button>
         ) : (
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-200/80">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="h-8 w-8 rounded-lg" />
-            ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-400 text-white text-sm font-semibold">
-                {displayName.charAt(0).toUpperCase()}
-              </div>
-            )}
+          <Link href="/account" className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-200/80 hover:bg-slate-100 transition-colors w-full">
+            <div className="relative">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="h-8 w-8 rounded-lg" />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-400 text-white text-sm font-semibold">
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+              )}
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-pink-500 border-2 border-white" />
+              )}
+            </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-slate-700 truncate">{displayName || "ユーザー"}</p>
-              <p className="text-[10px] text-slate-400">メンバー</p>
+              <p className="text-[10px] text-slate-400">{unreadCount > 0 ? `${unreadCount}件の通知` : "アカウント設定"}</p>
             </div>
-            <button onClick={signOut} className="p-1.5 rounded-md hover:bg-slate-200/60 transition-colors" title="ログアウト">
-              <LogOut className="w-3.5 h-3.5 text-slate-400" />
-            </button>
-          </div>
+            <Settings className="w-3.5 h-3.5 text-slate-300" />
+          </Link>
         )}
       </div>
 
@@ -161,12 +165,12 @@ function NotificationPanel({ notifications, onClose }: { notifications: AppNotif
             >
               <div className="flex items-start gap-2">
                 <span className="text-sm mt-0.5">
-                  {n.type === "like" ? "👍" : "⭐"}
+                  {n.type === "like" ? "👍" : n.type === "favorite" ? "⭐" : "🔄"}
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-slate-600 leading-tight">
                     <span className="font-semibold">{n.actorName}</span>
-                    {n.type === "like" ? " がいいね！しました" : " がお気に入りに追加しました"}
+                    {n.type === "like" ? " がいいね！しました" : n.type === "favorite" ? " がお気に入りに追加しました" : " が派生プロンプトを作成しました"}
                   </p>
                   <p className="text-[10px] text-slate-400 truncate mt-0.5">
                     「{n.promptTitle}」

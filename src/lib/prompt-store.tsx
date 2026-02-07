@@ -15,7 +15,7 @@ export interface HistoryEntry {
 /* ─── Notification ─── */
 export interface AppNotification {
   id: string;
-  type: "like" | "favorite";
+  type: "like" | "favorite" | "fork";
   promptId: string;
   promptTitle: string;
   actorName: string;
