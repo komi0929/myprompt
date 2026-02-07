@@ -11,10 +11,12 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import HistoryModal from "@/components/HistoryModal";
 import { showToast } from "@/components/ui/Toast";
+import { useAuth } from "@/components/AuthProvider";
 
 export function DetailPanel(): React.ReactElement {
   const { selectedPromptId, prompts, openEditor, duplicateAsArrangement, toggleFavorite, isFavorited, toggleLike, isLiked } = usePromptStore();
   const { requireAuth } = useAuthGuard();
+  const { user } = useAuth();
   const prompt = prompts.find(p => p.id === selectedPromptId) ?? null;
   const [historyOpen, setHistoryOpen] = useState(false);
 
@@ -135,15 +137,18 @@ export function DetailPanel(): React.ReactElement {
             <h1 className="text-xl font-semibold text-slate-800 leading-tight">
               {prompt.title}
             </h1>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="shrink-0 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 border-yellow-200"
-              onClick={handleEdit}
-            >
-              <Pencil className="w-3.5 h-3.5 mr-1" />
-              編集
-            </Button>
+            {/* Edit button - only for owned prompts */}
+            {!!user && prompt.authorId === user.id && (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="shrink-0 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 border-yellow-200"
+                onClick={handleEdit}
+              >
+                <Pencil className="w-3.5 h-3.5 mr-1" />
+                編集
+              </Button>
+            )}
           </div>
           <div className="text-xs text-slate-400 font-mono border-b border-slate-100 pb-3">
             更新日: {new Date(prompt.updatedAt).toLocaleDateString("ja-JP")}

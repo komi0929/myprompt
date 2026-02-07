@@ -169,23 +169,25 @@ function PromptCard({ prompt, isFavoritedByMe }: { prompt: Prompt; isFavoritedBy
             <span className="font-medium tabular-nums">{prompt.likeCount}</span>
           </button>
 
-          {/* Edit/Delete - hover only */}
-          <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <button
-              className="p-1.5 rounded-md text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all"
-              onClick={handleEdit}
-              title="編集"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
-            <button
-              className="p-1.5 rounded-md text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all"
-              onClick={handleDelete}
-              title="削除"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          {/* Edit/Delete - only for owned prompts */}
+          {isOwned && (
+            <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <button
+                className="p-1.5 rounded-md text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all"
+                onClick={handleEdit}
+                title="編集"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+              <button
+                className="p-1.5 rounded-md text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all"
+                onClick={handleDelete}
+                title="削除"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </CardFooter>
     </Card>

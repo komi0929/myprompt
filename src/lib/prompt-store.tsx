@@ -136,7 +136,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  const currentUserId = user?.id ?? MOCK_USER_ID;
+  const currentUserId = user?.id ?? "";
 
   /* ─── Load from localStorage on mount ─── */
   useEffect(() => {
@@ -295,7 +295,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       if (updates.phase !== undefined) dbUpdates.phase = updates.phase;
       if (updates.visibility !== undefined) dbUpdates.visibility = updates.visibility;
 
-      await supabase.from("prompts").update(dbUpdates).eq("id", id);
+      await supabase.from("prompts").update(dbUpdates).eq("id", id).eq("user_id", user.id);
 
       const prompt = prompts.find(p => p.id === id);
       if (prompt) {
@@ -314,7 +314,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     setLikes(prev => prev.filter(lid => lid !== id));
     if (selectedPromptId === id) setSelectedPromptId(null);
     if (user) {
-      await supabase.from("prompts").delete().eq("id", id);
+      await supabase.from("prompts").delete().eq("id", id).eq("user_id", user.id);
     }
   }, [selectedPromptId, user]);
 
