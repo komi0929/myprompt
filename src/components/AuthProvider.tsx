@@ -11,11 +11,10 @@ interface AuthState {
   isGuest: boolean;
   displayName: string;
   avatarUrl: string;
+  email: string;
 }
 
 interface AuthActions {
-  signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
-  signUpWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
   signInWithGitHub: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -30,6 +29,15 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
   const [isLoading, setIsLoading] = useState(true);
   const [displayName, setDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [email, setEmail] = useState("");
+
+  // Extract user metadata from GitHub OAuth
+  const extractUserMeta = (u: User): void => {
+    const meta = u.user_metadata ?? {};
+    setDisplayName(meta.user_name ?? meta.full_name ?? meta.name ?? u.email?.split("@")[0] ?? "");
+    setAvatarUrl(meta.avatar_url ?? "");
+    setEmail(u.email ?? "");
+  };
 
   // Initial session check
   useEffect(() => {
@@ -38,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
       setSession(data.session);
       setUser(data.session?.user ?? null);
       if (data.session?.user) {
+        extractUserMeta(data.session.user);
         await fetchProfile(data.session.user.id);
       }
       setIsLoading(false);
@@ -48,10 +57,12 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
       setSession(newSession);
       setUser(newSession?.user ?? null);
       if (newSession?.user) {
+        extractUserMeta(newSession.user);
         await fetchProfile(newSession.user.id);
       } else {
         setDisplayName("");
         setAvatarUrl("");
+        setEmail("");
       }
     });
 
@@ -65,25 +76,18 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
       .eq("id", userId)
       .single();
     if (data) {
-      setDisplayName(data.display_name ?? "");
-      setAvatarUrl(data.avatar_url ?? "");
+      if (data.display_name) setDisplayName(data.display_name);
+      if (data.avatar_url) setAvatarUrl(data.avatar_url);
     }
   };
-
-  const signInWithEmail = useCallback(async (email: string, password: string): Promise<{ error: string | null }> => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error?.message ?? null };
-  }, []);
-
-  const signUpWithEmail = useCallback(async (email: string, password: string): Promise<{ error: string | null }> => {
-    const { error } = await supabase.auth.signUp({ email, password });
-    return { error: error?.message ?? null };
-  }, []);
 
   const signInWithGitHub = useCallback(async (): Promise<void> => {
     await supabase.auth.signInWithOAuth({
       provider: "github",
-      options: { redirectTo: `${window.location.origin}/` },
+      options: {
+        redirectTo: `${window.location.origin}/`,
+        scopes: "read:user user:email",
+      },
     });
   }, []);
 
@@ -98,8 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
     isGuest: !user,
     displayName,
     avatarUrl,
-    signInWithEmail,
-    signUpWithEmail,
+    email,
     signInWithGitHub,
     signOut,
   };
