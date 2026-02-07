@@ -8,6 +8,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useState } from "react";
 import type { AppNotification } from "@/lib/prompt-store";
+import LoginPromptBar from "@/components/LoginPromptBar";
 
 export function Sidebar({ className }: { className?: string }): React.ReactElement {
   const { view, setView, visibilityFilter, setVisibilityFilter, notifications, unreadCount, markAllNotificationsRead } = usePromptStore();
@@ -122,10 +123,14 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
         />
       </div>
 
-      {/* Bottom credit */}
-      <div className="mt-auto pt-6 px-2">
-        <p className="text-[10px] text-slate-300 font-mono">v0.3 — Made with ❤️</p>
-      </div>
+      {/* Bottom: Login CTA for guests, credit for members */}
+      {isGuest ? (
+        <LoginPromptBar />
+      ) : (
+        <div className="mt-auto pt-6 px-2">
+          <p className="text-[10px] text-slate-300 font-mono">v0.3 — Made with ❤️</p>
+        </div>
+      )}
     </div>
   );
 }

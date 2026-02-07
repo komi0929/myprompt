@@ -11,7 +11,7 @@ import { PHASES } from "@/lib/mock-data";
 import ToastContainer from "@/components/ui/Toast";
 import PromptModal from "@/components/PromptModal";
 import LoginModal from "@/components/LoginModal";
-import LoginPromptBar from "@/components/LoginPromptBar";
+
 import WelcomeOverlay from "@/components/WelcomeOverlay";
 import FloatingCreateButton from "@/components/FloatingCreateButton";
 import { useAuth } from "@/components/AuthProvider";
@@ -108,8 +108,7 @@ function PageContent(): React.ReactElement {
       {/* Floating Create Button (auth-guarded) */}
       {!isGuest && <FloatingCreateButton />}
 
-      {/* Login Prompt Bar (guests only) */}
-      <LoginPromptBar />
+
     </div>
   );
 }

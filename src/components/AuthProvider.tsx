@@ -15,7 +15,10 @@ interface AuthState {
 }
 
 interface AuthActions {
+  signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUpWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
   signInWithGitHub: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -31,7 +34,6 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
   const [avatarUrl, setAvatarUrl] = useState("");
   const [email, setEmail] = useState("");
 
-  // Extract user metadata from GitHub OAuth
   const extractUserMeta = (u: User): void => {
     const meta = u.user_metadata ?? {};
     setDisplayName(meta.user_name ?? meta.full_name ?? meta.name ?? u.email?.split("@")[0] ?? "");
@@ -39,7 +41,6 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
     setEmail(u.email ?? "");
   };
 
-  // Initial session check
   useEffect(() => {
     const init = async (): Promise<void> => {
       const { data } = await supabase.auth.getSession();
@@ -81,6 +82,16 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
     }
   };
 
+  const signInWithEmail = useCallback(async (email: string, password: string): Promise<{ error: string | null }> => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error: error?.message ?? null };
+  }, []);
+
+  const signUpWithEmail = useCallback(async (email: string, password: string): Promise<{ error: string | null }> => {
+    const { error } = await supabase.auth.signUp({ email, password });
+    return { error: error?.message ?? null };
+  }, []);
+
   const signInWithGitHub = useCallback(async (): Promise<void> => {
     await supabase.auth.signInWithOAuth({
       provider: "github",
@@ -91,20 +102,24 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
     });
   }, []);
 
+  const signInWithGoogle = useCallback(async (): Promise<void> => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/`,
+        queryParams: { access_type: "offline", prompt: "consent" },
+      },
+    });
+  }, []);
+
   const signOut = useCallback(async (): Promise<void> => {
     await supabase.auth.signOut();
   }, []);
 
   const value: AuthContext = {
-    user,
-    session,
-    isLoading,
-    isGuest: !user,
-    displayName,
-    avatarUrl,
-    email,
-    signInWithGitHub,
-    signOut,
+    user, session, isLoading, isGuest: !user,
+    displayName, avatarUrl, email,
+    signInWithEmail, signUpWithEmail, signInWithGitHub, signInWithGoogle, signOut,
   };
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
