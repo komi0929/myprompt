@@ -55,14 +55,18 @@ function AdminContent(): React.ReactElement {
     if (!isAdmin) return;
     let cancelled = false;
     const load = async (): Promise<void> => {
-      setFetching(true);
-      const { data } = await supabase
-        .from("contacts")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (!cancelled) {
-        setContacts((data as ContactEntry[]) ?? []);
-        setFetching(false);
+      try {
+        setFetching(true);
+        const { data } = await supabase
+          .from("contacts")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!cancelled) {
+          setContacts((data as ContactEntry[]) ?? []);
+          setFetching(false);
+        }
+      } catch {
+        if (!cancelled) setFetching(false);
       }
     };
     load();
