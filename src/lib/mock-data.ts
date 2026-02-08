@@ -16,6 +16,7 @@ export interface Prompt {
   authorAvatarUrl?: string;
   folderId?: string;
   lastUsedAt?: string;
+  notes?: string;
   lineage: {
     parent?: string;
     children?: string[];

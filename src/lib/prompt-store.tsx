@@ -107,6 +107,7 @@ interface DbPrompt {
   is_pinned?: boolean;
   folder_id?: string | null;
   last_used_at?: string | null;
+  notes?: string | null;
   created_at: string;
   updated_at: string;
   profiles?: { display_name: string | null; avatar_url: string | null } | null;
@@ -126,6 +127,7 @@ function dbToPrompt(row: DbPrompt): Prompt {
     isPinned: row.is_pinned ?? false,
     folderId: row.folder_id ?? undefined,
     lastUsedAt: row.last_used_at ?? undefined,
+    notes: row.notes ?? undefined,
     authorId: row.user_id,
     authorName: row.profiles?.display_name ?? undefined,
     authorAvatarUrl: row.profiles?.avatar_url ?? undefined,

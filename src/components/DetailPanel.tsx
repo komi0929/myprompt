@@ -6,7 +6,7 @@ import { PHASES } from "@/lib/mock-data";
 import { usePromptStore } from "@/lib/prompt-store";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { copyToClipboard } from "@/components/ui/Toast";
-import { ArrowRight, Copy, GitBranch, History, Share2, Sparkles, Edit3, Pencil, Heart, Bookmark, Zap } from "lucide-react";
+import { ArrowRight, Copy, GitBranch, History, Share2, Sparkles, Edit3, Pencil, Heart, Bookmark, Zap, StickyNote, ChevronDown, ChevronUp, Lightbulb } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import HistoryModal from "@/components/HistoryModal";
@@ -16,12 +16,15 @@ import { useAuth } from "@/components/AuthProvider";
 import { hasVariables } from "@/lib/template-utils";
 
 export function DetailPanel(): React.ReactElement {
-  const { selectedPromptId, prompts, openEditor, duplicateAsArrangement, toggleFavorite, isFavorited, toggleLike, isLiked, incrementUseCount } = usePromptStore();
+  const { selectedPromptId, prompts, openEditor, duplicateAsArrangement, toggleFavorite, isFavorited, toggleLike, isLiked, incrementUseCount, updatePrompt, setSelectedPromptId } = usePromptStore();
   const { requireAuth } = useAuthGuard();
   const { user } = useAuth();
   const prompt = prompts.find(p => p.id === selectedPromptId) ?? null;
   const [historyOpen, setHistoryOpen] = useState(false);
   const [templateOpen, setTemplateOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [notesValue, setNotesValue] = useState("");
+  const [notesSynced, setNotesSynced] = useState(true);
 
    if (!prompt) {
     return (
@@ -36,6 +39,7 @@ export function DetailPanel(): React.ReactElement {
   const phaseInfo = PHASES.find(p => p.id === prompt.phase);
   const fav = isFavorited(prompt.id);
   const liked = isLiked(prompt.id);
+  const isOwner = user?.id === prompt.authorId;
 
   const handleShare = (): void => {
     if (navigator.share) {
@@ -263,6 +267,48 @@ export function DetailPanel(): React.ReactElement {
           </div>
         </div>
 
+        {/* Notes */}
+        {isOwner && (
+          <div className="pt-3 border-t border-slate-100">
+            <button
+              onClick={() => {
+                if (!notesOpen) setNotesValue(prompt.notes ?? "");
+                setNotesOpen(prev => !prev);
+              }}
+              className="flex items-center justify-between w-full text-xs font-semibold text-slate-400 uppercase tracking-wider hover:text-slate-600 transition-colors"
+            >
+              <span className="flex items-center gap-1.5">
+                <StickyNote className="w-3.5 h-3.5" />
+                メモ・ノート {prompt.notes ? "📝" : ""}
+              </span>
+              {notesOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+            {notesOpen && (
+              <div className="mt-2 space-y-2">
+                <textarea
+                  value={notesValue}
+                  onChange={e => { setNotesValue(e.target.value); setNotesSynced(false); }}
+                  onBlur={() => {
+                    if (!notesSynced) {
+                      updatePrompt(prompt.id, { notes: notesValue || undefined });
+                      setNotesSynced(true);
+                    }
+                  }}
+                  placeholder="このプロンプトについてのメモ...（なぜ有効だったか、使い方のコツ等）"
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 focus:border-yellow-300 transition-all resize-none"
+                />
+                {!notesSynced && (
+                  <p className="text-[10px] text-slate-400">フォーカスを外すと自動保存</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Related prompts */}
+        <RelatedSuggestions currentPrompt={prompt} allPrompts={prompts} onSelect={setSelectedPromptId} />
+
         {/* Descendants */}
         {prompt.lineage.children && prompt.lineage.children.length > 0 && (
           <div className="pt-6 border-t border-slate-100">
@@ -293,6 +339,55 @@ export function DetailPanel(): React.ReactElement {
           onUsed={() => incrementUseCount(prompt.id)}
         />
       )}
+    </div>
+  );
+}
+
+import type { Prompt } from "@/lib/mock-data";
+
+function RelatedSuggestions({ currentPrompt, allPrompts, onSelect }: {
+  currentPrompt: Prompt;
+  allPrompts: Prompt[];
+  onSelect: (id: string) => void;
+}): React.ReactElement {
+  // Score-based related prompt finding
+  const related = allPrompts
+    .filter(p => p.id !== currentPrompt.id)
+    .map(p => {
+      let score = 0;
+      // Shared tags
+      const sharedTags = p.tags.filter(t => currentPrompt.tags.includes(t)).length;
+      score += sharedTags * 3;
+      // Same phase
+      if (p.phase === currentPrompt.phase) score += 2;
+      // Lineage connection
+      if (currentPrompt.lineage.parent === p.id || currentPrompt.lineage.children?.includes(p.id)) score += 5;
+      return { prompt: p, score };
+    })
+    .filter(r => r.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+
+  if (related.length === 0) return <></>;
+
+  return (
+    <div className="pt-4 border-t border-slate-100">
+      <h4 className="font-semibold text-xs text-slate-400 mb-2 flex items-center gap-1.5 uppercase tracking-wider">
+        <Lightbulb className="w-3.5 h-3.5" />
+        関連するメモ
+      </h4>
+      <div className="space-y-1">
+        {related.map(r => (
+          <button
+            key={r.prompt.id}
+            onClick={() => onSelect(r.prompt.id)}
+            className="w-full text-left p-2.5 rounded-lg bg-slate-50 border border-slate-100 hover:bg-white hover:border-yellow-200 transition-all group"
+          >
+            <p className="text-xs font-medium text-slate-600 truncate group-hover:text-yellow-700">{r.prompt.title}</p>
+            <p className="text-[10px] text-slate-400 truncate mt-0.5">{r.prompt.content.slice(0, 50)}</p>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

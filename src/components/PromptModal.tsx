@@ -20,6 +20,7 @@ export default function PromptModal(): React.ReactElement | null {
   const [tags, setTags] = useState<string[]>([]);
   const [phase, setPhase] = useState<PromptPhase>("Implementation");
   const [visibility, setVisibility] = useState<"Private" | "Public">("Private");
+  const [hasDraft, setHasDraft] = useState(false);
 
   const isNew = editingPrompt?.id === "";
 
@@ -27,14 +28,58 @@ export default function PromptModal(): React.ReactElement | null {
   const prevId = useState<string | undefined>(undefined);
   if (editingPrompt && editingPrompt.id !== prevId[0]) {
     prevId[1](editingPrompt.id);
-    setTitle(editingPrompt.title);
-    setContent(editingPrompt.content);
-    setTags(editingPrompt.tags);
-    setPhase(editingPrompt.phase);
-    setVisibility(editingPrompt.visibility);
+    // check for draft
+    const draftKey = `myprompt-draft-${editingPrompt.id || "new"}`;
+    const savedDraft = typeof window !== "undefined" ? localStorage.getItem(draftKey) : null;
+    if (savedDraft && editingPrompt.id === "") {
+      try {
+        const draft = JSON.parse(savedDraft) as { title: string; content: string; tags: string[]; phase: PromptPhase; visibility: "Private" | "Public" };
+        if (draft.title || draft.content) {
+          setTitle(draft.title);
+          setContent(draft.content);
+          setTags(draft.tags ?? []);
+          setPhase(draft.phase ?? "Implementation");
+          setVisibility(draft.visibility ?? "Private");
+          setHasDraft(true);
+        } else {
+          setTitle(editingPrompt.title);
+          setContent(editingPrompt.content);
+          setTags(editingPrompt.tags);
+          setPhase(editingPrompt.phase);
+          setVisibility(editingPrompt.visibility);
+        }
+      } catch {
+        setTitle(editingPrompt.title);
+        setContent(editingPrompt.content);
+        setTags(editingPrompt.tags);
+        setPhase(editingPrompt.phase);
+        setVisibility(editingPrompt.visibility);
+      }
+    } else {
+      setTitle(editingPrompt.title);
+      setContent(editingPrompt.content);
+      setTags(editingPrompt.tags);
+      setPhase(editingPrompt.phase);
+      setVisibility(editingPrompt.visibility);
+      setHasDraft(false);
+    }
   }
 
   if (!editingPrompt) return null;
+
+  // Auto-save draft to localStorage
+  const draftKey = `myprompt-draft-${editingPrompt.id || "new"}`;
+  const saveDraft = (): void => {
+    if (typeof window !== "undefined" && (title || content)) {
+      localStorage.setItem(draftKey, JSON.stringify({ title, content, tags, phase, visibility }));
+    }
+  };
+  const clearDraft = (): void => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(draftKey);
+    }
+    setHasDraft(false);
+  };
 
   const handleAddTag = (tagValue?: string): void => {
     const t = (tagValue ?? tagInput).trim();
@@ -79,6 +124,7 @@ export default function PromptModal(): React.ReactElement | null {
       showToast("プロンプトを更新しました");
     }
     closeEditor();
+    clearDraft();
   };
 
   return (
@@ -97,6 +143,14 @@ export default function PromptModal(): React.ReactElement | null {
           </button>
         </div>
 
+        {/* Draft Banner */}
+        {hasDraft && (
+          <div className="px-5 py-2 bg-amber-50 border-b border-amber-100 flex items-center justify-between">
+            <span className="text-xs text-amber-600">📝 前回の下書きを復元しました</span>
+            <button onClick={() => { clearDraft(); setTitle(""); setContent(""); setTags([]); }} className="text-[10px] text-amber-500 hover:text-amber-700 transition-colors">クリア</button>
+          </div>
+        )}
+
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
           {/* Title */}
@@ -105,7 +159,7 @@ export default function PromptModal(): React.ReactElement | null {
             <input
               type="text"
               value={title}
-              onChange={e => setTitle(e.target.value)}
+              onChange={e => { setTitle(e.target.value); saveDraft(); }}
               placeholder="例: Cursor用レスポンシブ修正プロンプト"
               className="w-full h-10 px-4 rounded-lg border border-slate-200 text-slate-700 text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-400 transition-all"
             />
@@ -116,7 +170,7 @@ export default function PromptModal(): React.ReactElement | null {
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">プロンプト本文</label>
             <textarea
               value={content}
-              onChange={e => setContent(e.target.value)}
+              onChange={e => { setContent(e.target.value); saveDraft(); }}
               placeholder={"プロンプトの内容を入力\n\n変数には {変数名} を使えます"}
               rows={8}
               className="w-full px-4 py-3 rounded-lg border border-slate-200 text-slate-700 text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-400 transition-all font-mono leading-relaxed resize-none"
