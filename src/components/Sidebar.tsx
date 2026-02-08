@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
-import { Home, Flame, User, Bell, Copy, Clock } from "lucide-react";
+import { Home, Flame, User, Bell, Copy, Clock, MessageSquarePlus } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePromptStore } from "@/lib/prompt-store";
@@ -68,6 +68,17 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
       <div className="space-y-1">
         <NavButton icon={Home} label="ライブラリ" hint="自分のメモとお気に入り" active={view === "library"} onClick={() => setView("library")} />
         <NavButton icon={Flame} label="みんなのプロンプト" hint="公開されたプロンプト" active={view === "trend"} onClick={() => setView("trend")} />
+      </div>
+
+      {/* Feedback Link */}
+      <div className="mt-3 px-1">
+        <Link
+          href="/feedback"
+          className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-xs font-medium text-slate-500 hover:text-yellow-700 hover:bg-yellow-50 border border-dashed border-slate-200 hover:border-yellow-300 transition-all"
+        >
+          <MessageSquarePlus className="w-4 h-4" />
+          <span>改善提案・バグ報告</span>
+        </Link>
       </div>
 
       {/* Recently Used */}
