@@ -15,9 +15,11 @@ import Image from "next/image";
 
 import WelcomeOverlay from "@/components/WelcomeOverlay";
 import FloatingCreateButton from "@/components/FloatingCreateButton";
+import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/components/AuthProvider";
 import { useAuthGuard } from "@/lib/useAuthGuard";
-import { Search, Plus, Sparkles } from "lucide-react";
+import { Search, Plus, Sparkles, X } from "lucide-react";
+import { useState } from "react";
 
 export default function Page(): React.ReactElement {
   return (
@@ -35,10 +37,20 @@ export default function Page(): React.ReactElement {
 }
 
 function PageContent(): React.ReactElement {
-  const { currentPhase, setCurrentPhase, getFilteredPrompts, searchQuery, setSearchQuery, openEditor } = usePromptStore();
+  const { currentPhase, setCurrentPhase, getFilteredPrompts, searchQuery, setSearchQuery, openEditor, selectedPromptId } = usePromptStore();
   const { isGuest } = useAuth();
   const { requireAuth } = useAuthGuard();
   const filteredPrompts = getFilteredPrompts();
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
+  const [lastMobileSelectedId, setLastMobileSelectedId] = useState<string | null>(null);
+
+  // Derive mobile detail open from selectedPromptId changes
+  if (selectedPromptId && selectedPromptId !== lastMobileSelectedId) {
+    setLastMobileSelectedId(selectedPromptId);
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setMobileDetailOpen(true);
+    }
+  }
 
   const handleCreateNew = (): void => {
     if (requireAuth("プロンプトのメモ")) {
@@ -56,44 +68,44 @@ function PageContent(): React.ReactElement {
 
       {/* 2. Center Main Feed */}
       <main className="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
-        {/* Hero Header */}
-        <div className="px-6 pt-6 pb-2 z-20 flex flex-col items-center gap-2">
+        {/* Hero Header - smaller on mobile */}
+        <div className="px-4 md:px-6 pt-4 md:pt-6 pb-1 md:pb-2 z-20 flex flex-col items-center gap-1 md:gap-2">
           <Image
             src="/mascot.png"
             alt="マイプロンプト"
             width={200}
             height={200}
-            className="h-[73px] w-[73px] object-contain drop-shadow-md"
+            className="h-[50px] w-[50px] md:h-[73px] md:w-[73px] object-contain drop-shadow-md"
           />
-          <p className="text-center text-sm font-bold text-slate-700 leading-relaxed tracking-wide">
+          <p className="text-center text-xs md:text-sm font-bold text-slate-700 leading-relaxed tracking-wide">
             バイブコーダーのための<br />
             プロンプト簡単メモサイト
           </p>
         </div>
 
         {/* Search Bar */}
-        <div className="px-6 pt-3 pb-2 z-20">
+        <div className="px-4 md:px-6 pt-2 md:pt-3 pb-1 md:pb-2 z-20">
           <div className="relative max-w-4xl mx-auto">
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-3 md:left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="プロンプトを検索..."
-              className="h-10 w-full rounded-lg bg-white border border-slate-200 pl-11 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-300 transition-all shadow-sm hover:shadow"
+              className="h-9 md:h-10 w-full rounded-lg bg-white border border-slate-200 pl-9 md:pl-11 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-300 transition-all shadow-sm hover:shadow"
             />
           </div>
         </div>
 
         {/* Phase Compass */}
-        <div className="px-6 pb-1 z-20">
-          <div className="max-w-4xl mx-auto">
+        <div className="px-4 md:px-6 pb-1 z-20">
+          <div className="max-w-4xl mx-auto overflow-x-auto">
             <PhaseCompass currentPhase={currentPhase} onPhaseChange={setCurrentPhase} />
           </div>
         </div>
 
         {/* Scrollable Feed */}
-        <div className="flex-1 overflow-y-auto px-6 pb-10 scroll-smooth">
+        <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-20 md:pb-10 scroll-smooth">
           <div className="max-w-4xl mx-auto py-3">
 
             {filteredPrompts.length > 0 ? (
@@ -106,14 +118,37 @@ function PageContent(): React.ReactElement {
         </div>
       </main>
 
-      {/* 3. Right Detail Panel */}
+      {/* 3. Right Detail Panel - Desktop only */}
       <aside className="hidden lg:flex w-[400px] xl:w-[440px] h-full shrink-0 z-40">
         <DetailPanel />
       </aside>
 
-      {/* Floating Create Button (auth-guarded) */}
-      {!isGuest && <FloatingCreateButton />}
+      {/* 3b. Mobile Detail Drawer */}
+      {mobileDetailOpen && selectedPromptId && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-black/30 backdrop-blur-sm" onClick={() => setMobileDetailOpen(false)}>
+          <div
+            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 flex items-center justify-between p-3 bg-white/90 backdrop-blur-md border-b border-slate-100 rounded-t-2xl z-10">
+              <div className="w-10 h-1 rounded-full bg-slate-200 mx-auto" />
+              <button
+                onClick={() => setMobileDetailOpen(false)}
+                className="absolute right-3 top-3 p-1.5 hover:bg-slate-100 rounded-md transition-colors"
+              >
+                <X className="w-4 h-4 text-slate-400" />
+              </button>
+            </div>
+            <DetailPanel />
+          </div>
+        </div>
+      )}
 
+      {/* Floating Create Button (auth-guarded, desktop only) */}
+      {!isGuest && <div className="hidden md:block"><FloatingCreateButton /></div>}
+
+      {/* Mobile Bottom Navigation */}
+      <BottomNav />
 
     </div>
   );
