@@ -19,41 +19,26 @@ export function PhaseCompass({
   };
 
   return (
-    <div className="w-full pb-3 pt-1">
-      <div className="flex w-full items-center gap-1 px-0.5">
-        {PHASES.map((phase) => {
-          const isActive = active === phase.id;
-          return (
-            <div key={phase.id} className="flex flex-1 items-center justify-center group/phase relative">
-              <button
-                onClick={() => handleClick(phase.id)}
-                className={cn(
-                  "relative flex w-full flex-col items-center gap-0.5 rounded-xl py-2 transition-all duration-200 border",
-                  isActive
-                    ? "bg-yellow-50 text-yellow-700 shadow-sm border-yellow-300 z-10"
-                    : "bg-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-600 border-transparent hover:border-slate-300"
-                )}
-              >
-                <span className="text-base">{phase.icon}</span>
-                <span className={cn("font-semibold whitespace-nowrap text-[11px] transition-colors", isActive ? "text-yellow-700" : "text-slate-500")}>
-                  {phase.label}
-                </span>
-                
-                {isActive && (
-                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-yellow-400 border border-white" />
-                )}
-              </button>
-
-              {/* Tooltip */}
-              <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 opacity-0 group-hover/phase:opacity-100 transition-opacity pointer-events-none z-50">
-                <span className="whitespace-nowrap bg-slate-800 text-white text-[10px] px-2.5 py-1 rounded-md shadow-lg">
-                  {phase.hint}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+    <div className="flex flex-wrap items-center gap-1.5 py-2">
+      {PHASES.map((phase) => {
+        const isActive = active === phase.id;
+        return (
+          <button
+            key={phase.id}
+            onClick={() => handleClick(phase.id)}
+            className={cn(
+              "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 whitespace-nowrap",
+              isActive
+                ? "bg-yellow-400 text-slate-800 shadow-sm"
+                : "bg-white text-slate-500 border border-slate-200 hover:bg-yellow-50 hover:text-yellow-700 hover:border-yellow-300"
+            )}
+            title={phase.hint}
+          >
+            <span className="text-sm leading-none">{phase.icon}</span>
+            {phase.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

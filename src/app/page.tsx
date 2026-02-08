@@ -81,18 +81,17 @@ function PageContent(): React.ReactElement {
 
       {/* 2. Center Main Feed */}
       <main className="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
-        {/* Hero Header - smaller on mobile */}
-        <div className="px-4 md:px-6 pt-4 md:pt-6 pb-1 md:pb-2 z-20 flex flex-col items-center gap-1 md:gap-2">
+        {/* Hero Header - compact */}
+        <div className="px-4 md:px-6 pt-3 md:pt-4 pb-1 z-20 flex items-center justify-center gap-2">
           <Image
             src="/mascot.png"
             alt="マイプロンプト"
             width={200}
             height={200}
-            className="h-[50px] w-[50px] md:h-[73px] md:w-[73px] object-contain drop-shadow-md"
+            className="h-[36px] w-[36px] md:h-[44px] md:w-[44px] object-contain drop-shadow-md shrink-0"
           />
-          <p className="text-center text-xs md:text-sm font-bold text-slate-700 leading-relaxed tracking-wide">
-            バイブコーダーのための<br />
-            プロンプト簡単メモサイト
+          <p className="text-xs md:text-sm font-bold text-slate-700 tracking-wide">
+            バイブコーダーのためのプロンプト簡単メモサイト
           </p>
         </div>
 
@@ -110,22 +109,18 @@ function PageContent(): React.ReactElement {
           </div>
         </div>
 
-        {/* Phase Compass */}
+        {/* Phase Compass + Tag Filter + Import/Export */}
         <div className="px-4 md:px-6 pb-1 z-20">
-          <div className="max-w-4xl mx-auto overflow-x-auto">
-            <PhaseCompass currentPhase={currentPhase} onPhaseChange={setCurrentPhase} />
-          </div>
-        </div>
-
-        {/* Tag Filter + Import/Export */}
-        <div className="px-4 md:px-6 pb-1 z-20">
-          <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
-            <div className="flex-1 min-w-0 overflow-hidden">
-              <TagFilter />
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center gap-2">
+              <div className="flex-1 min-w-0">
+                <PhaseCompass currentPhase={currentPhase} onPhaseChange={setCurrentPhase} />
+              </div>
+              <div className="hidden md:block shrink-0">
+                <ImportExportMenu />
+              </div>
             </div>
-            <div className="hidden md:flex shrink-0">
-              <ImportExportMenu />
-            </div>
+            <TagFilter />
           </div>
         </div>
 
@@ -152,10 +147,11 @@ function PageContent(): React.ReactElement {
         {!bulkMode.isActive && (
           <button
             onClick={() => setBulkMode(prev => ({ ...prev, isActive: true }))}
-            className="fixed bottom-24 md:bottom-6 left-4 z-40 w-11 h-11 rounded-xl bg-white border border-slate-200 shadow-lg flex items-center justify-center text-slate-400 hover:text-yellow-600 hover:border-yellow-300 transition-all"
+            className="fixed bottom-24 md:bottom-6 left-4 z-40 flex items-center gap-1.5 px-3 h-10 rounded-xl bg-white border border-slate-200 shadow-md text-xs font-medium text-slate-500 hover:text-yellow-600 hover:border-yellow-300 transition-all"
             title="一括操作"
           >
             <CheckSquare className="w-4 h-4" />
+            <span className="hidden md:inline">選択</span>
           </button>
         )}
         <BulkActionBar bulkMode={bulkMode} setBulkMode={setBulkMode} />
