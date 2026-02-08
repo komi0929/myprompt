@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -16,7 +18,14 @@
 
   /* Accent: Yellow-400 */
   --accent: #facc15;
-  --accent-foreground: #422006; /* yellow-950 for contrast? or slate-900 */
+  --accent-foreground: #422006;
+}
+
+:root.dark {
+  --background: #0f172a; /* slate-900 */
+  --foreground: #e2e8f0; /* slate-200 */
+  --accent: #facc15;
+  --accent-foreground: #fefce8;
 }
 
 body {
@@ -26,6 +35,7 @@ body {
   letter-spacing: 0.025em; /* tracking-wide */
   line-height: 1.625; /* leading-relaxed */
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 /* Custom Utilities for Text Selection */

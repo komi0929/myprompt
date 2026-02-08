@@ -236,19 +236,50 @@ export function DetailPanel(): React.ReactElement {
               テンプレートとして使う
             </Button>
           ) : (
-            <Button
-              className="w-full"
-              variant="secondary"
-              size="lg"
-              onClick={() => {
-                copyToClipboard(prompt.content, "コピーしました ✨");
-                incrementUseCount(prompt.id);
-                addToCopyBuffer(prompt.id, prompt.title, prompt.content);
-              }}
-            >
-              <Copy className="w-4 h-4 mr-2" />
-              プロンプトをコピー
-            </Button>
+            <div className="flex gap-1">
+              <Button
+                className="flex-1"
+                variant="secondary"
+                size="lg"
+                onClick={() => {
+                  copyToClipboard(prompt.content, "コピーしました ✨");
+                  incrementUseCount(prompt.id);
+                  addToCopyBuffer(prompt.id, prompt.title, prompt.content);
+                }}
+              >
+                <Copy className="w-4 h-4 mr-2" />
+                コピー
+              </Button>
+              <div className="relative group/fmt">
+                <Button variant="ghost" size="lg" className="px-2" title="フォーマット選択">
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+                <div className="absolute bottom-full right-0 mb-1 hidden group-hover/fmt:block z-30">
+                  <div className="bg-white rounded-lg border border-slate-200 shadow-lg py-1 min-w-[140px]">
+                    <button
+                      className="w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-yellow-50 hover:text-yellow-700 transition-colors"
+                      onClick={() => {
+                        const md = `## ${prompt.title}\n\n${prompt.content}\n\nTags: ${prompt.tags.map(t => `#${t}`).join(" ")}`;
+                        copyToClipboard(md, "Markdown形式でコピー ✨");
+                        incrementUseCount(prompt.id);
+                      }}
+                    >
+                      📝 Markdown形式
+                    </button>
+                    <button
+                      className="w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-yellow-50 hover:text-yellow-700 transition-colors"
+                      onClick={() => {
+                        const xml = `<prompt>\n<title>${prompt.title}</title>\n<content>\n${prompt.content}\n</content>\n<tags>${prompt.tags.join(", ")}</tags>\n</prompt>`;
+                        copyToClipboard(xml, "XML形式でコピー ✨");
+                        incrementUseCount(prompt.id);
+                      }}
+                    >
+                      🏷️ XML形式
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
         </div>
 

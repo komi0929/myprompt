@@ -13,6 +13,7 @@ import type { AppNotification } from "@/lib/prompt-store";
 import type { Prompt } from "@/lib/mock-data";
 import { copyToClipboard } from "@/components/ui/Toast";
 import PromptChainPanel from "@/components/PromptChainPanel";
+import DarkModeToggle from "@/components/DarkModeToggle";
 
 export function Sidebar({ className }: { className?: string }): React.ReactElement {
   const { view, setView, notifications, unreadCount, markAllNotificationsRead, getRecentlyUsed, setSelectedPromptId, incrementUseCount } = usePromptStore();
@@ -85,6 +86,9 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
 
       {/* Bottom: User Info pushed to bottom */}
       <div className="mt-auto pt-6 px-1">
+        <div className="flex justify-end mb-2">
+          <DarkModeToggle />
+        </div>
         {isGuest ? (
           <button
             onClick={() => openLoginModal()}

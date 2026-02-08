@@ -76,6 +76,32 @@ export default function QuickCaptureBar(): React.ReactElement {
 
   const hasContent = value.trim().length > 0;
 
+  const handlePaste = useCallback(async (e: React.ClipboardEvent): Promise<void> => {
+    const pasted = e.clipboardData.getData("text");
+    if (pasted.length > 100) {
+      e.preventDefault();
+      if (!requireAuth("プロンプトのメモ")) return;
+      setSaving(true);
+      try {
+        const { cleaned, tags } = extractInlineTags(pasted);
+        const firstLine = cleaned.split("\n")[0];
+        const title = firstLine.length > 40 ? firstLine.slice(0, 40) + "…" : firstLine;
+        const phase = guessPhase(cleaned);
+        await addPrompt({
+          title,
+          content: cleaned,
+          tags,
+          phase,
+          visibility: "Private",
+          lineage: { isOriginal: true },
+        });
+        showToast(`ペーストから保存しました ✨ (${pasted.length}文字)`);
+      } finally {
+        setSaving(false);
+      }
+    }
+  }, [requireAuth, addPrompt]);
+
   return (
     <div
       className={cn(
@@ -94,7 +120,7 @@ export default function QuickCaptureBar(): React.ReactElement {
         <Zap className={cn(
           "w-4 h-4 shrink-0 transition-colors",
           isFocused ? "text-yellow-500" : "text-slate-300"
-        )} />
+         )} />
 
         <input
           ref={inputRef}
@@ -104,6 +130,7 @@ export default function QuickCaptureBar(): React.ReactElement {
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           placeholder="プロンプトをサッとメモ… Enterで保存  #タグ も使えます"
           disabled={saving}
           className="flex-1 text-sm text-slate-700 placeholder:text-slate-400 bg-transparent outline-none disabled:opacity-50"
