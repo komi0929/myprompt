@@ -2,11 +2,12 @@
 
 import { Button } from "@/components/ui/Button";
 import { usePromptStore, type HistoryEntry } from "@/lib/prompt-store";
-import { X, Clock, Loader2 } from "lucide-react";
+import { X, Clock, Loader2, RotateCcw } from "lucide-react";
 import { useState, useEffect } from "react";
+import { showToast } from "@/components/ui/Toast";
 
 export default function HistoryModal({ promptId, onClose }: { promptId: string; onClose: () => void }): React.ReactElement {
-  const { getHistory } = usePromptStore();
+  const { getHistory, updatePrompt, prompts } = usePromptStore();
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -96,7 +97,31 @@ export default function HistoryModal({ promptId, onClose }: { promptId: string; 
         )}
 
         {/* Footer */}
-        <div className="p-5 border-t border-slate-100 flex justify-end">
+        <div className="p-5 border-t border-slate-100 flex justify-between">
+          {selectedEntry ? (
+            <Button
+              variant="default"
+              onClick={async () => {
+                const current = prompts.find(p => p.id === promptId);
+                if (!current || !selectedEntry) return;
+                await updatePrompt(promptId, {
+                  title: selectedEntry.title,
+                  content: selectedEntry.content,
+                  tags: current.tags,
+                  phase: current.phase,
+                  visibility: current.visibility,
+                });
+                showToast("この版に復元しました ✨");
+                onClose();
+              }}
+              className="flex items-center gap-1.5"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              この版に復元
+            </Button>
+          ) : (
+            <div />
+          )}
           <Button variant="secondary" onClick={onClose}>
             閉じる
           </Button>

@@ -17,6 +17,7 @@ import WelcomeOverlay from "@/components/WelcomeOverlay";
 import FloatingCreateButton from "@/components/FloatingCreateButton";
 import BottomNav from "@/components/BottomNav";
 import TagFilter from "@/components/TagFilter";
+import ImportExportMenu from "@/components/ImportExportMenu";
 import { useAuth } from "@/components/AuthProvider";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useKeyboardShortcuts } from "@/lib/useKeyboardShortcuts";
@@ -110,10 +111,15 @@ function PageContent(): React.ReactElement {
           </div>
         </div>
 
-        {/* Tag Filter */}
+        {/* Tag Filter + Import/Export */}
         <div className="px-4 md:px-6 pb-1 z-20">
-          <div className="max-w-4xl mx-auto">
-            <TagFilter />
+          <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <TagFilter />
+            </div>
+            <div className="hidden md:flex shrink-0">
+              <ImportExportMenu />
+            </div>
           </div>
         </div>
 
