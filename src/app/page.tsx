@@ -19,6 +19,8 @@ import BottomNav from "@/components/BottomNav";
 import TagFilter from "@/components/TagFilter";
 import ImportExportMenu from "@/components/ImportExportMenu";
 import QuickCaptureBar from "@/components/QuickCaptureBar";
+import StatsBar from "@/components/StatsBar";
+import CopyBuffer from "@/components/CopyBuffer";
 import { useAuth } from "@/components/AuthProvider";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useKeyboardShortcuts } from "@/lib/useKeyboardShortcuts";
@@ -36,6 +38,7 @@ export default function Page(): React.ReactElement {
           <PromptModal />
           <LoginModal />
           <CommandPalette />
+          <CopyBuffer />
           <ToastContainer />
         </PromptStoreProvider>
       </AuthGuardProvider>
@@ -127,6 +130,7 @@ function PageContent(): React.ReactElement {
         {/* Scrollable Feed */}
         <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-20 md:pb-10 scroll-smooth">
           <div className="max-w-4xl mx-auto py-3">
+            <StatsBar />
 
             {filteredPrompts.length > 0 ? (
               <PromptFeed />

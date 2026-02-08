@@ -6,7 +6,7 @@ import { PHASES } from "@/lib/mock-data";
 import { usePromptStore } from "@/lib/prompt-store";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { copyToClipboard } from "@/components/ui/Toast";
-import { ArrowRight, Copy, GitBranch, History, Share2, Sparkles, Edit3, Pencil, Heart, Bookmark, Zap, StickyNote, ChevronDown, ChevronUp, Lightbulb } from "lucide-react";
+import { ArrowRight, Copy, GitBranch, History, Share2, Sparkles, Edit3, Pencil, Heart, Bookmark, Zap, StickyNote, ChevronDown, ChevronUp, Lightbulb, ThumbsUp, ThumbsDown, Minus } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import HistoryModal from "@/components/HistoryModal";
@@ -14,6 +14,7 @@ import TemplateModal from "@/components/TemplateModal";
 import { showToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/AuthProvider";
 import { hasVariables } from "@/lib/template-utils";
+import { addToCopyBuffer } from "@/components/CopyBuffer";
 
 export function DetailPanel(): React.ReactElement {
   const { selectedPromptId, prompts, openEditor, duplicateAsArrangement, toggleFavorite, isFavorited, toggleLike, isLiked, incrementUseCount, updatePrompt, setSelectedPromptId } = usePromptStore();
@@ -242,6 +243,7 @@ export function DetailPanel(): React.ReactElement {
               onClick={() => {
                 copyToClipboard(prompt.content, "コピーしました ✨");
                 incrementUseCount(prompt.id);
+                addToCopyBuffer(prompt.id, prompt.title, prompt.content);
               }}
             >
               <Copy className="w-4 h-4 mr-2" />
@@ -249,6 +251,37 @@ export function DetailPanel(): React.ReactElement {
             </Button>
           )}
         </div>
+
+        {/* Rating Marker */}
+        {isOwner && (
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-slate-400 mr-1">評価:</span>
+            {(["good", "neutral", "bad"] as const).map(r => {
+              const icons = { good: ThumbsUp, neutral: Minus, bad: ThumbsDown };
+              const labels = { good: "成功", neutral: "普通", bad: "失敗" };
+              const colors = {
+                good: prompt.rating === r ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "text-slate-400 hover:bg-emerald-50 hover:text-emerald-600",
+                neutral: prompt.rating === r ? "bg-amber-100 text-amber-700 border-amber-200" : "text-slate-400 hover:bg-amber-50 hover:text-amber-600",
+                bad: prompt.rating === r ? "bg-red-100 text-red-700 border-red-200" : "text-slate-400 hover:bg-red-50 hover:text-red-600",
+              };
+              const Icon = icons[r];
+              return (
+                <button
+                  key={r}
+                  onClick={() => updatePrompt(prompt.id, { rating: prompt.rating === r ? undefined : r })}
+                  className={cn(
+                    "flex items-center gap-1 px-2 py-1 rounded-md border border-transparent text-[10px] font-medium transition-all",
+                    colors[r]
+                  )}
+                  title={labels[r]}
+                >
+                  <Icon className="w-3 h-3" />
+                  {labels[r]}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Actions */}
         <div className="space-y-3 pt-1">

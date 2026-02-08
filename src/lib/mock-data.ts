@@ -17,6 +17,7 @@ export interface Prompt {
   folderId?: string;
   lastUsedAt?: string;
   notes?: string;
+  rating?: "good" | "neutral" | "bad";
   lineage: {
     parent?: string;
     children?: string[];
