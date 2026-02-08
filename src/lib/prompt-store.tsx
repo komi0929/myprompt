@@ -79,6 +79,7 @@ interface PromptStoreActions {
   deleteFolder: (id: string) => void;
   setSelectedFolderId: (id: string | null) => void;
   moveToFolder: (promptId: string, folderId: string | null) => void;
+  getRecentlyUsed: () => Prompt[];
 }
 
 type PromptStore = PromptStoreState & PromptStoreActions;
@@ -105,6 +106,7 @@ interface DbPrompt {
   use_count?: number;
   is_pinned?: boolean;
   folder_id?: string | null;
+  last_used_at?: string | null;
   created_at: string;
   updated_at: string;
   profiles?: { display_name: string | null; avatar_url: string | null } | null;
@@ -123,6 +125,7 @@ function dbToPrompt(row: DbPrompt): Prompt {
     useCount: row.use_count ?? 0,
     isPinned: row.is_pinned ?? false,
     folderId: row.folder_id ?? undefined,
+    lastUsedAt: row.last_used_at ?? undefined,
     authorId: row.user_id,
     authorName: row.profiles?.display_name ?? undefined,
     authorAvatarUrl: row.profiles?.avatar_url ?? undefined,
@@ -364,12 +367,14 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
 
   /* ─── Use Count ─── */
   const incrementUseCount = useCallback((id: string): void => {
+    const now = new Date().toISOString();
     setPrompts(prev => prev.map(p => {
       if (p.id !== id) return p;
-      return { ...p, useCount: (p.useCount ?? 0) + 1 };
+      return { ...p, useCount: (p.useCount ?? 0) + 1, lastUsedAt: now };
     }));
     if (user) {
       supabase.rpc("increment_use_count", { prompt_id: id }).then();
+      supabase.from("prompts").update({ last_used_at: now }).eq("id", id).then();
     }
   }, [user]);
 
@@ -551,6 +556,13 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     }
   }, [user]);
 
+  const getRecentlyUsed = useCallback((): Prompt[] => {
+    return prompts
+      .filter(p => p.lastUsedAt && p.authorId === currentUserId)
+      .sort((a, b) => new Date(b.lastUsedAt!).getTime() - new Date(a.lastUsedAt!).getTime())
+      .slice(0, 5);
+  }, [prompts, currentUserId]);
+
   const store = useMemo<PromptStore>(() => ({
     prompts, favorites, likes, history, notifications, unreadCount, view, visibilityFilter, searchQuery,
     selectedPromptId, currentPhase, editingPrompt, sortOrder, folders, selectedFolderId,
@@ -559,14 +571,14 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     setView, setVisibilityFilter, setSearchQuery, setSortOrder,
     setSelectedPromptId, setCurrentPhase, openEditor, closeEditor,
     getHistory, getFilteredPrompts, refreshPrompts, markAllNotificationsRead,
-    addFolder, deleteFolder, setSelectedFolderId, moveToFolder,
+    addFolder, deleteFolder, setSelectedFolderId, moveToFolder, getRecentlyUsed,
   }), [
     prompts, favorites, likes, history, notifications, unreadCount, view, visibilityFilter, searchQuery,
     selectedPromptId, currentPhase, editingPrompt, sortOrder, folders, selectedFolderId,
     addPrompt, updatePrompt, deletePrompt, duplicateAsArrangement,
     toggleFavorite, toggleLike, isFavorited, isLiked, incrementUseCount, togglePin,
     openEditor, closeEditor, getHistory, getFilteredPrompts, refreshPrompts, markAllNotificationsRead, setSortOrder,
-    addFolder, deleteFolder, moveToFolder,
+    addFolder, deleteFolder, moveToFolder, getRecentlyUsed,
   ]);
 
   return (

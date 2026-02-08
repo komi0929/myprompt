@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
-import { Home, Flame, User, Bell } from "lucide-react";
+import { Home, Flame, User, Bell, Copy, Clock } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePromptStore } from "@/lib/prompt-store";
@@ -10,9 +10,11 @@ import { useAuth } from "@/components/AuthProvider";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useState } from "react";
 import type { AppNotification } from "@/lib/prompt-store";
+import type { Prompt } from "@/lib/mock-data";
+import { copyToClipboard } from "@/components/ui/Toast";
 
 export function Sidebar({ className }: { className?: string }): React.ReactElement {
-  const { view, setView, notifications, unreadCount, markAllNotificationsRead } = usePromptStore();
+  const { view, setView, notifications, unreadCount, markAllNotificationsRead, getRecentlyUsed, setSelectedPromptId, incrementUseCount } = usePromptStore();
   const { isGuest, displayName, avatarUrl } = useAuth();
   const { openLoginModal } = useAuthGuard();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -67,6 +69,13 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
         <NavButton icon={Home} label="ライブラリ" hint="自分のメモとお気に入り" active={view === "library"} onClick={() => setView("library")} />
         <NavButton icon={Flame} label="みんなのプロンプト" hint="公開されたプロンプト" active={view === "trend"} onClick={() => setView("trend")} />
       </div>
+
+      {/* Recently Used */}
+      <RecentlyUsedSection
+        getRecentlyUsed={getRecentlyUsed}
+        onSelect={setSelectedPromptId}
+        onCopy={incrementUseCount}
+      />
 
       {/* Bottom: User Info pushed to bottom */}
       <div className="mt-auto pt-6 px-1">
@@ -203,5 +212,53 @@ function NavButton({
         <span className="text-[10px] text-slate-400 font-normal pl-[28px] -mt-1">{hint}</span>
       )}
     </Button>
+  );
+}
+
+/* ─── Recently Used Section ─── */
+function RecentlyUsedSection({
+  getRecentlyUsed,
+  onSelect,
+  onCopy,
+}: {
+  getRecentlyUsed: () => Prompt[];
+  onSelect: (id: string) => void;
+  onCopy: (id: string) => void;
+}): React.ReactElement {
+  const recent = getRecentlyUsed();
+  if (recent.length === 0) return <></>;
+
+  return (
+    <div className="mt-4 px-1">
+      <div className="flex items-center gap-1.5 mb-2">
+        <Clock className="w-3 h-3 text-slate-400" />
+        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">最近使った</span>
+      </div>
+      <div className="space-y-0.5">
+        {recent.map(p => (
+          <div
+            key={p.id}
+            className="group flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+            onClick={() => onSelect(p.id)}
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-slate-600 truncate">{p.title}</p>
+              <p className="text-[10px] text-slate-400 truncate">{p.content.slice(0, 30)}</p>
+            </div>
+            <button
+              onClick={e => {
+                e.stopPropagation();
+                copyToClipboard(p.content, "コピーしました ✨");
+                onCopy(p.id);
+              }}
+              className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-yellow-50 text-slate-400 hover:text-yellow-600 transition-all"
+              title="コピー"
+            >
+              <Copy className="w-3 h-3" />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

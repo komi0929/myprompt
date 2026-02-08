@@ -18,6 +18,7 @@ import FloatingCreateButton from "@/components/FloatingCreateButton";
 import BottomNav from "@/components/BottomNav";
 import TagFilter from "@/components/TagFilter";
 import ImportExportMenu from "@/components/ImportExportMenu";
+import QuickCaptureBar from "@/components/QuickCaptureBar";
 import { useAuth } from "@/components/AuthProvider";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useKeyboardShortcuts } from "@/lib/useKeyboardShortcuts";
@@ -134,6 +135,11 @@ function PageContent(): React.ReactElement {
             )}
           </div>
           <Footer />
+        </div>
+
+        {/* Quick Capture Bar - sticky bottom */}
+        <div className="sticky bottom-0 z-30 px-4 md:px-6 pb-20 md:pb-4 pt-2 bg-linear-to-t from-slate-50 via-slate-50/95 to-transparent">
+          <QuickCaptureBar />
         </div>
       </main>
 
