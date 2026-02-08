@@ -20,6 +20,7 @@ export default function PromptModal(): React.ReactElement | null {
   const [tags, setTags] = useState<string[]>([]);
   const [phase, setPhase] = useState<PromptPhase>("Implementation");
   const [visibility, setVisibility] = useState<"Private" | "Public">("Private");
+  const [notes, setNotes] = useState("");
   const [hasDraft, setHasDraft] = useState(false);
 
   const isNew = editingPrompt?.id === "";
@@ -33,13 +34,14 @@ export default function PromptModal(): React.ReactElement | null {
     const savedDraft = typeof window !== "undefined" ? localStorage.getItem(draftKey) : null;
     if (savedDraft && editingPrompt.id === "") {
       try {
-        const draft = JSON.parse(savedDraft) as { title: string; content: string; tags: string[]; phase: PromptPhase; visibility: "Private" | "Public" };
+        const draft = JSON.parse(savedDraft) as { title: string; content: string; tags: string[]; phase: PromptPhase; visibility: "Private" | "Public"; notes?: string };
         if (draft.title || draft.content) {
           setTitle(draft.title);
           setContent(draft.content);
           setTags(draft.tags ?? []);
           setPhase(draft.phase ?? "Implementation");
           setVisibility(draft.visibility ?? "Private");
+          setNotes(draft.notes ?? "");
           setHasDraft(true);
         } else {
           setTitle(editingPrompt.title);
@@ -61,6 +63,7 @@ export default function PromptModal(): React.ReactElement | null {
       setTags(editingPrompt.tags);
       setPhase(editingPrompt.phase);
       setVisibility(editingPrompt.visibility);
+      setNotes(editingPrompt.notes ?? "");
       setHasDraft(false);
     }
   }
@@ -71,7 +74,7 @@ export default function PromptModal(): React.ReactElement | null {
   const draftKey = `myprompt-draft-${editingPrompt.id || "new"}`;
   const saveDraft = (): void => {
     if (typeof window !== "undefined" && (title || content)) {
-      localStorage.setItem(draftKey, JSON.stringify({ title, content, tags, phase, visibility }));
+      localStorage.setItem(draftKey, JSON.stringify({ title, content, tags, phase, visibility, notes }));
     }
   };
   const clearDraft = (): void => {
@@ -111,6 +114,7 @@ export default function PromptModal(): React.ReactElement | null {
         phase,
         visibility,
         lineage: editingPrompt.lineage,
+        notes: notes.trim() || undefined,
       });
       showToast("プロンプトを保存しました");
     } else {
@@ -120,6 +124,7 @@ export default function PromptModal(): React.ReactElement | null {
         tags,
         phase,
         visibility,
+        notes: notes.trim() || undefined,
       });
       showToast("プロンプトを更新しました");
     }
@@ -130,12 +135,12 @@ export default function PromptModal(): React.ReactElement | null {
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={closeEditor}>
       <div
-        className="w-full max-w-2xl max-h-[90vh] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+        className="w-full max-w-2xl max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+          <h2 className="text-lg font-semibold text-slate-800">
             {isNew ? "新しいプロンプトをメモ" : "プロンプトを編集"}
           </h2>
           <button onClick={closeEditor} className="p-1.5 hover:bg-slate-100 rounded-md transition-colors">
@@ -174,6 +179,18 @@ export default function PromptModal(): React.ReactElement | null {
               placeholder={"プロンプトの内容を入力\n\n変数には {変数名} を使えます"}
               rows={8}
               className="w-full px-4 py-3 rounded-lg border border-slate-200 text-slate-700 text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-400 transition-all font-mono leading-relaxed resize-none"
+            />
+          </div>
+
+          {/* 補足情報 */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">💡 補足情報（任意）</label>
+            <textarea
+              value={notes}
+              onChange={e => { setNotes(e.target.value); saveDraft(); }}
+              placeholder="使い方のコツ、効果的だった場面、注意点など"
+              rows={3}
+              className="w-full px-4 py-3 rounded-lg border border-slate-200 text-slate-700 text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-400 transition-all resize-none"
             />
           </div>
 

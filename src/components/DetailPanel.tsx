@@ -6,7 +6,7 @@ import { PHASES } from "@/lib/mock-data";
 import { usePromptStore } from "@/lib/prompt-store";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { copyToClipboard } from "@/components/ui/Toast";
-import { ArrowRight, Copy, GitBranch, History, Share2, Sparkles, Edit3, Pencil, Heart, Bookmark, Zap, StickyNote, ChevronDown, ChevronUp, Lightbulb, ThumbsUp, ThumbsDown, Minus } from "lucide-react";
+import { ArrowRight, Copy, GitBranch, History, Share2, Sparkles, Edit3, Pencil, Heart, Bookmark, Zap, ChevronDown, Lightbulb, ThumbsUp, ThumbsDown, Minus } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import HistoryModal from "@/components/HistoryModal";
@@ -23,13 +23,10 @@ export function DetailPanel(): React.ReactElement {
   const prompt = prompts.find(p => p.id === selectedPromptId) ?? null;
   const [historyOpen, setHistoryOpen] = useState(false);
   const [templateOpen, setTemplateOpen] = useState(false);
-  const [notesOpen, setNotesOpen] = useState(false);
-  const [notesValue, setNotesValue] = useState("");
-  const [notesSynced, setNotesSynced] = useState(true);
 
    if (!prompt) {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center text-slate-400 bg-slate-50/50 dark:bg-slate-800/50">
+      <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center text-slate-400 bg-slate-50/50">
         <Sparkles className="h-10 w-10 mb-3 text-slate-200" />
         <p className="font-semibold text-sm">プロンプトを選んで</p>
         <p className="font-semibold text-sm">詳細を確認しましょう ✨</p>
@@ -77,7 +74,7 @@ export function DetailPanel(): React.ReactElement {
   };
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto bg-white dark:bg-slate-800 border-l border-slate-200/80 dark:border-slate-700 shadow-lg shadow-slate-200/30 z-20 w-full max-w-[480px]">
+    <div className="flex h-full flex-col overflow-y-auto bg-white border-l border-slate-200/80 shadow-lg shadow-slate-200/30 z-20 w-full max-w-[480px]">
       
       {/* Lineage Bar */}
       <div className="bg-slate-50 border-b border-slate-200/80 p-4">
@@ -283,6 +280,18 @@ export function DetailPanel(): React.ReactElement {
           )}
         </div>
 
+        {/* 💡 補足情報 */}
+        {prompt.notes && (
+          <div className="pt-3 border-t border-slate-100">
+            <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+              <Lightbulb className="w-3.5 h-3.5" /> 補足
+            </h4>
+            <div className="bg-amber-50 rounded-lg p-4 text-sm text-slate-600 leading-relaxed border border-amber-100 whitespace-pre-wrap">
+              {prompt.notes}
+            </div>
+          </div>
+        )}
+
         {/* Rating Marker */}
         {isOwner && (
           <div className="flex items-center gap-1">
@@ -331,44 +340,6 @@ export function DetailPanel(): React.ReactElement {
           </div>
         </div>
 
-        {/* Notes */}
-        {isOwner && (
-          <div className="pt-3 border-t border-slate-100">
-            <button
-              onClick={() => {
-                if (!notesOpen) setNotesValue(prompt.notes ?? "");
-                setNotesOpen(prev => !prev);
-              }}
-              className="flex items-center justify-between w-full text-xs font-semibold text-slate-400 uppercase tracking-wider hover:text-slate-600 transition-colors"
-            >
-              <span className="flex items-center gap-1.5">
-                <StickyNote className="w-3.5 h-3.5" />
-                メモ・ノート {prompt.notes ? "📝" : ""}
-              </span>
-              {notesOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            </button>
-            {notesOpen && (
-              <div className="mt-2 space-y-2">
-                <textarea
-                  value={notesValue}
-                  onChange={e => { setNotesValue(e.target.value); setNotesSynced(false); }}
-                  onBlur={() => {
-                    if (!notesSynced) {
-                      updatePrompt(prompt.id, { notes: notesValue || undefined });
-                      setNotesSynced(true);
-                    }
-                  }}
-                  placeholder="このプロンプトについてのメモ...（なぜ有効だったか、使い方のコツ等）"
-                  rows={3}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 focus:border-yellow-300 transition-all resize-none"
-                />
-                {!notesSynced && (
-                  <p className="text-[10px] text-slate-400">フォーカスを外すと自動保存</p>
-                )}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Related prompts */}
         <RelatedSuggestions currentPrompt={prompt} allPrompts={prompts} onSelect={setSelectedPromptId} />

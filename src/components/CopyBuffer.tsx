@@ -55,9 +55,9 @@ export default function CopyBuffer(): React.ReactElement {
 
   return (
     <div className="fixed bottom-24 md:bottom-6 right-4 z-50 w-64 animate-in slide-in-from-right duration-300">
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700">
+        <div className="flex items-center justify-between p-3 bg-slate-50 border-b border-slate-100">
           <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1">
             <Copy className="w-3 h-3" />
             コピー履歴 ({items.length})
