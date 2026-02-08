@@ -432,14 +432,22 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       result = result.filter(p => p.visibility === visibilityFilter);
     }
 
-    // Search filter
+    // Search filter (supports #tag syntax)
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(p =>
-        p.title.toLowerCase().includes(q) ||
-        p.content.toLowerCase().includes(q) ||
-        p.tags.some(t => t.toLowerCase().includes(q))
-      );
+      const q = searchQuery.trim();
+      if (q.startsWith("#")) {
+        const tagName = q.slice(1).toLowerCase();
+        result = result.filter(p =>
+          p.tags.some(t => t.toLowerCase() === tagName)
+        );
+      } else {
+        const lower = q.toLowerCase();
+        result = result.filter(p =>
+          p.title.toLowerCase().includes(lower) ||
+          p.content.toLowerCase().includes(lower) ||
+          p.tags.some(t => t.toLowerCase().includes(lower))
+        );
+      }
     }
 
     // Sort

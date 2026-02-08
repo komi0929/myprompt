@@ -9,6 +9,7 @@ import { PHASES, type Phase } from "@/lib/mock-data";
 type PromptPhase = Exclude<Phase, "All">;
 import { X, Save } from "lucide-react";
 import { showToast } from "@/components/ui/Toast";
+import TagAutocomplete from "@/components/TagAutocomplete";
 
 export default function PromptModal(): React.ReactElement | null {
   const { editingPrompt, closeEditor, addPrompt, updatePrompt } = usePromptStore();
@@ -35,8 +36,8 @@ export default function PromptModal(): React.ReactElement | null {
 
   if (!editingPrompt) return null;
 
-  const handleAddTag = (): void => {
-    const t = tagInput.trim();
+  const handleAddTag = (tagValue?: string): void => {
+    const t = (tagValue ?? tagInput).trim();
     if (t && !tags.includes(t)) {
       setTags(prev => [...prev, t]);
       setTagInput("");
@@ -138,15 +139,15 @@ export default function PromptModal(): React.ReactElement | null {
               ))}
             </div>
             <div className="flex gap-2">
-              <input
-                type="text"
+              <TagAutocomplete
                 value={tagInput}
-                onChange={e => setTagInput(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleAddTag(); } }}
+                onChange={setTagInput}
+                onAddTag={handleAddTag}
+                existingTags={tags}
                 placeholder="タグを入力して Enter"
-                className="flex-1 h-9 px-3 rounded-lg border border-slate-200 text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-400 transition-all"
+                className="flex-1"
               />
-              <Button size="sm" variant="secondary" onClick={handleAddTag}>
+              <Button size="sm" variant="secondary" onClick={() => handleAddTag(tagInput)}>
                 追加
               </Button>
             </div>

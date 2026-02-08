@@ -16,6 +16,7 @@ import Image from "next/image";
 import WelcomeOverlay from "@/components/WelcomeOverlay";
 import FloatingCreateButton from "@/components/FloatingCreateButton";
 import BottomNav from "@/components/BottomNav";
+import TagFilter from "@/components/TagFilter";
 import { useAuth } from "@/components/AuthProvider";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useKeyboardShortcuts } from "@/lib/useKeyboardShortcuts";
@@ -103,6 +104,13 @@ function PageContent(): React.ReactElement {
         <div className="px-4 md:px-6 pb-1 z-20">
           <div className="max-w-4xl mx-auto overflow-x-auto">
             <PhaseCompass currentPhase={currentPhase} onPhaseChange={setCurrentPhase} />
+          </div>
+        </div>
+
+        {/* Tag Filter */}
+        <div className="px-4 md:px-6 pb-1 z-20">
+          <div className="max-w-4xl mx-auto">
+            <TagFilter />
           </div>
         </div>
 
