@@ -10,6 +10,7 @@ export interface Prompt {
   updatedAt: string;
   likeCount: number;
   useCount?: number;
+  isPinned?: boolean;
   authorId?: string;
   authorName?: string;
   authorAvatarUrl?: string;

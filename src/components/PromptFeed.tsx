@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
-import { Copy, GitBranch, Trash2, Pencil, Heart, Bookmark, ArrowUpDown } from "lucide-react";
+import { Copy, GitBranch, Trash2, Pencil, Heart, Bookmark, ArrowUpDown, Pin } from "lucide-react";
 import { usePromptStore, SORT_OPTIONS } from "@/lib/prompt-store";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { copyToClipboard, showToast } from "@/components/ui/Toast";
@@ -42,7 +42,7 @@ export function PromptFeed(): React.ReactElement {
 }
 
 function PromptCard({ prompt, isFavoritedByMe }: { prompt: Prompt; isFavoritedByMe: boolean }): React.ReactElement {
-  const { setSelectedPromptId, selectedPromptId, deletePrompt, toggleFavorite, toggleLike, isLiked, openEditor, incrementUseCount } = usePromptStore();
+  const { setSelectedPromptId, selectedPromptId, deletePrompt, toggleFavorite, toggleLike, isLiked, openEditor, incrementUseCount, togglePin } = usePromptStore();
   const { requireAuth } = useAuthGuard();
   const { user } = useAuth();
   const isSelected = selectedPromptId === prompt.id;
@@ -89,6 +89,21 @@ function PromptCard({ prompt, isFavoritedByMe }: { prompt: Prompt; isFavoritedBy
 
       {/* Always-visible action bar */}
       <div className="absolute top-3 right-3 flex items-center gap-1 z-10">
+        <button
+          className={cn(
+            "p-1.5 rounded-md transition-all",
+            prompt.isPinned
+              ? "text-amber-500 bg-amber-50"
+              : "text-slate-300 hover:text-amber-500 hover:bg-amber-50"
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            togglePin(prompt.id);
+          }}
+          title={prompt.isPinned ? "ピン解除" : "ピン留め"}
+        >
+          <Pin className={cn("w-3.5 h-3.5", prompt.isPinned && "fill-amber-400")} />
+        </button>
         <button
           className={cn(
             "p-1.5 rounded-md transition-all",

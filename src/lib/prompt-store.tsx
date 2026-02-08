@@ -60,6 +60,7 @@ interface PromptStoreActions {
   isFavorited: (id: string) => boolean;
   isLiked: (id: string) => boolean;
   incrementUseCount: (id: string) => void;
+  togglePin: (id: string) => void;
   setSortOrder: (order: SortOrder) => void;
   setView: (view: PromptStoreState["view"]) => void;
   setVisibilityFilter: (f: PromptStoreState["visibilityFilter"]) => void;
@@ -96,6 +97,7 @@ interface DbPrompt {
   parent_id: string | null;
   like_count?: number;
   use_count?: number;
+  is_pinned?: boolean;
   created_at: string;
   updated_at: string;
   profiles?: { display_name: string | null; avatar_url: string | null } | null;
@@ -112,6 +114,7 @@ function dbToPrompt(row: DbPrompt): Prompt {
     updatedAt: row.updated_at,
     likeCount: row.like_count ?? 0,
     useCount: row.use_count ?? 0,
+    isPinned: row.is_pinned ?? false,
     authorId: row.user_id,
     authorName: row.profiles?.display_name ?? undefined,
     authorAvatarUrl: row.profiles?.avatar_url ?? undefined,
@@ -456,14 +459,37 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         break;
     }
 
-    return result;
+    // Pin-first: pinned prompts always appear at top
+    const pinned = result.filter(p => p.isPinned);
+    const unpinned = result.filter(p => !p.isPinned);
+    return [...pinned, ...unpinned];
   }, [prompts, view, currentPhase, visibilityFilter, searchQuery, favorites, currentUserId, sortOrder]);
+
+  /* ─── Toggle Pin ─── */
+  const togglePin = useCallback((id: string): void => {
+    setPrompts(prev => {
+      const pinnedCount = prev.filter(p => p.isPinned).length;
+      return prev.map(p => {
+        if (p.id !== id) return p;
+        const newPinned = !p.isPinned;
+        // Max 5 pinned
+        if (newPinned && pinnedCount >= 5) return p;
+        return { ...p, isPinned: newPinned };
+      });
+    });
+    if (user) {
+      const prompt = prompts.find(p => p.id === id);
+      if (prompt) {
+        supabase.from("prompts").update({ is_pinned: !prompt.isPinned }).eq("id", id).then();
+      }
+    }
+  }, [user, prompts]);
 
   const store = useMemo<PromptStore>(() => ({
     prompts, favorites, likes, history, notifications, unreadCount, view, visibilityFilter, searchQuery,
     selectedPromptId, currentPhase, editingPrompt, sortOrder,
     addPrompt, updatePrompt, deletePrompt, duplicateAsArrangement,
-    toggleFavorite, toggleLike, isFavorited, isLiked, incrementUseCount,
+    toggleFavorite, toggleLike, isFavorited, isLiked, incrementUseCount, togglePin,
     setView, setVisibilityFilter, setSearchQuery, setSortOrder,
     setSelectedPromptId, setCurrentPhase, openEditor, closeEditor,
     getHistory, getFilteredPrompts, refreshPrompts, markAllNotificationsRead,
@@ -471,7 +497,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     prompts, favorites, likes, history, notifications, unreadCount, view, visibilityFilter, searchQuery,
     selectedPromptId, currentPhase, editingPrompt, sortOrder,
     addPrompt, updatePrompt, deletePrompt, duplicateAsArrangement,
-    toggleFavorite, toggleLike, isFavorited, isLiked, incrementUseCount,
+    toggleFavorite, toggleLike, isFavorited, isLiked, incrementUseCount, togglePin,
     openEditor, closeEditor, getHistory, getFilteredPrompts, refreshPrompts, markAllNotificationsRead, setSortOrder,
   ]);
 

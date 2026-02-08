@@ -18,6 +18,7 @@ import FloatingCreateButton from "@/components/FloatingCreateButton";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/components/AuthProvider";
 import { useAuthGuard } from "@/lib/useAuthGuard";
+import { useKeyboardShortcuts } from "@/lib/useKeyboardShortcuts";
 import { Search, Plus, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 
@@ -40,6 +41,7 @@ function PageContent(): React.ReactElement {
   const { currentPhase, setCurrentPhase, getFilteredPrompts, searchQuery, setSearchQuery, openEditor, selectedPromptId } = usePromptStore();
   const { isGuest } = useAuth();
   const { requireAuth } = useAuthGuard();
+  useKeyboardShortcuts();
   const filteredPrompts = getFilteredPrompts();
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [lastMobileSelectedId, setLastMobileSelectedId] = useState<string | null>(null);
