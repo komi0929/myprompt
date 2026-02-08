@@ -29,7 +29,7 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
   return (
     <div
       className={cn(
-        "flex h-full w-[240px] flex-col border-r border-slate-200/80 bg-white p-5",
+        "flex h-full w-[240px] flex-col border-r border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 p-5",
         className
       )}
     >

@@ -29,7 +29,7 @@ export function DetailPanel(): React.ReactElement {
 
    if (!prompt) {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center text-slate-400 bg-slate-50/50">
+      <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center text-slate-400 bg-slate-50/50 dark:bg-slate-800/50">
         <Sparkles className="h-10 w-10 mb-3 text-slate-200" />
         <p className="font-semibold text-sm">プロンプトを選んで</p>
         <p className="font-semibold text-sm">詳細を確認しましょう ✨</p>
@@ -77,7 +77,7 @@ export function DetailPanel(): React.ReactElement {
   };
 
   return (
-    <div className="flex h-full flex-col bg-white border-l border-slate-200/80 shadow-lg shadow-slate-200/30 z-20 w-full max-w-[480px]">
+    <div className="flex h-full flex-col overflow-y-auto bg-white dark:bg-slate-800 border-l border-slate-200/80 dark:border-slate-700 shadow-lg shadow-slate-200/30 z-20 w-full max-w-[480px]">
       
       {/* Lineage Bar */}
       <div className="bg-slate-50 border-b border-slate-200/80 p-4">

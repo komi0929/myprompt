@@ -111,10 +111,10 @@ export default function QuickCaptureBar(): React.ReactElement {
     >
       <div
         className={cn(
-          "flex items-center gap-2 rounded-xl border bg-white px-3 py-2 shadow-sm transition-all duration-200",
+          "flex items-center gap-2 rounded-xl border bg-white dark:bg-slate-800 px-3 py-2 shadow-sm transition-all duration-200",
           isFocused
             ? "border-yellow-300 shadow-md shadow-yellow-100/50 ring-2 ring-yellow-400/20"
-            : "border-slate-200 hover:border-slate-300 hover:shadow"
+            : "border-slate-200 dark:border-slate-700 hover:border-slate-300 hover:shadow"
         )}
       >
         <Zap className={cn(
@@ -133,7 +133,7 @@ export default function QuickCaptureBar(): React.ReactElement {
           onPaste={handlePaste}
           placeholder="プロンプトをサッとメモ… Enterで保存  #タグ も使えます"
           disabled={saving}
-          className="flex-1 text-sm text-slate-700 placeholder:text-slate-400 bg-transparent outline-none disabled:opacity-50"
+          className="flex-1 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 bg-transparent outline-none disabled:opacity-50"
         />
 
         {hasContent && (

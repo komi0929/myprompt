@@ -130,12 +130,12 @@ export default function PromptModal(): React.ReactElement | null {
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={closeEditor}>
       <div
-        className="w-full max-w-2xl max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+        className="w-full max-w-2xl max-h-[90vh] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-100">
-          <h2 className="text-lg font-semibold text-slate-800">
+        <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700">
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
             {isNew ? "新しいプロンプトをメモ" : "プロンプトを編集"}
           </h2>
           <button onClick={closeEditor} className="p-1.5 hover:bg-slate-100 rounded-md transition-colors">

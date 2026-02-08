@@ -73,7 +73,7 @@ function PageContent(): React.ReactElement {
   };
 
   return (
-    <div className="flex h-screen w-full bg-slate-50 overflow-hidden font-sans">
+    <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-900 overflow-hidden font-sans">
       {/* Welcome Overlay (first visit only) */}
       <WelcomeOverlay onCreateFirst={handleCreateNew} />
 
@@ -91,7 +91,7 @@ function PageContent(): React.ReactElement {
             height={200}
             className="h-[50px] w-[50px] md:h-[73px] md:w-[73px] object-contain drop-shadow-md"
           />
-          <p className="text-center text-xs md:text-sm font-bold text-slate-700 leading-relaxed tracking-wide">
+          <p className="text-center text-xs md:text-sm font-bold text-slate-700 dark:text-slate-200 leading-relaxed tracking-wide">
             バイブコーダーのための<br />
             プロンプト簡単メモサイト
           </p>
@@ -106,7 +106,7 @@ function PageContent(): React.ReactElement {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="プロンプトを検索..."
-              className="h-9 md:h-10 w-full rounded-lg bg-white border border-slate-200 pl-9 md:pl-11 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-300 transition-all shadow-sm hover:shadow"
+              className="h-9 md:h-10 w-full rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 pl-9 md:pl-11 pr-4 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-300 transition-all shadow-sm hover:shadow"
             />
           </div>
         </div>
@@ -149,7 +149,7 @@ function PageContent(): React.ReactElement {
         </div>
 
         {/* Quick Capture Bar - sticky bottom */}
-        <div className="sticky bottom-0 z-30 px-4 md:px-6 pb-20 md:pb-4 pt-2 bg-linear-to-t from-slate-50 via-slate-50/95 to-transparent">
+        <div className="sticky bottom-0 z-30 px-4 md:px-6 pb-20 md:pb-4 pt-2 bg-linear-to-t from-slate-50 via-slate-50/95 to-transparent dark:from-slate-900 dark:via-slate-900/95">
           <QuickCaptureBar />
         </div>
 
@@ -157,7 +157,7 @@ function PageContent(): React.ReactElement {
         {!bulkMode.isActive && (
           <button
             onClick={() => setBulkMode(prev => ({ ...prev, isActive: true }))}
-            className="fixed bottom-24 md:bottom-6 left-4 z-40 w-9 h-9 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center text-slate-400 hover:text-yellow-600 hover:border-yellow-300 transition-all"
+            className="fixed bottom-24 md:bottom-6 left-4 z-40 w-9 h-9 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg flex items-center justify-center text-slate-400 hover:text-yellow-600 hover:border-yellow-300 transition-all"
             title="一括操作"
           >
             <CheckSquare className="w-4 h-4" />

@@ -179,7 +179,7 @@ function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { pro
 
       <CardContent className="pb-2">
         <div className="relative group/preview">
-          <div className="bg-slate-50 p-3.5 rounded-lg text-sm text-slate-600 font-mono leading-relaxed line-clamp-3 border border-slate-100 transition-colors">
+          <div className="bg-slate-50 dark:bg-slate-900 p-3.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 font-mono leading-relaxed line-clamp-3 border border-slate-100 dark:border-slate-700 transition-colors">
             {prompt.content}
           </div>
           {/* Hover preview tooltip */}

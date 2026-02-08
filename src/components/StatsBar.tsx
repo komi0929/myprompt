@@ -89,7 +89,7 @@ export default function StatsBar(): React.ReactElement {
       </button>
 
       {open && (
-        <div className="mt-2 p-3 bg-white rounded-xl border border-slate-200 shadow-sm space-y-3 animate-in fade-in duration-200">
+        <div className="mt-2 p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-3 animate-in fade-in duration-200">
           {/* Phase Distribution */}
           <div>
             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">フェーズ分布</p>

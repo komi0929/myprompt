@@ -70,7 +70,7 @@ export default function BulkActionBar({
 
   return (
     <div className="fixed bottom-20 md:bottom-4 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom duration-300">
-      <div className="flex items-center gap-2 bg-white rounded-xl border border-slate-200 shadow-xl px-4 py-2.5">
+      <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl px-4 py-2.5">
         <CheckSquare className="w-4 h-4 text-yellow-600" />
         <span className="text-sm font-semibold text-slate-700">{selectedCount}件選択</span>
 
