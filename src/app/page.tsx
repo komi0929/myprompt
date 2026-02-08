@@ -59,7 +59,7 @@ function PageContent(): React.ReactElement {
         {/* Hero Header */}
         <div className="px-6 pt-6 pb-2 z-20 flex flex-col items-center gap-2">
           <Image
-            src="/icon.png"
+            src="/mascot.png"
             alt="マイプロンプト"
             width={200}
             height={200}
