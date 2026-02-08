@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { type Phase, type Prompt } from "@/lib/mock-data";
+import { type Phase, type Prompt, type Folder } from "@/lib/mock-data";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -47,6 +47,8 @@ interface PromptStoreState {
   currentPhase: Phase;
   editingPrompt: Prompt | null;
   sortOrder: SortOrder;
+  folders: Folder[];
+  selectedFolderId: string | null;
 }
 
 /* ─── Actions ─── */
@@ -73,6 +75,10 @@ interface PromptStoreActions {
   getFilteredPrompts: () => Prompt[];
   refreshPrompts: () => Promise<void>;
   markAllNotificationsRead: () => void;
+  addFolder: (name: string, color: string) => void;
+  deleteFolder: (id: string) => void;
+  setSelectedFolderId: (id: string | null) => void;
+  moveToFolder: (promptId: string, folderId: string | null) => void;
 }
 
 type PromptStore = PromptStoreState & PromptStoreActions;
@@ -98,6 +104,7 @@ interface DbPrompt {
   like_count?: number;
   use_count?: number;
   is_pinned?: boolean;
+  folder_id?: string | null;
   created_at: string;
   updated_at: string;
   profiles?: { display_name: string | null; avatar_url: string | null } | null;
@@ -115,6 +122,7 @@ function dbToPrompt(row: DbPrompt): Prompt {
     likeCount: row.like_count ?? 0,
     useCount: row.use_count ?? 0,
     isPinned: row.is_pinned ?? false,
+    folderId: row.folder_id ?? undefined,
     authorId: row.user_id,
     authorName: row.profiles?.display_name ?? undefined,
     authorAvatarUrl: row.profiles?.avatar_url ?? undefined,
@@ -410,6 +418,10 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   }, []);
 
+  /* ─── Folders (state only - logic below) ─── */
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+
   const getFilteredPrompts = useCallback((): Prompt[] => {
     let result = prompts;
 
@@ -430,6 +442,11 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     // Visibility filter
     if (visibilityFilter !== "all") {
       result = result.filter(p => p.visibility === visibilityFilter);
+    }
+
+    // Folder filter
+    if (selectedFolderId) {
+      result = result.filter(p => p.folderId === selectedFolderId);
     }
 
     // Search filter (supports #tag syntax)
@@ -471,7 +488,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     const pinned = result.filter(p => p.isPinned);
     const unpinned = result.filter(p => !p.isPinned);
     return [...pinned, ...unpinned];
-  }, [prompts, view, currentPhase, visibilityFilter, searchQuery, favorites, currentUserId, sortOrder]);
+  }, [prompts, view, currentPhase, visibilityFilter, searchQuery, favorites, currentUserId, sortOrder, selectedFolderId]);
 
   /* ─── Toggle Pin ─── */
   const togglePin = useCallback((id: string): void => {
@@ -493,20 +510,63 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     }
   }, [user, prompts]);
 
+  /* ─── Folders (logic) ─── */
+
+  // Load folders from DB
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("folders").select("*").order("sort_order").then(({ data }) => {
+      if (data) {
+        setFolders(data.map(f => ({ id: f.id, name: f.name, color: f.color, sortOrder: f.sort_order })));
+      }
+    });
+  }, [user]);
+
+  const addFolder = useCallback((name: string, color: string): void => {
+    const tempId = crypto.randomUUID();
+    const newFolder: Folder = { id: tempId, name, color, sortOrder: folders.length };
+    setFolders(prev => [...prev, newFolder]);
+    if (user) {
+      supabase.from("folders").insert({ user_id: user.id, name, color, sort_order: folders.length }).select("id").single().then(({ data }) => {
+        if (data) {
+          setFolders(prev => prev.map(f => f.id === tempId ? { ...f, id: data.id } : f));
+        }
+      });
+    }
+  }, [user, folders.length]);
+
+  const deleteFolder = useCallback((id: string): void => {
+    setFolders(prev => prev.filter(f => f.id !== id));
+    setPrompts(prev => prev.map(p => p.folderId === id ? { ...p, folderId: undefined } : p));
+    if (selectedFolderId === id) setSelectedFolderId(null);
+    if (user) {
+      supabase.from("folders").delete().eq("id", id).then();
+    }
+  }, [user, selectedFolderId]);
+
+  const moveToFolder = useCallback((promptId: string, folderId: string | null): void => {
+    setPrompts(prev => prev.map(p => p.id === promptId ? { ...p, folderId: folderId ?? undefined } : p));
+    if (user) {
+      supabase.from("prompts").update({ folder_id: folderId }).eq("id", promptId).then();
+    }
+  }, [user]);
+
   const store = useMemo<PromptStore>(() => ({
     prompts, favorites, likes, history, notifications, unreadCount, view, visibilityFilter, searchQuery,
-    selectedPromptId, currentPhase, editingPrompt, sortOrder,
+    selectedPromptId, currentPhase, editingPrompt, sortOrder, folders, selectedFolderId,
     addPrompt, updatePrompt, deletePrompt, duplicateAsArrangement,
     toggleFavorite, toggleLike, isFavorited, isLiked, incrementUseCount, togglePin,
     setView, setVisibilityFilter, setSearchQuery, setSortOrder,
     setSelectedPromptId, setCurrentPhase, openEditor, closeEditor,
     getHistory, getFilteredPrompts, refreshPrompts, markAllNotificationsRead,
+    addFolder, deleteFolder, setSelectedFolderId, moveToFolder,
   }), [
     prompts, favorites, likes, history, notifications, unreadCount, view, visibilityFilter, searchQuery,
-    selectedPromptId, currentPhase, editingPrompt, sortOrder,
+    selectedPromptId, currentPhase, editingPrompt, sortOrder, folders, selectedFolderId,
     addPrompt, updatePrompt, deletePrompt, duplicateAsArrangement,
     toggleFavorite, toggleLike, isFavorited, isLiked, incrementUseCount, togglePin,
     openEditor, closeEditor, getHistory, getFilteredPrompts, refreshPrompts, markAllNotificationsRead, setSortOrder,
+    addFolder, deleteFolder, moveToFolder,
   ]);
 
   return (

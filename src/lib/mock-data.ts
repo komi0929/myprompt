@@ -14,11 +14,19 @@ export interface Prompt {
   authorId?: string;
   authorName?: string;
   authorAvatarUrl?: string;
+  folderId?: string;
   lineage: {
     parent?: string;
     children?: string[];
     isOriginal: boolean;
   };
+}
+
+export interface Folder {
+  id: string;
+  name: string;
+  color: string;
+  sortOrder: number;
 }
 
 export const MOCK_PROMPTS: Prompt[] = [

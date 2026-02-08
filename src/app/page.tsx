@@ -23,6 +23,8 @@ import { useKeyboardShortcuts } from "@/lib/useKeyboardShortcuts";
 import { Search, Plus, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 
+import CommandPalette from "@/components/CommandPalette";
+
 export default function Page(): React.ReactElement {
   return (
     <AuthProvider>
@@ -31,6 +33,7 @@ export default function Page(): React.ReactElement {
           <PageContent />
           <PromptModal />
           <LoginModal />
+          <CommandPalette />
           <ToastContainer />
         </PromptStoreProvider>
       </AuthGuardProvider>
