@@ -138,11 +138,28 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
 
   const updateProfile = useCallback(async (name: string, newAvatarUrl: string): Promise<{ error: string | null }> => {
     if (!user) return { error: "ログインが必要です" };
-    const { error } = await supabase
+
+    // Try update first (works when profile exists, which is the common case)
+    const { error: updateError, data: updateData } = await supabase
       .from("profiles")
       .update({ display_name: name, avatar_url: newAvatarUrl })
-      .eq("id", user.id);
-    if (error) return { error: error.message };
+      .eq("id", user.id)
+      .select("id");
+
+    if (updateError) {
+      // If update fails, try upsert as fallback (creates profile if missing)
+      const { error: upsertError } = await supabase
+        .from("profiles")
+        .upsert({ id: user.id, display_name: name, avatar_url: newAvatarUrl }, { onConflict: "id" });
+      if (upsertError) return { error: upsertError.message };
+    } else if (!updateData || updateData.length === 0) {
+      // Profile row doesn't exist yet — insert it
+      const { error: insertError } = await supabase
+        .from("profiles")
+        .insert({ id: user.id, display_name: name, avatar_url: newAvatarUrl });
+      if (insertError) return { error: insertError.message };
+    }
+
     setDisplayName(name);
     setAvatarUrl(newAvatarUrl);
     return { error: null };
