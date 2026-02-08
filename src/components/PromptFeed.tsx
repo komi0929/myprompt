@@ -3,14 +3,15 @@
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
-import { Copy, GitBranch, Trash2, Pencil, Heart, Bookmark, ArrowUpDown, Pin } from "lucide-react";
+import { Copy, GitBranch, Trash2, Pencil, Heart, Bookmark, ArrowUpDown, Pin, CheckSquare, Square } from "lucide-react";
 import { usePromptStore, SORT_OPTIONS } from "@/lib/prompt-store";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { copyToClipboard, showToast } from "@/components/ui/Toast";
 import { type Prompt, PHASES } from "@/lib/mock-data";
 import { useAuth } from "@/components/AuthProvider";
+import type { BulkModeState } from "@/components/BulkActionBar";
 
-export function PromptFeed(): React.ReactElement {
+export function PromptFeed({ bulkMode, onToggleSelect }: { bulkMode?: BulkModeState; onToggleSelect?: (id: string) => void } = {}): React.ReactElement {
   const { getFilteredPrompts, favorites, sortOrder, setSortOrder } = usePromptStore();
   const prompts = getFilteredPrompts();
 
@@ -34,14 +35,14 @@ export function PromptFeed(): React.ReactElement {
       </div>
       <div className="grid grid-cols-1 gap-4">
         {prompts.map((prompt) => (
-          <PromptCard key={prompt.id} prompt={prompt} isFavoritedByMe={favorites.includes(prompt.id)} />
+          <PromptCard key={prompt.id} prompt={prompt} isFavoritedByMe={favorites.includes(prompt.id)} bulkMode={bulkMode} onToggleSelect={onToggleSelect} />
         ))}
       </div>
     </div>
   );
 }
 
-function PromptCard({ prompt, isFavoritedByMe }: { prompt: Prompt; isFavoritedByMe: boolean }): React.ReactElement {
+function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { prompt: Prompt; isFavoritedByMe: boolean; bulkMode?: BulkModeState; onToggleSelect?: (id: string) => void }): React.ReactElement {
   const { setSelectedPromptId, selectedPromptId, deletePrompt, toggleFavorite, toggleLike, isLiked, openEditor, incrementUseCount, togglePin } = usePromptStore();
   const { requireAuth } = useAuthGuard();
   const { user } = useAuth();
@@ -78,14 +79,33 @@ function PromptCard({ prompt, isFavoritedByMe }: { prompt: Prompt; isFavoritedBy
     showToast("削除しました");
   };
 
+  const isBulkSelected = bulkMode?.isActive && bulkMode.selectedIds.has(prompt.id);
+
   return (
     <Card
       className={cn(
         "group relative flex flex-col justify-between hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer border-l-3 border-l-transparent",
-        isSelected && "border-l-yellow-400 bg-yellow-50/30 shadow-md"
+        isSelected && "border-l-yellow-400 bg-yellow-50/30 shadow-md",
+        isBulkSelected && "ring-2 ring-yellow-400 bg-yellow-50/20"
       )}
-      onClick={() => setSelectedPromptId(prompt.id)}
+      onClick={() => {
+        if (bulkMode?.isActive && onToggleSelect) {
+          onToggleSelect(prompt.id);
+        } else {
+          setSelectedPromptId(prompt.id);
+        }
+      }}
     >
+      {/* Bulk select checkbox */}
+      {bulkMode?.isActive && (
+        <div className="absolute top-3 left-3 z-20">
+          {isBulkSelected ? (
+            <CheckSquare className="w-5 h-5 text-yellow-600" />
+          ) : (
+            <Square className="w-5 h-5 text-slate-300" />
+          )}
+        </div>
+      )}
 
       {/* Always-visible action bar */}
       <div className="absolute top-3 right-3 flex items-center gap-1 z-10">

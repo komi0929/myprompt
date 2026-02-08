@@ -21,10 +21,12 @@ import ImportExportMenu from "@/components/ImportExportMenu";
 import QuickCaptureBar from "@/components/QuickCaptureBar";
 import StatsBar from "@/components/StatsBar";
 import CopyBuffer from "@/components/CopyBuffer";
+import BulkActionBar from "@/components/BulkActionBar";
+import type { BulkModeState } from "@/components/BulkActionBar";
 import { useAuth } from "@/components/AuthProvider";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useKeyboardShortcuts } from "@/lib/useKeyboardShortcuts";
-import { Search, Plus, Sparkles, X } from "lucide-react";
+import { Search, Plus, Sparkles, X, CheckSquare } from "lucide-react";
 import { useState } from "react";
 
 import CommandPalette from "@/components/CommandPalette";
@@ -54,6 +56,7 @@ function PageContent(): React.ReactElement {
   const filteredPrompts = getFilteredPrompts();
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [lastMobileSelectedId, setLastMobileSelectedId] = useState<string | null>(null);
+  const [bulkMode, setBulkMode] = useState<BulkModeState>({ isActive: false, selectedIds: new Set() });
 
   // Derive mobile detail open from selectedPromptId changes
   if (selectedPromptId && selectedPromptId !== lastMobileSelectedId) {
@@ -133,7 +136,11 @@ function PageContent(): React.ReactElement {
             <StatsBar />
 
             {filteredPrompts.length > 0 ? (
-              <PromptFeed />
+              <PromptFeed bulkMode={bulkMode} onToggleSelect={(id: string) => setBulkMode(prev => {
+                const next = new Set(prev.selectedIds);
+                if (next.has(id)) next.delete(id); else next.add(id);
+                return { ...prev, selectedIds: next };
+              })} />
             ) : (
               <EmptyState onCreateFirst={handleCreateNew} />
             )}
@@ -145,6 +152,18 @@ function PageContent(): React.ReactElement {
         <div className="sticky bottom-0 z-30 px-4 md:px-6 pb-20 md:pb-4 pt-2 bg-linear-to-t from-slate-50 via-slate-50/95 to-transparent">
           <QuickCaptureBar />
         </div>
+
+        {/* Bulk mode button & bar */}
+        {!bulkMode.isActive && (
+          <button
+            onClick={() => setBulkMode(prev => ({ ...prev, isActive: true }))}
+            className="fixed bottom-24 md:bottom-6 left-4 z-40 w-9 h-9 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center text-slate-400 hover:text-yellow-600 hover:border-yellow-300 transition-all"
+            title="一括操作"
+          >
+            <CheckSquare className="w-4 h-4" />
+          </button>
+        )}
+        <BulkActionBar bulkMode={bulkMode} setBulkMode={setBulkMode} />
       </main>
 
       {/* 3. Right Detail Panel - Desktop only */}
