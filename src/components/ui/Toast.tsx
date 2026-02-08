@@ -46,7 +46,7 @@ export default function ToastContainer(): React.ReactElement | null {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 items-center">
+    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-9999 flex flex-col gap-2 items-center">
       {toasts.map(t => (
         <div
           key={t.id}

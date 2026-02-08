@@ -88,7 +88,10 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
             <div className="relative">
               {avatarUrl ? (
                 avatarUrl.startsWith("http") ? (
-                  <img src={avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
+                  </>
                 ) : (
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-50 border border-yellow-200 text-lg">
                     {avatarUrl}

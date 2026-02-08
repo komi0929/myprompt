@@ -45,7 +45,10 @@ export default function AvatarPicker({
               {currentAvatar}
             </div>
           ) : (
-            <img src={currentAvatar} alt="" className="h-14 w-14 rounded-full object-cover" />
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={currentAvatar} alt="" className="h-14 w-14 rounded-full object-cover" />
+            </>
           )
         ) : (
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-yellow-400 text-white text-2xl font-bold">

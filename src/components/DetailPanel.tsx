@@ -104,7 +104,10 @@ export function DetailPanel(): React.ReactElement {
         <div className="flex items-center gap-3">
           {prompt.authorAvatarUrl ? (
             prompt.authorAvatarUrl.startsWith("http") ? (
-              <img src={prompt.authorAvatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={prompt.authorAvatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
+              </>
             ) : (
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-50 border border-yellow-200 text-lg">
                 {prompt.authorAvatarUrl}

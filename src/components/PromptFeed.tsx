@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
-import { Copy, GitBranch, Star, Trash2, Pencil, Heart, Bookmark } from "lucide-react";
+import { Copy, GitBranch, Trash2, Pencil, Heart, Bookmark } from "lucide-react";
 import { usePromptStore } from "@/lib/prompt-store";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { copyToClipboard, showToast } from "@/components/ui/Toast";
@@ -144,7 +144,10 @@ function PromptCard({ prompt, isFavoritedByMe }: { prompt: Prompt; isFavoritedBy
           <div className="flex items-center gap-1.5 shrink-0 ml-2">
             {prompt.authorAvatarUrl ? (
               prompt.authorAvatarUrl.startsWith("http") ? (
-                <img src={prompt.authorAvatarUrl} alt="" className="h-5 w-5 rounded-full object-cover" />
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={prompt.authorAvatarUrl} alt="" className="h-5 w-5 rounded-full object-cover" />
+                </>
               ) : (
                 <div className="flex h-5 w-5 items-center justify-center rounded-full bg-yellow-50 border border-yellow-200 text-[10px]">
                   {prompt.authorAvatarUrl}
