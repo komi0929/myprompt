@@ -6,19 +6,22 @@ import { PHASES } from "@/lib/mock-data";
 import { usePromptStore } from "@/lib/prompt-store";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { copyToClipboard } from "@/components/ui/Toast";
-import { ArrowRight, Copy, GitBranch, History, Share2, Sparkles, Edit3, Pencil, Heart, Bookmark } from "lucide-react";
+import { ArrowRight, Copy, GitBranch, History, Share2, Sparkles, Edit3, Pencil, Heart, Bookmark, Zap } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import HistoryModal from "@/components/HistoryModal";
+import TemplateModal from "@/components/TemplateModal";
 import { showToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/AuthProvider";
+import { hasVariables } from "@/lib/template-utils";
 
 export function DetailPanel(): React.ReactElement {
-  const { selectedPromptId, prompts, openEditor, duplicateAsArrangement, toggleFavorite, isFavorited, toggleLike, isLiked } = usePromptStore();
+  const { selectedPromptId, prompts, openEditor, duplicateAsArrangement, toggleFavorite, isFavorited, toggleLike, isLiked, incrementUseCount } = usePromptStore();
   const { requireAuth } = useAuthGuard();
   const { user } = useAuth();
   const prompt = prompts.find(p => p.id === selectedPromptId) ?? null;
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [templateOpen, setTemplateOpen] = useState(false);
 
    if (!prompt) {
     return (
@@ -194,9 +197,16 @@ export function DetailPanel(): React.ReactElement {
 
         {/* Prompt Content */}
         <div className="space-y-3">
-          <h3 className="text-xs font-semibold text-slate-400 flex items-center gap-1.5 uppercase tracking-wider">
-            <Edit3 className="w-3.5 h-3.5" /> プロンプト内容
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-semibold text-slate-400 flex items-center gap-1.5 uppercase tracking-wider">
+              <Edit3 className="w-3.5 h-3.5" /> プロンプト内容
+            </h3>
+            {(prompt.useCount ?? 0) > 0 && (
+              <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                📋 {prompt.useCount}回使用
+              </span>
+            )}
+          </div>
           
           <div className="bg-slate-50 rounded-xl p-5 border border-slate-100 font-mono text-sm leading-relaxed text-slate-700 shadow-inner min-h-[160px] whitespace-pre-wrap">
             {prompt.content.split(/({.*?})/).map((part, i) => 
@@ -210,15 +220,30 @@ export function DetailPanel(): React.ReactElement {
             )}
           </div>
 
-          <Button
-            className="w-full"
-            variant="secondary"
-            size="lg"
-            onClick={() => copyToClipboard(prompt.content, "コピーしました ✨")}
-          >
-            <Copy className="w-4 h-4 mr-2" />
-            プロンプトをコピー
-          </Button>
+          {/* Template Use button or simple copy */}
+          {hasVariables(prompt.content) ? (
+            <Button
+              className="w-full shadow-md shadow-yellow-200 hover:shadow-yellow-300 transition-shadow"
+              size="lg"
+              onClick={() => setTemplateOpen(true)}
+            >
+              <Zap className="w-4 h-4 mr-2" />
+              テンプレートとして使う
+            </Button>
+          ) : (
+            <Button
+              className="w-full"
+              variant="secondary"
+              size="lg"
+              onClick={() => {
+                copyToClipboard(prompt.content, "コピーしました ✨");
+                incrementUseCount(prompt.id);
+              }}
+            >
+              <Copy className="w-4 h-4 mr-2" />
+              プロンプトをコピー
+            </Button>
+          )}
         </div>
 
         {/* Actions */}
@@ -257,6 +282,16 @@ export function DetailPanel(): React.ReactElement {
 
       {historyOpen && (
         <HistoryModal promptId={prompt.id} onClose={() => setHistoryOpen(false)} />
+      )}
+
+      {templateOpen && prompt && (
+        <TemplateModal
+          promptId={prompt.id}
+          promptTitle={prompt.title}
+          promptContent={prompt.content}
+          onClose={() => setTemplateOpen(false)}
+          onUsed={() => incrementUseCount(prompt.id)}
+        />
       )}
     </div>
   );

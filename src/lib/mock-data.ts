@@ -9,6 +9,7 @@ export interface Prompt {
   visibility: "Private" | "Public";
   updatedAt: string;
   likeCount: number;
+  useCount?: number;
   authorId?: string;
   authorName?: string;
   authorAvatarUrl?: string;

@@ -24,7 +24,7 @@ export function PromptFeed(): React.ReactElement {
 }
 
 function PromptCard({ prompt, isFavoritedByMe }: { prompt: Prompt; isFavoritedByMe: boolean }): React.ReactElement {
-  const { setSelectedPromptId, selectedPromptId, deletePrompt, toggleFavorite, toggleLike, isLiked, openEditor } = usePromptStore();
+  const { setSelectedPromptId, selectedPromptId, deletePrompt, toggleFavorite, toggleLike, isLiked, openEditor, incrementUseCount } = usePromptStore();
   const { requireAuth } = useAuthGuard();
   const { user } = useAuth();
   const isSelected = selectedPromptId === prompt.id;
@@ -88,6 +88,7 @@ function PromptCard({ prompt, isFavoritedByMe }: { prompt: Prompt; isFavoritedBy
           onClick={(e) => {
             e.stopPropagation();
             copyToClipboard(prompt.content, "コピーしました ✨");
+            incrementUseCount(prompt.id);
           }}
           title="プロンプトをコピー"
         >

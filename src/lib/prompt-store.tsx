@@ -49,6 +49,7 @@ interface PromptStoreActions {
   toggleLike: (id: string) => Promise<void>;
   isFavorited: (id: string) => boolean;
   isLiked: (id: string) => boolean;
+  incrementUseCount: (id: string) => void;
   setView: (view: PromptStoreState["view"]) => void;
   setVisibilityFilter: (f: PromptStoreState["visibilityFilter"]) => void;
   setSearchQuery: (q: string) => void;
@@ -83,6 +84,7 @@ interface DbPrompt {
   visibility: string;
   parent_id: string | null;
   like_count?: number;
+  use_count?: number;
   created_at: string;
   updated_at: string;
   profiles?: { display_name: string | null; avatar_url: string | null } | null;
@@ -98,6 +100,7 @@ function dbToPrompt(row: DbPrompt): Prompt {
     visibility: row.visibility as Prompt["visibility"],
     updatedAt: row.updated_at,
     likeCount: row.like_count ?? 0,
+    useCount: row.use_count ?? 0,
     authorId: row.user_id,
     authorName: row.profiles?.display_name ?? undefined,
     authorAvatarUrl: row.profiles?.avatar_url ?? undefined,
@@ -336,6 +339,17 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   const isFavorited = useCallback((id: string): boolean => favorites.includes(id), [favorites]);
   const isLiked = useCallback((id: string): boolean => likes.includes(id), [likes]);
 
+  /* ─── Use Count ─── */
+  const incrementUseCount = useCallback((id: string): void => {
+    setPrompts(prev => prev.map(p => {
+      if (p.id !== id) return p;
+      return { ...p, useCount: (p.useCount ?? 0) + 1 };
+    }));
+    if (user) {
+      supabase.rpc("increment_use_count", { prompt_id: id }).then();
+    }
+  }, [user]);
+
   const openEditor = useCallback((prompt?: Prompt): void => {
     if (prompt) {
       setEditingPrompt(prompt);
@@ -420,7 +434,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     prompts, favorites, likes, history, notifications, unreadCount, view, visibilityFilter, searchQuery,
     selectedPromptId, currentPhase, editingPrompt,
     addPrompt, updatePrompt, deletePrompt, duplicateAsArrangement,
-    toggleFavorite, toggleLike, isFavorited, isLiked,
+    toggleFavorite, toggleLike, isFavorited, isLiked, incrementUseCount,
     setView, setVisibilityFilter, setSearchQuery,
     setSelectedPromptId, setCurrentPhase, openEditor, closeEditor,
     getHistory, getFilteredPrompts, refreshPrompts, markAllNotificationsRead,
@@ -428,7 +442,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     prompts, favorites, likes, history, notifications, unreadCount, view, visibilityFilter, searchQuery,
     selectedPromptId, currentPhase, editingPrompt,
     addPrompt, updatePrompt, deletePrompt, duplicateAsArrangement,
-    toggleFavorite, toggleLike, isFavorited, isLiked,
+    toggleFavorite, toggleLike, isFavorited, isLiked, incrementUseCount,
     openEditor, closeEditor, getHistory, getFilteredPrompts, refreshPrompts, markAllNotificationsRead,
   ]);
 
