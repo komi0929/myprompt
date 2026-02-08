@@ -3,22 +3,40 @@
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
-import { Copy, GitBranch, Trash2, Pencil, Heart, Bookmark } from "lucide-react";
-import { usePromptStore } from "@/lib/prompt-store";
+import { Copy, GitBranch, Trash2, Pencil, Heart, Bookmark, ArrowUpDown } from "lucide-react";
+import { usePromptStore, SORT_OPTIONS } from "@/lib/prompt-store";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { copyToClipboard, showToast } from "@/components/ui/Toast";
 import { type Prompt, PHASES } from "@/lib/mock-data";
 import { useAuth } from "@/components/AuthProvider";
 
 export function PromptFeed(): React.ReactElement {
-  const { getFilteredPrompts, favorites } = usePromptStore();
+  const { getFilteredPrompts, favorites, sortOrder, setSortOrder } = usePromptStore();
   const prompts = getFilteredPrompts();
 
   return (
-    <div className="grid grid-cols-1 gap-4 p-0.5 pb-28">
-      {prompts.map((prompt) => (
-        <PromptCard key={prompt.id} prompt={prompt} isFavoritedByMe={favorites.includes(prompt.id)} />
-      ))}
+    <div className="space-y-3 p-0.5 pb-28">
+      {/* Sort bar */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-slate-400 font-medium">{prompts.length}件</span>
+        <div className="flex items-center gap-1.5">
+          <ArrowUpDown className="w-3 h-3 text-slate-400" />
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as typeof sortOrder)}
+            className="text-xs text-slate-500 bg-white border border-slate-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 cursor-pointer hover:border-slate-300 transition-colors"
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-4">
+        {prompts.map((prompt) => (
+          <PromptCard key={prompt.id} prompt={prompt} isFavoritedByMe={favorites.includes(prompt.id)} />
+        ))}
+      </div>
     </div>
   );
 }

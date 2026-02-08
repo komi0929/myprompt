@@ -6,6 +6,15 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
 
 /* ─── History Snapshot ─── */
+export type SortOrder = "updated" | "created" | "useCount" | "likes" | "title";
+
+export const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
+  { value: "updated", label: "更新日順" },
+  { value: "useCount", label: "よく使う順" },
+  { value: "likes", label: "いいね順" },
+  { value: "title", label: "タイトル順" },
+];
+
 export interface HistoryEntry {
   timestamp: string;
   title: string;
@@ -37,6 +46,7 @@ interface PromptStoreState {
   selectedPromptId: string | null;
   currentPhase: Phase;
   editingPrompt: Prompt | null;
+  sortOrder: SortOrder;
 }
 
 /* ─── Actions ─── */
@@ -50,6 +60,7 @@ interface PromptStoreActions {
   isFavorited: (id: string) => boolean;
   isLiked: (id: string) => boolean;
   incrementUseCount: (id: string) => void;
+  setSortOrder: (order: SortOrder) => void;
   setView: (view: PromptStoreState["view"]) => void;
   setVisibilityFilter: (f: PromptStoreState["visibilityFilter"]) => void;
   setSearchQuery: (q: string) => void;
@@ -126,6 +137,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   const [currentPhase, setCurrentPhase] = useState<Phase>("All");
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [sortOrder, setSortOrder] = useState<SortOrder>("updated");
 
   const currentUserId = user?.id ?? "";
 
@@ -427,23 +439,40 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       );
     }
 
+    // Sort
+    switch (sortOrder) {
+      case "useCount":
+        result = [...result].sort((a, b) => (b.useCount ?? 0) - (a.useCount ?? 0));
+        break;
+      case "likes":
+        result = [...result].sort((a, b) => b.likeCount - a.likeCount);
+        break;
+      case "title":
+        result = [...result].sort((a, b) => a.title.localeCompare(b.title, "ja"));
+        break;
+      case "updated":
+      default:
+        // Already sorted by updated_at from DB
+        break;
+    }
+
     return result;
-  }, [prompts, view, currentPhase, visibilityFilter, searchQuery, favorites, currentUserId]);
+  }, [prompts, view, currentPhase, visibilityFilter, searchQuery, favorites, currentUserId, sortOrder]);
 
   const store = useMemo<PromptStore>(() => ({
     prompts, favorites, likes, history, notifications, unreadCount, view, visibilityFilter, searchQuery,
-    selectedPromptId, currentPhase, editingPrompt,
+    selectedPromptId, currentPhase, editingPrompt, sortOrder,
     addPrompt, updatePrompt, deletePrompt, duplicateAsArrangement,
     toggleFavorite, toggleLike, isFavorited, isLiked, incrementUseCount,
-    setView, setVisibilityFilter, setSearchQuery,
+    setView, setVisibilityFilter, setSearchQuery, setSortOrder,
     setSelectedPromptId, setCurrentPhase, openEditor, closeEditor,
     getHistory, getFilteredPrompts, refreshPrompts, markAllNotificationsRead,
   }), [
     prompts, favorites, likes, history, notifications, unreadCount, view, visibilityFilter, searchQuery,
-    selectedPromptId, currentPhase, editingPrompt,
+    selectedPromptId, currentPhase, editingPrompt, sortOrder,
     addPrompt, updatePrompt, deletePrompt, duplicateAsArrangement,
     toggleFavorite, toggleLike, isFavorited, isLiked, incrementUseCount,
-    openEditor, closeEditor, getHistory, getFilteredPrompts, refreshPrompts, markAllNotificationsRead,
+    openEditor, closeEditor, getHistory, getFilteredPrompts, refreshPrompts, markAllNotificationsRead, setSortOrder,
   ]);
 
   return (
