@@ -105,7 +105,7 @@ function PageContent(): React.ReactElement {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="プロンプトを検索..."
-              className="h-9 md:h-10 w-full rounded-lg bg-white border border-slate-200 pl-9 md:pl-11 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-300 transition-all shadow-sm hover:shadow"
+              className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-400 transition-all shadow-sm hover:shadow"
             />
           </div>
         </div>
@@ -152,7 +152,7 @@ function PageContent(): React.ReactElement {
         {!bulkMode.isActive && (
           <button
             onClick={() => setBulkMode(prev => ({ ...prev, isActive: true }))}
-            className="fixed bottom-24 md:bottom-6 left-4 z-40 w-9 h-9 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center text-slate-400 hover:text-yellow-600 hover:border-yellow-300 transition-all"
+            className="fixed bottom-24 md:bottom-6 left-4 z-40 w-11 h-11 rounded-xl bg-white border border-slate-200 shadow-lg flex items-center justify-center text-slate-400 hover:text-yellow-600 hover:border-yellow-300 transition-all"
             title="一括操作"
           >
             <CheckSquare className="w-4 h-4" />

@@ -28,14 +28,14 @@ export function PhaseCompass({
               <button
                 onClick={() => handleClick(phase.id)}
                 className={cn(
-                  "relative flex w-full flex-col items-center gap-0.5 rounded-lg py-2 transition-all duration-200 border",
+                  "relative flex w-full flex-col items-center gap-0.5 rounded-xl py-2 transition-all duration-200 border",
                   isActive
                     ? "bg-yellow-50 text-yellow-700 shadow-sm border-yellow-300 z-10"
-                    : "bg-white text-slate-400 hover:bg-slate-50 hover:text-slate-600 border-slate-200/60 hover:border-slate-300"
+                    : "bg-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-600 border-transparent hover:border-slate-300"
                 )}
               >
                 <span className="text-base">{phase.icon}</span>
-                <span className={cn("font-semibold whitespace-nowrap text-[11px] transition-colors", isActive ? "text-yellow-700" : "text-slate-400")}>
+                <span className={cn("font-semibold whitespace-nowrap text-[11px] transition-colors", isActive ? "text-yellow-700" : "text-slate-500")}>
                   {phase.label}
                 </span>
                 

@@ -127,7 +127,7 @@ export function DetailPanel(): React.ReactElement {
             {prompt.authorName && (
               <p className="text-sm font-semibold text-slate-700 truncate">{prompt.authorName}</p>
             )}
-            <p className="text-[10px] text-slate-400">
+            <p className="text-[10px] text-slate-500">
               {new Date(prompt.updatedAt).toLocaleDateString("ja-JP")}に更新
             </p>
           </div>
@@ -148,7 +148,7 @@ export function DetailPanel(): React.ReactElement {
             {prompt.tags.map(tag => <Badge key={tag} variant="outline" className="text-[11px]">#{tag}</Badge>)}
           </div>
           <div className="flex items-start justify-between gap-3">
-            <h1 className="text-xl font-semibold text-slate-800 leading-tight">
+            <h1 className="text-xl font-semibold text-slate-800 leading-tight tracking-tight">
               {prompt.title}
             </h1>
             {/* Edit button - only for owned prompts */}
@@ -230,7 +230,7 @@ export function DetailPanel(): React.ReactElement {
               onClick={() => setTemplateOpen(true)}
             >
               <Zap className="w-4 h-4 mr-2" />
-              テンプレートとして使う
+              テンプレートとして使う（変数あり）
             </Button>
           ) : (
             <div className="flex gap-1">
@@ -295,7 +295,7 @@ export function DetailPanel(): React.ReactElement {
         {/* Rating Marker */}
         {isOwner && (
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-slate-400 mr-1">評価:</span>
+            <span className="text-xs text-slate-500 mr-1">評価:</span>
             {(["good", "neutral", "bad"] as const).map(r => {
               const icons = { good: ThumbsUp, neutral: Minus, bad: ThumbsDown };
               const labels = { good: "成功", neutral: "普通", bad: "失敗" };
@@ -310,7 +310,7 @@ export function DetailPanel(): React.ReactElement {
                   key={r}
                   onClick={() => updatePrompt(prompt.id, { rating: prompt.rating === r ? undefined : r })}
                   className={cn(
-                    "flex items-center gap-1 px-2 py-1 rounded-md border border-transparent text-[10px] font-medium transition-all",
+                    "flex items-center gap-1 px-3 py-1.5 rounded-lg border border-transparent text-xs font-medium transition-all",
                     colors[r]
                   )}
                   title={labels[r]}
@@ -324,8 +324,8 @@ export function DetailPanel(): React.ReactElement {
         )}
 
         {/* Actions */}
-        <div className="space-y-3 pt-1">
-          <Button className="w-full shadow-md shadow-yellow-200 hover:shadow-yellow-300 transition-shadow" size="lg" onClick={handleArrange}>
+        <div className="space-y-3 pt-4">
+          <Button className="w-full" variant="outline" size="lg" onClick={handleArrange}>
             <Sparkles className="w-4 h-4 mr-2" />
             このプロンプトをもとにメモ
           </Button>

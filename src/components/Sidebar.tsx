@@ -44,7 +44,7 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
         {/* Notification bell */}
         <button
           onClick={handleToggleNotifications}
-          className="relative p-1.5 rounded-md hover:bg-slate-100 transition-colors"
+          className="relative p-2 rounded-lg hover:bg-slate-100 transition-colors"
           title="通知"
         >
           <Bell className={cn("w-4 h-4", unreadCount > 0 ? "text-yellow-500" : "text-slate-400")} />
@@ -167,7 +167,7 @@ function NotificationPanel({ notifications, onClose }: { notifications: AppNotif
                   </p>
                 </div>
               </div>
-              <p className="text-[9px] text-slate-300 mt-1 pl-6">
+              <p className="text-[9px] text-slate-400 mt-1 pl-6">
                 {new Date(n.timestamp).toLocaleString("ja-JP")}
               </p>
             </div>
@@ -197,20 +197,20 @@ function NavButton({
     <Button
       variant={active ? "secondary" : "ghost"}
       className={cn(
-        "w-full justify-start gap-3 font-semibold rounded-lg h-auto py-2.5 text-sm flex-col items-start",
+        "w-full justify-start gap-3 font-semibold rounded-lg h-auto py-2.5 text-sm flex-col items-start relative",
         active
-          ? "bg-slate-50 text-slate-800 shadow-sm border-slate-200"
+          ? "bg-slate-50 text-slate-800 shadow-sm border-slate-200 border-l-3 border-l-yellow-400"
           : "text-slate-500 hover:text-slate-800 hover:bg-slate-50",
         className
       )}
       onClick={onClick}
     >
       <div className="flex items-center gap-3">
-        <Icon className={cn("h-[16px] w-[16px]", active ? "text-yellow-500" : "text-slate-400")} />
+        <Icon className={cn("w-4 h-4", active ? "text-yellow-500" : "text-slate-400")} />
         {label}
       </div>
       {hint && (
-        <span className="text-[10px] text-slate-400 font-normal pl-[28px] -mt-1">{hint}</span>
+        <span className="text-[10px] text-slate-400 font-normal pl-7 -mt-1">{hint}</span>
       )}
     </Button>
   );

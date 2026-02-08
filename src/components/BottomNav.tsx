@@ -42,9 +42,9 @@ export default function BottomNav(): React.ReactElement {
             <Plus className="w-6 h-6 text-slate-800" />
           </button>
         )}
-        <Link href="/account" className="flex flex-col items-center gap-0.5">
+        <Link href="/account" className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px]">
           <User className="w-5 h-5 text-slate-400" />
-          <span className="text-[10px] text-slate-400">アカウント</span>
+          <span className="text-[11px] text-slate-400">アカウント</span>
         </Link>
       </div>
     </nav>
@@ -66,12 +66,15 @@ function NavItem({
     <button
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors",
+        "flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] rounded-xl transition-colors relative",
         active ? "text-yellow-600" : "text-slate-400 hover:text-slate-600"
       )}
     >
       {icon}
-      <span className={cn("text-[10px]", active && "font-semibold")}>{label}</span>
+      <span className={cn("text-[11px]", active && "font-semibold")}>{label}</span>
+      {active && (
+        <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-yellow-500" />
+      )}
     </button>
   );
 }

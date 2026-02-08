@@ -16,7 +16,7 @@ export function PromptFeed({ bulkMode, onToggleSelect }: { bulkMode?: BulkModeSt
   const prompts = getFilteredPrompts();
 
   return (
-    <div className="space-y-3 p-0.5 pb-28">
+    <div className="space-y-3 pb-28">
       {/* Sort bar */}
       <div className="flex items-center justify-between">
         <span className="text-xs text-slate-400 font-medium">{prompts.length}件</span>
@@ -102,7 +102,7 @@ function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { pro
           {isBulkSelected ? (
             <CheckSquare className="w-5 h-5 text-yellow-600" />
           ) : (
-            <Square className="w-5 h-5 text-slate-300" />
+            <Square className="w-5 h-5 text-slate-400" />
           )}
         </div>
       )}
@@ -111,10 +111,10 @@ function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { pro
       <div className="absolute top-3 right-3 flex items-center gap-1 z-10">
         <button
           className={cn(
-            "p-1.5 rounded-md transition-all",
+            "p-2.5 rounded-lg transition-all",
             prompt.isPinned
               ? "text-amber-500 bg-amber-50"
-              : "text-slate-300 hover:text-amber-500 hover:bg-amber-50"
+              : "text-slate-400 hover:text-amber-500 hover:bg-amber-50"
           )}
           onClick={(e) => {
             e.stopPropagation();
@@ -122,14 +122,14 @@ function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { pro
           }}
           title={prompt.isPinned ? "ピン解除" : "ピン留め"}
         >
-          <Pin className={cn("w-3.5 h-3.5", prompt.isPinned && "fill-amber-400")} />
+          <Pin className={cn("w-4 h-4", prompt.isPinned && "fill-amber-400")} />
         </button>
         <button
           className={cn(
-            "p-1.5 rounded-md transition-all",
+            "p-2.5 rounded-lg transition-all",
             isFavoritedByMe
               ? "text-yellow-500 bg-yellow-50"
-              : "text-slate-300 hover:text-yellow-500 hover:bg-yellow-50"
+              : "text-slate-400 hover:text-yellow-500 hover:bg-yellow-50"
           )}
           onClick={handleFavorite}
           title={isFavoritedByMe ? "お気に入り解除" : "お気に入りに追加"}
@@ -137,7 +137,7 @@ function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { pro
           <Bookmark className={cn("w-4 h-4", isFavoritedByMe && "fill-yellow-400")} />
         </button>
         <button
-          className="p-1.5 rounded-md text-slate-300 hover:text-yellow-600 hover:bg-yellow-50 transition-all"
+          className="p-2.5 rounded-lg text-slate-400 hover:text-yellow-600 hover:bg-yellow-50 transition-all"
           onClick={(e) => {
             e.stopPropagation();
             copyToClipboard(prompt.content, "コピーしました ✨");
@@ -200,7 +200,7 @@ function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { pro
             <Badge key={tag} variant="secondary" className="bg-slate-50 text-slate-400 border border-slate-100 text-[10px]">#{tag}</Badge>
           ))}
           {prompt.tags.length > 3 && (
-            <span className="text-[10px] text-slate-300">+{prompt.tags.length - 3}</span>
+            <span className="text-[10px] text-slate-500">+{prompt.tags.length - 3}</span>
           )}
         </div>
 
@@ -234,7 +234,7 @@ function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { pro
               "flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-all",
               liked
                 ? "text-pink-500 bg-pink-50"
-                : "text-slate-300 hover:text-pink-500 hover:bg-pink-50"
+                : "text-slate-400 hover:text-pink-500 hover:bg-pink-50"
             )}
             onClick={handleLike}
             title="いいね！"
@@ -245,16 +245,16 @@ function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { pro
 
           {/* Edit/Delete - only for owned prompts */}
           {isOwned && (
-            <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <div className="flex gap-0.5">
               <button
-                className="p-1.5 rounded-md text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all"
+                className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
                 onClick={handleEdit}
                 title="編集"
               >
                 <Pencil className="w-3.5 h-3.5" />
               </button>
               <button
-                className="p-1.5 rounded-md text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all"
+                className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
                 onClick={handleDelete}
                 title="削除"
               >

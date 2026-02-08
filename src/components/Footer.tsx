@@ -21,10 +21,10 @@ export default function Footer(): React.ReactElement {
 
         {/* Credit */}
         <div className="mt-3 flex flex-col items-center gap-1">
-          <p className="text-[10px] text-slate-300">
+          <p className="text-[10px] text-slate-500">
             © {new Date().getFullYear()} 株式会社ヒトコト
           </p>
-          <p className="text-[10px] text-slate-300">
+          <p className="text-[10px] text-slate-500">
             produced by{" "}
             <a
               href="https://mykanban.hitokoto.tech/"

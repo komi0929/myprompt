@@ -36,7 +36,7 @@ export default function WelcomeOverlay({ onCreateFirst }: { onCreateFirst: () =>
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-white/80 mb-4 shadow-md">
             <span className="text-2xl">✨</span>
           </div>
-          <h2 className="text-xl font-semibold text-slate-800 mb-1">
+          <h2 className="text-xl font-semibold text-slate-800 mb-1 tracking-tight">
             マイプロンプトへようこそ！
           </h2>
           <p className="text-sm text-slate-600">
