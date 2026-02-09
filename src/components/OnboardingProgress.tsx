@@ -51,6 +51,7 @@ function useMilestoneState(): boolean[] {
 /** Mark a milestone as completed. Debounced — skips if already marked. */
 const markedCache = new Set<string>();
 export function markMilestone(id: string): void {
+  if (typeof window === "undefined") return;
   // Skip if already marked in this session (avoid repeated localStorage writes)
   if (markedCache.has(id)) return;
   const m = MILESTONES.find((ms) => ms.id === id);

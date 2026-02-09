@@ -31,17 +31,20 @@ import { Search, Plus, Sparkles, X, CheckSquare, ChevronLeft, ChevronRight } fro
 import { useState } from "react";
 
 import CommandPalette from "@/components/CommandPalette";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export default function Page(): React.ReactElement {
   return (
     <AuthProvider>
       <AuthGuardProvider>
         <PromptStoreProvider>
-          <PageContent />
-          <PromptModal />
-          <LoginModal />
-          <CommandPalette />
-          <CopyBuffer />
+          <ErrorBoundary>
+            <PageContent />
+            <PromptModal />
+            <LoginModal />
+            <CommandPalette />
+            <CopyBuffer />
+          </ErrorBoundary>
           <ToastContainer />
         </PromptStoreProvider>
       </AuthGuardProvider>

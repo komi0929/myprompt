@@ -33,7 +33,7 @@ export function fillTemplate(content: string, values: Record<string, string>): s
 
 /** Check if a prompt has any template variables */
 export function hasVariables(content: string): boolean {
-  return VARIABLE_REGEX.test(content);
+  return /\{[^{}]+\}/.test(content);
 }
 
 /** Save variable values to localStorage (keyed by promptId) */
