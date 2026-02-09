@@ -90,9 +90,14 @@ function PageContent(): React.ReactElement {
             height={200}
             className="h-[36px] w-[36px] md:h-[44px] md:w-[44px] object-contain drop-shadow-md shrink-0"
           />
-          <p className="text-xs md:text-sm font-bold text-slate-700 tracking-wide">
-            バイブコーダーのためのプロンプト簡単メモサイト
-          </p>
+          <div className="flex flex-col items-start">
+            <p className="text-sm md:text-base font-extrabold text-slate-800 tracking-tight">
+              プロンプト簡単メモサイト
+            </p>
+            <p className="text-[10px] md:text-xs font-medium text-yellow-600/80 tracking-wider">
+              For バイブコーディング
+            </p>
+          </div>
         </div>
 
         {/* Search Bar */}

@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { type Phase, type Prompt, type Folder } from "@/lib/mock-data";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
+import { trackEvent } from "@/lib/analytics";
 
 /* ─── History Snapshot ─── */
 export type SortOrder = "updated" | "created" | "useCount" | "likes" | "title";
@@ -275,6 +276,11 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       content: newPrompt.content,
     });
 
+    trackEvent("prompt_create", { prompt_id: newPrompt.id, visibility: input.visibility, phase: input.phase });
+    if (input.visibility === "Public") {
+      trackEvent("prompt_publish", { prompt_id: newPrompt.id });
+    }
+
     return newPrompt.id;
   }, [user]);
 
@@ -342,6 +348,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         await supabase.from("favorites").delete().eq("user_id", user.id).eq("prompt_id", id);
       } else {
         await supabase.from("favorites").insert({ user_id: user.id, prompt_id: id });
+        trackEvent("prompt_favorite", { prompt_id: id });
       }
     }
   }, [favorites, user]);
@@ -361,6 +368,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       await supabase.from("likes").delete().eq("user_id", user.id).eq("prompt_id", id);
     } else {
       await supabase.from("likes").insert({ user_id: user.id, prompt_id: id });
+      trackEvent("prompt_like", { prompt_id: id });
     }
   }, [likes, user]);
 
@@ -378,6 +386,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       supabase.rpc("increment_use_count", { prompt_id: id }).then();
       supabase.from("prompts").update({ last_used_at: now }).eq("id", id).then();
     }
+    trackEvent("prompt_copy", { prompt_id: id });
   }, [user]);
 
   const openEditor = useCallback((prompt?: Prompt): void => {
