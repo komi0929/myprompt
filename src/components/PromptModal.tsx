@@ -25,14 +25,17 @@ export default function PromptModal(): React.ReactElement | null {
 
   const isNew = editingPrompt?.id === "";
 
-  // Sync state with editingPrompt
-  const prevId = useState<string | undefined>(undefined);
-  if (editingPrompt && editingPrompt.id !== prevId[0]) {
-    prevId[1](editingPrompt.id);
-    // check for draft
-    const draftKey = `myprompt-draft-${editingPrompt.id || "new"}`;
+  // React-approved: "Adjusting state when a prop changes"
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [prevEditingId, setPrevEditingId] = useState<string | undefined>(undefined);
+  const editingId = editingPrompt?.id;
+  if (editingId !== undefined && editingId !== prevEditingId) {
+    setPrevEditingId(editingId);
+    setTagInput(""); // Reset tag input on prompt change (B-11 fix)
+
+    const draftKey = `myprompt-draft-${editingId || "new"}`;
     const savedDraft = typeof window !== "undefined" ? localStorage.getItem(draftKey) : null;
-    if (savedDraft && editingPrompt.id === "") {
+    if (savedDraft && editingId === "") {
       try {
         const draft = JSON.parse(savedDraft) as { title: string; content: string; tags: string[]; phase: PromptPhase; visibility: "Private" | "Public"; notes?: string };
         if (draft.title || draft.content) {
@@ -44,20 +47,24 @@ export default function PromptModal(): React.ReactElement | null {
           setNotes(draft.notes ?? "");
           setHasDraft(true);
         } else {
-          setTitle(editingPrompt.title);
-          setContent(editingPrompt.content);
-          setTags(editingPrompt.tags);
-          setPhase(editingPrompt.phase);
-          setVisibility(editingPrompt.visibility);
+          setTitle(editingPrompt!.title);
+          setContent(editingPrompt!.content);
+          setTags(editingPrompt!.tags);
+          setPhase(editingPrompt!.phase);
+          setVisibility(editingPrompt!.visibility);
+          setNotes("");
+          setHasDraft(false);
         }
       } catch {
-        setTitle(editingPrompt.title);
-        setContent(editingPrompt.content);
-        setTags(editingPrompt.tags);
-        setPhase(editingPrompt.phase);
-        setVisibility(editingPrompt.visibility);
+        setTitle(editingPrompt!.title);
+        setContent(editingPrompt!.content);
+        setTags(editingPrompt!.tags);
+        setPhase(editingPrompt!.phase);
+        setVisibility(editingPrompt!.visibility);
+        setNotes("");
+        setHasDraft(false);
       }
-    } else {
+    } else if (editingPrompt) {
       setTitle(editingPrompt.title);
       setContent(editingPrompt.content);
       setTags(editingPrompt.tags);

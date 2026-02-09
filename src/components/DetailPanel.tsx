@@ -6,8 +6,8 @@ import { PHASES } from "@/lib/mock-data";
 import { usePromptStore } from "@/lib/prompt-store";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { copyToClipboard } from "@/components/ui/Toast";
-import { ArrowRight, Copy, GitBranch, History, Share2, Sparkles, Edit3, Pencil, Heart, Bookmark, Zap, ChevronDown, Lightbulb, ThumbsUp, ThumbsDown, Minus } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, Copy, GitBranch, History, Share2, Sparkles, Edit3, Pencil, Heart, Bookmark, Zap, ChevronDown, Lightbulb, ThumbsUp, ThumbsDown, Minus, Check, X } from "lucide-react";
+import { useState, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import HistoryModal from "@/components/HistoryModal";
 import TemplateModal from "@/components/TemplateModal";
@@ -17,12 +17,45 @@ import { hasVariables } from "@/lib/template-utils";
 import { addToCopyBuffer } from "@/components/CopyBuffer";
 
 export function DetailPanel(): React.ReactElement {
-  const { selectedPromptId, prompts, openEditor, duplicateAsArrangement, toggleFavorite, isFavorited, toggleLike, isLiked, incrementUseCount, updatePrompt, setSelectedPromptId } = usePromptStore();
+  const { selectedPromptId, prompts, openEditor, duplicateAsArrangement, toggleFavorite, isFavorited, toggleLike, isLiked, incrementUseCount, updatePrompt, setSelectedPromptId, filteredPrompts } = usePromptStore();
   const { requireAuth } = useAuthGuard();
   const { user } = useAuth();
   const prompt = prompts.find(p => p.id === selectedPromptId) ?? null;
   const [historyOpen, setHistoryOpen] = useState(false);
   const [templateOpen, setTemplateOpen] = useState(false);
+
+  // V-06: Inline editing state
+  const [inlineField, setInlineField] = useState<"title" | "content" | "notes" | null>(null);
+  const [inlineValue, setInlineValue] = useState("");
+  const inlineRef = useRef<HTMLTextAreaElement | HTMLInputElement>(null);
+
+  const startInlineEdit = useCallback((field: "title" | "content" | "notes", currentValue: string): void => {
+    setInlineField(field);
+    setInlineValue(currentValue);
+    // Focus is set via autoFocus on the element
+  }, []);
+
+  const saveInlineEdit = useCallback((): void => {
+    if (!prompt || !inlineField) return;
+    const trimmed = inlineValue.trim();
+    if (inlineField === "title" && !trimmed) {
+      showToast("タイトルは空にできません");
+      return;
+    }
+    if (inlineField === "content" && !trimmed) {
+      showToast("本文は空にできません");
+      return;
+    }
+    const update: Record<string, string | undefined> = {};
+    update[inlineField] = inlineField === "notes" && !trimmed ? undefined : trimmed;
+    updatePrompt(prompt.id, update);
+    setInlineField(null);
+    showToast("保存しました");
+  }, [prompt, inlineField, inlineValue, updatePrompt]);
+
+  const cancelInlineEdit = useCallback((): void => {
+    setInlineField(null);
+  }, []);
 
    if (!prompt) {
     return (
@@ -148,9 +181,28 @@ export function DetailPanel(): React.ReactElement {
             {prompt.tags.map(tag => <Badge key={tag} variant="outline" className="text-[11px]">#{tag}</Badge>)}
           </div>
           <div className="flex items-start justify-between gap-3">
-            <h1 className="text-xl font-semibold text-slate-800 leading-tight tracking-tight">
-              {prompt.title}
-            </h1>
+            {inlineField === "title" ? (
+              <div className="flex-1 flex items-center gap-1.5">
+                <input
+                  autoFocus
+                  ref={inlineRef as React.RefObject<HTMLInputElement>}
+                  value={inlineValue}
+                  onChange={e => setInlineValue(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") saveInlineEdit(); if (e.key === "Escape") cancelInlineEdit(); }}
+                  className="flex-1 text-xl font-semibold text-slate-800 leading-tight tracking-tight bg-yellow-50 border border-yellow-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-yellow-400/40"
+                />
+                <button onClick={saveInlineEdit} className="p-1 rounded hover:bg-emerald-100 text-emerald-600" title="保存"><Check className="w-4 h-4" /></button>
+                <button onClick={cancelInlineEdit} className="p-1 rounded hover:bg-red-100 text-red-500" title="キャンセル"><X className="w-4 h-4" /></button>
+              </div>
+            ) : (
+              <h1
+                className={cn("text-xl font-semibold text-slate-800 leading-tight tracking-tight", isOwner && "cursor-pointer hover:bg-yellow-50 hover:rounded-lg transition-colors px-1 -mx-1")}
+                onDoubleClick={() => isOwner && startInlineEdit("title", prompt.title)}
+                title={isOwner ? "ダブルクリックで編集" : undefined}
+              >
+                {prompt.title}
+              </h1>
+            )}
             {/* Edit button - only for owned prompts */}
             {!!user && prompt.authorId === user.id && (
               <Button
@@ -210,7 +262,28 @@ export function DetailPanel(): React.ReactElement {
             )}
           </div>
           
-          <div className="bg-slate-50 rounded-xl p-5 border border-slate-100 font-mono text-sm leading-relaxed text-slate-700 shadow-inner min-h-[160px] whitespace-pre-wrap">
+          {inlineField === "content" ? (
+            <div className="space-y-2">
+              <textarea
+                autoFocus
+                ref={inlineRef as React.RefObject<HTMLTextAreaElement>}
+                value={inlineValue}
+                onChange={e => setInlineValue(e.target.value)}
+                onKeyDown={e => { if (e.key === "Escape") cancelInlineEdit(); }}
+                rows={10}
+                className="w-full bg-yellow-50 rounded-xl p-5 border border-yellow-300 font-mono text-sm leading-relaxed text-slate-700 min-h-[160px] resize-none focus:outline-none focus:ring-2 focus:ring-yellow-400/40"
+              />
+              <div className="flex justify-end gap-1.5">
+                <button onClick={cancelInlineEdit} className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100">キャンセル</button>
+                <button onClick={saveInlineEdit} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-yellow-700 bg-yellow-100 hover:bg-yellow-200 border border-yellow-300">保存</button>
+              </div>
+            </div>
+          ) : (
+          <div
+            className={cn("bg-slate-50 rounded-xl p-5 border border-slate-100 font-mono text-sm leading-relaxed text-slate-700 shadow-inner min-h-[160px] whitespace-pre-wrap", isOwner && "cursor-pointer hover:border-yellow-200 transition-colors")}
+            onDoubleClick={() => isOwner && startInlineEdit("content", prompt.content)}
+            title={isOwner ? "ダブルクリックで編集" : undefined}
+          >
             {prompt.content.split(/({.*?})/).map((part, i) => 
               part.match(/^{.*}$/) ? (
                 <span key={i} className="bg-yellow-200 text-yellow-800 px-1 rounded font-semibold mx-0.5 border-b-2 border-yellow-300">
@@ -221,6 +294,7 @@ export function DetailPanel(): React.ReactElement {
               )
             )}
           </div>
+          )}
 
           {/* Template Use button or simple copy */}
           {hasVariables(prompt.content) ? (
@@ -281,14 +355,43 @@ export function DetailPanel(): React.ReactElement {
         </div>
 
         {/* 💡 補足情報 */}
-        {prompt.notes && (
+        {(prompt.notes || (isOwner && !prompt.notes)) && (
           <div className="pt-3 border-t border-slate-100">
             <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
               <Lightbulb className="w-3.5 h-3.5" /> 補足
             </h4>
-            <div className="bg-amber-50 rounded-lg p-4 text-sm text-slate-600 leading-relaxed border border-amber-100 whitespace-pre-wrap">
-              {prompt.notes}
-            </div>
+            {inlineField === "notes" ? (
+              <div className="space-y-2">
+                <textarea
+                  autoFocus
+                  value={inlineValue}
+                  onChange={e => setInlineValue(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Escape") cancelInlineEdit(); }}
+                  rows={4}
+                  placeholder="使い方のコツ、効果的だった場面、注意点など"
+                  className="w-full bg-yellow-50 rounded-lg p-4 text-sm text-slate-600 leading-relaxed border border-yellow-300 resize-none focus:outline-none focus:ring-2 focus:ring-yellow-400/40"
+                />
+                <div className="flex justify-end gap-1.5">
+                  <button onClick={cancelInlineEdit} className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100">キャンセル</button>
+                  <button onClick={saveInlineEdit} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-yellow-700 bg-yellow-100 hover:bg-yellow-200 border border-yellow-300">保存</button>
+                </div>
+              </div>
+            ) : prompt.notes ? (
+              <div
+                className={cn("bg-amber-50 rounded-lg p-4 text-sm text-slate-600 leading-relaxed border border-amber-100 whitespace-pre-wrap", isOwner && "cursor-pointer hover:border-yellow-300 transition-colors")}
+                onDoubleClick={() => isOwner && startInlineEdit("notes", prompt.notes ?? "")}
+                title={isOwner ? "ダブルクリックで編集" : undefined}
+              >
+                {prompt.notes}
+              </div>
+            ) : isOwner ? (
+              <button
+                onClick={() => startInlineEdit("notes", "")}
+                className="w-full p-4 text-sm text-slate-400 bg-slate-50 rounded-lg border border-dashed border-slate-200 hover:border-yellow-300 hover:bg-yellow-50 transition-colors text-center"
+              >
+                + 補足情報を追加
+              </button>
+            ) : null}
           </div>
         )}
 

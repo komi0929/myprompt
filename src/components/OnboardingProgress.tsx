@@ -48,14 +48,21 @@ function useMilestoneState(): boolean[] {
   return state;
 }
 
-/** Mark a milestone as completed. Call from actions in prompt-store etc. */
+/** Mark a milestone as completed. Debounced — skips if already marked. */
+const markedCache = new Set<string>();
 export function markMilestone(id: string): void {
+  // Skip if already marked in this session (avoid repeated localStorage writes)
+  if (markedCache.has(id)) return;
   const m = MILESTONES.find((ms) => ms.id === id);
-  if (m) {
-    localStorage.setItem(m.storageKey, "true");
-    // Dispatch a storage event so useSyncExternalStore picks it up
-    window.dispatchEvent(new Event("ob-milestone-update"));
+  if (!m) return;
+  // Also skip if already persisted
+  if (localStorage.getItem(m.storageKey) === "true") {
+    markedCache.add(id);
+    return;
   }
+  markedCache.add(id);
+  localStorage.setItem(m.storageKey, "true");
+  window.dispatchEvent(new Event("ob-milestone-update"));
 }
 
 export default function OnboardingProgress(): React.ReactElement | null {

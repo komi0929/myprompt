@@ -76,6 +76,8 @@ interface PromptStoreActions {
   closeEditor: () => void;
   getHistory: (id: string) => Promise<HistoryEntry[]>;
   getFilteredPrompts: () => Prompt[];
+  /** Pre-computed filtered prompts (memoized) */
+  filteredPrompts: Prompt[];
   refreshPrompts: () => Promise<void>;
   markAllNotificationsRead: () => void;
   addFolder: (name: string, color: string) => void;
@@ -89,10 +91,19 @@ type PromptStore = PromptStoreState & PromptStoreActions;
 
 const PromptStoreContext = createContext<PromptStore | null>(null);
 
-/* ─── LocalStorage helpers ─── */
-function saveJson(key: string, value: unknown): void {
+/* ─── sessionStorage helpers ─── */
+function ssGet<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const v = sessionStorage.getItem(key);
+    return v ? (JSON.parse(v) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+function ssSet(key: string, value: unknown): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(key, JSON.stringify(value));
+  sessionStorage.setItem(key, JSON.stringify(value));
 }
 
 /* ─── DB Row → Prompt ─── */
@@ -149,20 +160,31 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   const [likes, setLikes] = useState<string[]>([]);
   const [history] = useState<Record<string, HistoryEntry[]>>({});
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [view, setView] = useState<PromptStoreState["view"]>("library");
-  const [visibilityFilter, setVisibilityFilter] = useState<PromptStoreState["visibilityFilter"]>("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [view, setViewState] = useState<PromptStoreState["view"]>(() => ssGet("mp-view", "library" as const));
+  const [visibilityFilter, setVisibilityFilterState] = useState<PromptStoreState["visibilityFilter"]>(() => ssGet("mp-vf", "all" as const));
+  const [searchQuery, setSearchQueryState] = useState(() => ssGet("mp-sq", ""));
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
-  const [currentPhase, setCurrentPhase] = useState<Phase>("All");
+  const [currentPhase, setCurrentPhaseState] = useState<Phase>(() => ssGet("mp-phase", "All" as Phase));
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
   const [hydrated, setHydrated] = useState(false);
-  const [sortOrder, setSortOrder] = useState<SortOrder>("updated");
+  const [sortOrder, setSortOrderState] = useState<SortOrder>(() => ssGet("mp-sort", "updated" as SortOrder));
+
+  // V-13: Persist filter state to sessionStorage
+  const setView = useCallback((v: PromptStoreState["view"]) => { setViewState(v); ssSet("mp-view", v); }, []);
+  const setVisibilityFilter = useCallback((v: PromptStoreState["visibilityFilter"]) => { setVisibilityFilterState(v); ssSet("mp-vf", v); }, []);
+  const setSearchQuery = useCallback((v: string) => { setSearchQueryState(v); ssSet("mp-sq", v); }, []);
+  const setCurrentPhase = useCallback((v: Phase) => { setCurrentPhaseState(v); ssSet("mp-phase", v); }, []);
+  const setSortOrder = useCallback((v: SortOrder) => { setSortOrderState(v); ssSet("mp-sort", v); }, []);
 
   const currentUserId = user?.id ?? "";
 
   /* ─── Persist notifications on change ─── */
   useEffect(() => {
-    if (hydrated) saveJson("myprompt-notifications", notifications);
+    if (hydrated) {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("myprompt-notifications", JSON.stringify(notifications));
+      }
+    }
   }, [notifications, hydrated]);
 
   const unreadCount = useMemo(() => notifications.filter(n => !n.read).length, [notifications]);
@@ -483,7 +505,8 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   const [folders, setFolders] = useState<Folder[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
 
-  const getFilteredPrompts = useCallback((): Prompt[] => {
+  // B-12: useMemo instead of useCallback for filtered prompts
+  const filteredPrompts = useMemo((): Prompt[] => {
     let result = prompts;
 
     // View filter: library = owned + favorited, trend = public
@@ -541,15 +564,17 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         break;
       case "updated":
       default:
-        // Already sorted by updated_at from DB
         break;
     }
 
-    // Pin-first: pinned prompts always appear at top
+    // Pin-first
     const pinned = result.filter(p => p.isPinned);
     const unpinned = result.filter(p => !p.isPinned);
     return [...pinned, ...unpinned];
   }, [prompts, view, currentPhase, visibilityFilter, searchQuery, favorites, currentUserId, sortOrder, selectedFolderId]);
+
+  // Backwards-compatible wrapper
+  const getFilteredPrompts = useCallback((): Prompt[] => filteredPrompts, [filteredPrompts]);
 
   /* ─── Toggle Pin ─── */
   const togglePin = useCallback((id: string): void => {
@@ -621,7 +646,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
 
   const store = useMemo<PromptStore>(() => ({
     prompts, favorites, likes, history, notifications, unreadCount, view, visibilityFilter, searchQuery,
-    selectedPromptId, currentPhase, editingPrompt, sortOrder, folders, selectedFolderId,
+    selectedPromptId, currentPhase, editingPrompt, sortOrder, folders, selectedFolderId, filteredPrompts,
     addPrompt, updatePrompt, deletePrompt, duplicateAsArrangement,
     toggleFavorite, toggleLike, isFavorited, isLiked, incrementUseCount, togglePin,
     setView, setVisibilityFilter, setSearchQuery, setSortOrder,
@@ -630,10 +655,11 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     addFolder, deleteFolder, setSelectedFolderId, moveToFolder, getRecentlyUsed,
   }), [
     prompts, favorites, likes, history, notifications, unreadCount, view, visibilityFilter, searchQuery,
-    selectedPromptId, currentPhase, editingPrompt, sortOrder, folders, selectedFolderId,
+    selectedPromptId, currentPhase, editingPrompt, sortOrder, folders, selectedFolderId, filteredPrompts,
     addPrompt, updatePrompt, deletePrompt, duplicateAsArrangement,
     toggleFavorite, toggleLike, isFavorited, isLiked, incrementUseCount, togglePin,
-    openEditor, closeEditor, getHistory, getFilteredPrompts, refreshPrompts, markAllNotificationsRead, setSortOrder,
+    setView, setVisibilityFilter, setSearchQuery, setSortOrder, setCurrentPhase,
+    openEditor, closeEditor, getHistory, getFilteredPrompts, refreshPrompts, markAllNotificationsRead,
     addFolder, deleteFolder, moveToFolder, getRecentlyUsed,
   ]);
 

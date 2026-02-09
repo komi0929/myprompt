@@ -27,7 +27,7 @@ import { markMilestone } from "@/components/OnboardingProgress";
 import { useAuth } from "@/components/AuthProvider";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useKeyboardShortcuts } from "@/lib/useKeyboardShortcuts";
-import { Search, Plus, Sparkles, X, CheckSquare } from "lucide-react";
+import { Search, Plus, Sparkles, X, CheckSquare, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
 import CommandPalette from "@/components/CommandPalette";
@@ -50,11 +50,10 @@ export default function Page(): React.ReactElement {
 }
 
 function PageContent(): React.ReactElement {
-  const { currentPhase, setCurrentPhase, getFilteredPrompts, searchQuery, setSearchQuery, openEditor, selectedPromptId } = usePromptStore();
+  const { currentPhase, setCurrentPhase, filteredPrompts, searchQuery, setSearchQuery, openEditor, selectedPromptId, setSelectedPromptId } = usePromptStore();
   const { isGuest } = useAuth();
   const { requireAuth } = useAuthGuard();
   useKeyboardShortcuts();
-  const filteredPrompts = getFilteredPrompts();
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [bulkMode, setBulkMode] = useState<BulkModeState>({ isActive: false, selectedIds: new Set() });
 
@@ -175,17 +174,45 @@ function PageContent(): React.ReactElement {
       </aside>
 
       {/* 3b. Mobile Detail Drawer */}
-      {mobileDetailOpen && selectedPromptId && (
+      {mobileDetailOpen && selectedPromptId && (() => {
+        const currentIndex = filteredPrompts.findIndex(p => p.id === selectedPromptId);
+        const hasPrev = currentIndex > 0;
+        const hasNext = currentIndex < filteredPrompts.length - 1;
+        const goTo = (dir: -1 | 1): void => {
+          const next = filteredPrompts[currentIndex + dir];
+          if (next) setSelectedPromptId(next.id);
+        };
+        return (
         <div className="lg:hidden fixed inset-0 z-50 bg-black/30 backdrop-blur-sm" onClick={() => setMobileDetailOpen(false)}>
           <div
             className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="sticky top-0 flex items-center justify-between p-3 bg-white/90 backdrop-blur-md border-b border-slate-100 rounded-t-2xl z-10">
-              <div className="w-10 h-1 rounded-full bg-slate-200 mx-auto" />
+              {/* V-01: Prev/Next navigation */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => goTo(-1)}
+                  disabled={!hasPrev}
+                  className="p-1.5 rounded-md hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  title="前のプロンプト"
+                >
+                  <ChevronLeft className="w-4 h-4 text-slate-500" />
+                </button>
+                <span className="text-[10px] text-slate-400 tabular-nums">{currentIndex + 1}/{filteredPrompts.length}</span>
+                <button
+                  onClick={() => goTo(1)}
+                  disabled={!hasNext}
+                  className="p-1.5 rounded-md hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  title="次のプロンプト"
+                >
+                  <ChevronRight className="w-4 h-4 text-slate-500" />
+                </button>
+              </div>
+              <div className="w-10 h-1 rounded-full bg-slate-200" />
               <button
                 onClick={() => setMobileDetailOpen(false)}
-                className="absolute right-3 top-3 p-1.5 hover:bg-slate-100 rounded-md transition-colors"
+                className="p-1.5 hover:bg-slate-100 rounded-md transition-colors"
               >
                 <X className="w-4 h-4 text-slate-400" />
               </button>
@@ -193,7 +220,8 @@ function PageContent(): React.ReactElement {
             <DetailPanel />
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Floating Create Button (auth-guarded, desktop only) */}
       {!isGuest && <div className="hidden md:block"><FloatingCreateButton /></div>}
