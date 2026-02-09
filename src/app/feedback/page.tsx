@@ -85,8 +85,8 @@ const STATUS_CONFIG = {
 /* ─── Tab Definitions ─── */
 type TabId = "features" | "feedback" | "changelog";
 const TABS: { id: TabId; label: string; icon: typeof Sparkles }[] = [
+  { id: "feedback", label: "改善要望・バグ報告", icon: MessageSquarePlus },
   { id: "features", label: "現在の機能", icon: Sparkles },
-  { id: "feedback", label: "みんなの声", icon: MessageSquarePlus },
   { id: "changelog", label: "改善履歴", icon: History },
 ];
 
@@ -103,7 +103,7 @@ const FEEDBACK_STATUS = {
 /* ═══════════════════════════════════════════ */
 function FeedbackPageContent(): React.ReactElement {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabId>("features");
+  const [activeTab, setActiveTab] = useState<TabId>("feedback");
   const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([]);
   const [changelog, setChangelog] = useState<ChangelogItem[]>([]);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
@@ -312,7 +312,7 @@ function FeedbackPageContent(): React.ReactElement {
 
       {/* Content */}
       <div className="max-w-3xl mx-auto px-4 py-6">
-        {loading ? (
+        {loading && activeTab !== "features" ? (
           <div className="flex justify-center py-20 text-slate-400 text-sm">読み込み中...</div>
         ) : (
           <>

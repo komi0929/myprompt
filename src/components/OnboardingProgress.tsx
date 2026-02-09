@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown, ChevronUp, Trophy, Sparkles } from "lucide-react";
 
@@ -24,17 +24,28 @@ const MILESTONES: Milestone[] = [
 ];
 
 /* ─── localStorage helpers ─── */
-const emptySubscribe = (): (() => void) => () => {};
+function getMilestoneSnapshot(): boolean[] {
+  return MILESTONES.map((m) => localStorage.getItem(m.storageKey) === "true");
+}
 
 function useMilestoneState(): boolean[] {
-  return MILESTONES.map((m) =>
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useSyncExternalStore(
-      emptySubscribe,
-      () => localStorage.getItem(m.storageKey) === "true",
-      () => false
-    )
-  );
+  const [state, setState] = useState<boolean[]>(() => {
+    if (typeof window === "undefined") return MILESTONES.map(() => false);
+    return getMilestoneSnapshot();
+  });
+
+  useEffect(() => {
+    // Re-read whenever a milestone is marked
+    const handler = (): void => setState(getMilestoneSnapshot());
+    window.addEventListener("ob-milestone-update", handler);
+    window.addEventListener("storage", handler);
+    return () => {
+      window.removeEventListener("ob-milestone-update", handler);
+      window.removeEventListener("storage", handler);
+    };
+  }, []);
+
+  return state;
 }
 
 /** Mark a milestone as completed. Call from actions in prompt-store etc. */
@@ -56,11 +67,10 @@ export default function OnboardingProgress(): React.ReactElement | null {
   const [activeHint, setActiveHint] = useState<string | null>(null);
 
   // Check if the user has dismissed onboarding progress
-  const isDismissed = useSyncExternalStore(
-    emptySubscribe,
-    () => localStorage.getItem("ob_progress_dismissed") === "true",
-    () => false
-  );
+  const [isDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("ob_progress_dismissed") === "true";
+  });
 
   if (isDismissed) return null;
 
