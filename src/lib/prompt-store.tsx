@@ -300,11 +300,12 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     setPrompts(prev => [newPrompt, ...prev]);
     setSelectedPromptId(newPrompt.id);
 
-    await supabase.from("prompt_history").insert({
+    const { error: histError } = await supabase.from("prompt_history").insert({
       prompt_id: newPrompt.id,
       title: newPrompt.title,
       content: newPrompt.content,
     });
+    if (histError) console.warn("prompt_history insert failed:", histError.message);
 
     trackEvent("prompt_create", { prompt_id: newPrompt.id, visibility: input.visibility, phase: input.phase });
     markMilestone("create");
@@ -354,11 +355,12 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       // Only create history entry for title/content changes (avoid bloat)
       if (updates.title !== undefined || updates.content !== undefined) {
         if (previousPrompt) {
-          await supabase.from("prompt_history").insert({
+          const { error: histError } = await supabase.from("prompt_history").insert({
             prompt_id: id,
             title: updates.title ?? previousPrompt.title,
             content: updates.content ?? previousPrompt.content,
           });
+          if (histError) console.warn("prompt_history insert failed:", histError.message);
         }
       }
     }

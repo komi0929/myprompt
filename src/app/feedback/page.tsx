@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
+import { showToast } from "@/components/ui/Toast";
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import {
   Lightbulb,
@@ -263,7 +264,7 @@ function FeedbackPageContent(): React.ReactElement {
 
     setSubmitting(false);
     if (insertError) {
-      // Show error but don't reset form so user can retry
+      showToast("投稿に失敗しました。もう一度お試しください");
       return;
     }
 
