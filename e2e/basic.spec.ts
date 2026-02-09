@@ -21,7 +21,7 @@ test.describe("MyPrompt — ページ表示テスト", () => {
 
   test("お問い合わせページが正常に読み込まれる", async ({ page }) => {
     await page.goto("/contact");
-    await expect(page.getByText("お問い合わせ")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "お問い合わせ" })).toBeVisible();
     await expect(page.locator("#contact-name")).toBeVisible();
     await expect(page.locator("#contact-email")).toBeVisible();
     await expect(page.locator("#contact-message")).toBeVisible();
