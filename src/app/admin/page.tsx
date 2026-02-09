@@ -363,7 +363,11 @@ function FlagsTab({ flags, setFlags }: { flags: FeatureFlag[]; setFlags: React.D
   const toggleFlag = async (id: string, current: boolean): Promise<void> => {
     const newVal = !current;
     setFlags(prev => prev.map(f => f.id === id ? { ...f, enabled: newVal } : f));
-    await (supabase.from("feature_flags" as "profiles") as unknown as { update: (data: Record<string, unknown>) => { eq: (col: string, val: string) => Promise<unknown> } }).update({ enabled: newVal, updated_at: new Date().toISOString() }).eq("id", id);
+    try {
+      await (supabase.from("feature_flags" as "profiles") as unknown as { update: (data: Record<string, unknown>) => { eq: (col: string, val: string) => Promise<{ error: unknown }> } }).update({ enabled: newVal, updated_at: new Date().toISOString() }).eq("id", id);
+    } catch {
+      setFlags(prev => prev.map(f => f.id === id ? { ...f, enabled: current } : f));
+    }
   };
 
   if (flags.length === 0) {
@@ -425,13 +429,21 @@ function ContactsTab({
   setSelectedId: (id: string | null) => void;
 }): React.ReactElement {
   const updateStatus = async (id: string, status: string): Promise<void> => {
-    await supabase.from("contacts").update({ status }).eq("id", id);
-    setContacts(prev => prev.map(c => c.id === id ? { ...c, status } : c));
+    const prev = contacts.find(c => c.id === id)?.status;
+    setContacts(p => p.map(c => c.id === id ? { ...c, status } : c));
+    const { error } = await supabase.from("contacts").update({ status }).eq("id", id);
+    if (error && prev) {
+      setContacts(p => p.map(c => c.id === id ? { ...c, status: prev } : c));
+    }
   };
   const deleteContact = async (id: string): Promise<void> => {
-    await supabase.from("contacts").delete().eq("id", id);
+    const backup = contacts.find(c => c.id === id);
     setContacts(prev => prev.filter(c => c.id !== id));
     if (selectedId === id) setSelectedId(null);
+    const { error } = await supabase.from("contacts").delete().eq("id", id);
+    if (error && backup) {
+      setContacts(prev => [...prev, backup]);
+    }
   };
 
   const selected = contacts.find(c => c.id === selectedId);
@@ -532,24 +544,37 @@ function FeedbackTab(props: FeedbackTabAllProps): React.ReactElement {
   } = props;
 
   const updateStatus = async (id: string, status: string): Promise<void> => {
-    await supabase.from("feedback").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
-    setItems(prev => prev.map(f => f.id === id ? { ...f, status: status as FeedbackItem["status"] } : f));
+    const prev = items.find(f => f.id === id)?.status;
+    setItems(p => p.map(f => f.id === id ? { ...f, status: status as FeedbackItem["status"] } : f));
+    const { error } = await supabase.from("feedback").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
+    if (error && prev) {
+      setItems(p => p.map(f => f.id === id ? { ...f, status: prev } : f));
+    }
   };
   const deleteFb = async (id: string): Promise<void> => {
-    await supabase.from("feedback").delete().eq("id", id);
+    const backup = items.find(f => f.id === id);
     setItems(prev => prev.filter(f => f.id !== id));
     if (selectedId === id) setSelectedId(null);
+    const { error } = await supabase.from("feedback").delete().eq("id", id);
+    if (error && backup) {
+      setItems(prev => [...prev, backup]);
+    }
   };
   const addChangelog = async (): Promise<void> => {
     if (!clTitle.trim()) return;
-    await supabase.from("changelog").insert({ version: clVersion.trim(), title: clTitle.trim(), description: clDesc.trim(), type: clType });
+    const { error } = await supabase.from("changelog").insert({ version: clVersion.trim(), title: clTitle.trim(), description: clDesc.trim(), type: clType });
+    if (error) return;
     setClVersion(""); setClTitle(""); setClDesc(""); setShowClForm(false);
     const { data } = await supabase.from("changelog").select("*").order("created_at", { ascending: false });
     setChangelog((data as ChangelogItem[]) ?? []);
   };
   const deleteChangelog = async (id: string): Promise<void> => {
-    await supabase.from("changelog").delete().eq("id", id);
+    const backup = changelog.find(c => c.id === id);
     setChangelog(prev => prev.filter(c => c.id !== id));
+    const { error } = await supabase.from("changelog").delete().eq("id", id);
+    if (error && backup) {
+      setChangelog(prev => [...prev, backup]);
+    }
   };
 
   const selected = items.find(f => f.id === selectedId);

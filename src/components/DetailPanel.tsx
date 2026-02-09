@@ -35,7 +35,7 @@ export function DetailPanel(): React.ReactElement {
     // Focus is set via autoFocus on the element
   }, []);
 
-  const saveInlineEdit = useCallback((): void => {
+  const saveInlineEdit = useCallback(async (): Promise<void> => {
     if (!prompt || !inlineField) return;
     const trimmed = inlineValue.trim();
     if (inlineField === "title" && !trimmed) {
@@ -48,7 +48,7 @@ export function DetailPanel(): React.ReactElement {
     }
     const update: Record<string, string | undefined> = {};
     update[inlineField] = inlineField === "notes" && !trimmed ? undefined : trimmed;
-    updatePrompt(prompt.id, update);
+    await updatePrompt(prompt.id, update);
     setInlineField(null);
     showToast("保存しました");
   }, [prompt, inlineField, inlineValue, updatePrompt]);

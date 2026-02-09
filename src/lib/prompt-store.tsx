@@ -243,7 +243,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         .select("prompt_id")
         .eq("user_id", user.id);
       if (!error && data) {
-        setLikes(data.map(l => l.prompt_id));
+        setLikes(data.map(l => l.prompt_id).filter((id): id is string => id !== null));
       }
     } catch {
       // ignore
