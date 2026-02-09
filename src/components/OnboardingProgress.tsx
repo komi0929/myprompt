@@ -74,7 +74,7 @@ export default function OnboardingProgress(): React.ReactElement | null {
   const [activeHint, setActiveHint] = useState<string | null>(null);
 
   // Check if the user has dismissed onboarding progress
-  const [isDismissed] = useState(() => {
+  const [isDismissed, setIsDismissed] = useState(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("ob_progress_dismissed") === "true";
   });
@@ -88,6 +88,7 @@ export default function OnboardingProgress(): React.ReactElement | null {
 
   const handleDismiss = (): void => {
     localStorage.setItem("ob_progress_dismissed", "true");
+    setIsDismissed(true);
   };
 
   return (

@@ -174,10 +174,26 @@ function FeedbackPageContent(): React.ReactElement {
       )
     );
 
-    await supabase.rpc("increment_feedback_like", {
+    const { error } = await supabase.rpc("increment_feedback_like", {
       p_feedback_id: feedbackId,
       p_session_id: sid,
     });
+    if (error) {
+      // Rollback optimistic update
+      setLikedIds(prev => {
+        const next = new Set(prev);
+        if (alreadyLiked) next.add(feedbackId);
+        else next.delete(feedbackId);
+        return next;
+      });
+      setFeedbackItems(prev =>
+        prev.map(f =>
+          f.id === feedbackId
+            ? { ...f, like_count: f.like_count + (alreadyLiked ? 1 : -1) }
+            : f
+        )
+      );
+    }
   };
 
   /* ─── Screenshot paste/upload ─── */
@@ -236,7 +252,7 @@ function FeedbackPageContent(): React.ReactElement {
       ? (user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.split("@")[0] ?? "ゲスト")
       : "ゲスト";
 
-    await supabase.from("feedback").insert({
+    const { error: insertError } = await supabase.from("feedback").insert({
       type: formType,
       title: formTitle.trim(),
       description: formDesc.trim(),
@@ -245,12 +261,17 @@ function FeedbackPageContent(): React.ReactElement {
       author_id: user?.id ?? null,
     });
 
-    // Reset form
+    setSubmitting(false);
+    if (insertError) {
+      // Show error but don't reset form so user can retry
+      return;
+    }
+
+    // Reset form only on success
     setFormTitle("");
     setFormDesc("");
     setFormScreenshot(null);
     setFormOpen(false);
-    setSubmitting(false);
 
     // Refresh
     await fetchFeedback();

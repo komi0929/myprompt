@@ -57,9 +57,9 @@ export default function BulkActionBar({
     exportPrompts(selected);
   }, [prompts, bulkMode.selectedIds]);
 
-  const handleMoveToFolder = useCallback((folderId: string | null): void => {
+  const handleMoveToFolder = useCallback(async (folderId: string | null): Promise<void> => {
     for (const id of bulkMode.selectedIds) {
-      updatePrompt(id, { folderId: folderId ?? undefined });
+      await updatePrompt(id, { folderId: folderId ?? undefined });
     }
     const fname = folders.find(f => f.id === folderId)?.name ?? "未分類";
     showToast(`${selectedCount}件を「${fname}」に移動 ✨`);

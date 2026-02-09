@@ -35,6 +35,38 @@
 - `database.types.ts` を自動生成して型安全を確保
 - Service Role Key はサーバーサイドのみで使用
 
+### DB書き込みルール（絶対遵守）
+
+#### 禁止パターン
+
+- `.then()` でDB結果を捨てる行為は **絶対禁止**（use countのような非重要データは例外：console.warnで記録）
+- `await supabase.from(...).update(...)` の戻り値の `error` を **無視禁止**
+- Optimistic UIを使う場合、**必ず失敗時のロールバック処理**を実装
+
+#### 必須パターン
+
+```typescript
+// ✅ 正しい: エラーチェック + ロールバック + ユーザー通知
+const prev = state; // ロールバック用にキャプチャ
+setState(optimisticValue); // Optimistic UI
+const { error } = await supabase.from("table").update(data).eq("id", id);
+if (error) {
+  setState(prev); // ロールバック
+  showToast("保存に失敗しました");
+  return;
+}
+```
+
+#### インターフェースとDBカラムの一致
+
+Promptインターフェースにフィールドを追加したら、以下3箇所を **必ず同時に** 更新：
+
+1. `DbPrompt` インターフェース
+2. `dbToPrompt` マッピング関数
+3. `addPrompt` / `updatePrompt` のDB書き込み部分
+
+1箇所でも漏れがあればバグ。3箇所セットで更新すること。
+
 ## 品質基準
 
 ### ビルド前チェック（必須）

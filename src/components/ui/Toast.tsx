@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Check, Undo2 } from "lucide-react";
 
@@ -36,15 +36,23 @@ export function copyToClipboard(text: string, label = "コピーしました"): 
 
 export default function ToastContainer(): React.ReactElement | null {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const timersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   const removeToast = useCallback((id: number) => {
     setToasts(prev => prev.filter(t => t.id !== id));
+    // Clean up timer reference
+    const timer = timersRef.current.get(id);
+    if (timer) {
+      clearTimeout(timer);
+      timersRef.current.delete(id);
+    }
   }, []);
 
   const addToast = useCallback((msg: ToastMessage) => {
     setToasts(prev => [...prev, msg]);
     const timeout = msg.duration ?? (msg.onUndo ? 5000 : 2500);
-    setTimeout(() => removeToast(msg.id), timeout);
+    const timer = setTimeout(() => removeToast(msg.id), timeout);
+    timersRef.current.set(msg.id, timer);
   }, [removeToast]);
 
   useEffect(() => {
