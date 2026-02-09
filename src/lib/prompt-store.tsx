@@ -109,34 +109,35 @@ function ssSet(key: string, value: unknown): void {
 /* ─── DB Row → Prompt ─── */
 interface DbPrompt {
   id: string;
-  user_id: string;
+  user_id: string | null;
   title: string;
   content: string;
-  tags: string[];
-  phase: string;
-  visibility: string;
+  tags: string[] | null;
+  phase: string | null;
+  visibility: string | null;
   parent_id: string | null;
-  like_count?: number;
-  use_count?: number;
-  is_pinned?: boolean;
-  folder_id?: string | null;
-  last_used_at?: string | null;
-  notes?: string | null;
-  rating?: string | null;
-  created_at: string;
-  updated_at: string;
-  profiles?: { display_name: string | null; avatar_url: string | null } | null;
+  like_count: number;
+  use_count: number;
+  is_pinned: boolean;
+  folder_id: string | null;
+  last_used_at: string | null;
+  notes: string | null;
+  rating: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  profiles?: { display_name: string | null; avatar_url: string | null }[] | null;
 }
 
 function dbToPrompt(row: DbPrompt): Prompt {
+  const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
   return {
     id: row.id,
     title: row.title,
     content: row.content,
     tags: row.tags ?? [],
-    phase: row.phase as Prompt["phase"],
-    visibility: row.visibility as Prompt["visibility"],
-    updatedAt: row.updated_at,
+    phase: (row.phase ?? "Implementation") as Prompt["phase"],
+    visibility: (row.visibility ?? "Private") as Prompt["visibility"],
+    updatedAt: row.updated_at ?? new Date().toISOString(),
     likeCount: row.like_count ?? 0,
     useCount: row.use_count ?? 0,
     isPinned: row.is_pinned ?? false,
@@ -144,9 +145,9 @@ function dbToPrompt(row: DbPrompt): Prompt {
     lastUsedAt: row.last_used_at ?? undefined,
     notes: row.notes ?? undefined,
     rating: (row.rating as Prompt["rating"]) ?? undefined,
-    authorId: row.user_id,
-    authorName: row.profiles?.display_name ?? undefined,
-    authorAvatarUrl: row.profiles?.avatar_url ?? undefined,
+    authorId: row.user_id ?? "",
+    authorName: profile?.display_name ?? undefined,
+    authorAvatarUrl: profile?.avatar_url ?? undefined,
     lineage: {
       parent: row.parent_id ?? undefined,
       isOriginal: !row.parent_id,
@@ -226,7 +227,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         .select("prompt_id")
         .eq("user_id", user.id);
       if (!error && data) {
-        setFavorites(data.map(f => f.prompt_id));
+        setFavorites(data.map(f => f.prompt_id).filter((id): id is string => id !== null));
       }
     } catch {
       // ignore
@@ -548,7 +549,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         .eq("prompt_id", id)
         .order("created_at", { ascending: true });
       if (!error && data) {
-        return data.map(d => ({ title: d.title, content: d.content, timestamp: d.created_at }));
+        return data.map(d => ({ title: d.title ?? "", content: d.content ?? "", timestamp: d.created_at ?? "" }));
       }
     } catch {
       // fallback

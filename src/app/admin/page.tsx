@@ -123,17 +123,17 @@ function AdminDashboard(): React.ReactElement {
 
     const [kpi, flagsData, contactsData, fbData, clData] = await Promise.all([
       fetchRecentKpi(14),
-      supabase.from("feature_flags").select("*").order("id"),
+      supabase.from("feature_flags" as "profiles").select("*").order("id") as unknown as { data: FeatureFlag[] | null },
       supabase.from("contacts").select("*").order("created_at", { ascending: false }),
       supabase.from("feedback").select("*").order("created_at", { ascending: false }),
       supabase.from("changelog").select("*").order("created_at", { ascending: false }),
     ]);
 
     setKpiData(kpi);
-    setFlags((flagsData.data as FeatureFlag[]) ?? []);
-    setContacts((contactsData.data as ContactEntry[]) ?? []);
-    setFeedbackItems((fbData.data as FeedbackItem[]) ?? []);
-    setChangelog((clData.data as ChangelogItem[]) ?? []);
+    setFlags(flagsData.data ?? []);
+    setContacts((contactsData.data as unknown as ContactEntry[]) ?? []);
+    setFeedbackItems((fbData.data as unknown as FeedbackItem[]) ?? []);
+    setChangelog((clData.data as unknown as ChangelogItem[]) ?? []);
     setFetching(false);
   }, []);
 
@@ -363,7 +363,7 @@ function FlagsTab({ flags, setFlags }: { flags: FeatureFlag[]; setFlags: React.D
   const toggleFlag = async (id: string, current: boolean): Promise<void> => {
     const newVal = !current;
     setFlags(prev => prev.map(f => f.id === id ? { ...f, enabled: newVal } : f));
-    await supabase.from("feature_flags").update({ enabled: newVal, updated_at: new Date().toISOString() }).eq("id", id);
+    await (supabase.from("feature_flags" as "profiles") as unknown as { update: (data: Record<string, unknown>) => { eq: (col: string, val: string) => Promise<unknown> } }).update({ enabled: newVal, updated_at: new Date().toISOString() }).eq("id", id);
   };
 
   if (flags.length === 0) {

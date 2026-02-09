@@ -52,8 +52,8 @@ export function trackEvent(
   // 1. Fire-and-forget insert to Supabase
   void (async () => {
     try {
-      await supabase
-        .from("analytics_events")
+      await (supabase
+        .from("analytics_events" as "profiles") as unknown as { insert: (data: Record<string, unknown>) => Promise<unknown> })
         .insert({
           event_name: eventName,
           session_id: sessionId,
@@ -87,7 +87,7 @@ function getCurrentUserId(): string | null {
 
 /* ─── Aggregate Today's KPI (called from admin dashboard) ─── */
 export async function aggregateDailyKpi(date: string): Promise<void> {
-  await supabase.rpc("aggregate_daily_kpi", { target_date: date });
+  await (supabase.rpc as unknown as (fn: string, params: Record<string, unknown>) => Promise<unknown>)("aggregate_daily_kpi", { target_date: date });
 }
 
 /* ─── Fetch KPI data for admin dashboard ─── */
@@ -106,9 +106,9 @@ export interface DailyKpi {
 
 export async function fetchRecentKpi(days: number = 7): Promise<DailyKpi[]> {
   const { data } = await supabase
-    .from("daily_kpi")
+    .from("daily_kpi" as "profiles")
     .select("*")
     .order("date", { ascending: false })
-    .limit(days);
-  return (data as DailyKpi[]) ?? [];
+    .limit(days) as unknown as { data: DailyKpi[] | null };
+  return data ?? [];
 }

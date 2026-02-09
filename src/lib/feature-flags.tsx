@@ -33,11 +33,11 @@ export function FeatureFlagsProvider({ children }: { children: ReactNode }): Rea
     const load = async (): Promise<void> => {
       try {
         const { data } = await supabase
-          .from("feature_flags")
-          .select("id, enabled");
+          .from("feature_flags" as "profiles")
+          .select("id, enabled") as unknown as { data: { id: string; enabled: boolean }[] | null };
         if (!cancelled && data) {
           const map: Record<string, boolean> = {};
-          for (const row of data as { id: string; enabled: boolean }[]) {
+          for (const row of data) {
             map[row.id] = row.enabled;
           }
           setFlags(map);

@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:types": "npx supabase gen types typescript --project-id parfxkcytzgwhzgkpzjx | Out-File -Encoding utf8 src/lib/database.types.ts",
+    "test:e2e": "npx playwright test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
@@ -19,6 +21,7 @@
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
