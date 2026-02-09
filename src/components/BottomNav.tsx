@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Library, TrendingUp, Plus, User } from "lucide-react";
+import { Library, TrendingUp, Plus, User, HelpCircle } from "lucide-react";
 import { usePromptStore } from "@/lib/prompt-store";
 import { useAuth } from "@/components/AuthProvider";
 import { useAuthGuard } from "@/lib/useAuthGuard";
@@ -42,6 +42,10 @@ export default function BottomNav(): React.ReactElement {
             <Plus className="w-6 h-6 text-slate-800" />
           </button>
         )}
+        <Link href="/guide" className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px]">
+          <HelpCircle className="w-5 h-5 text-slate-400" />
+          <span className="text-[11px] text-slate-400">ガイド</span>
+        </Link>
         <Link href="/account" className="flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px]">
           <User className="w-5 h-5 text-slate-400" />
           <span className="text-[11px] text-slate-400">アカウント</span>

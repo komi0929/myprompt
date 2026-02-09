@@ -5,6 +5,7 @@ import { type Phase, type Prompt, type Folder } from "@/lib/mock-data";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
 import { trackEvent } from "@/lib/analytics";
+import { markMilestone } from "@/components/OnboardingProgress";
 
 /* ─── History Snapshot ─── */
 export type SortOrder = "updated" | "created" | "useCount" | "likes" | "title";
@@ -277,8 +278,10 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     });
 
     trackEvent("prompt_create", { prompt_id: newPrompt.id, visibility: input.visibility, phase: input.phase });
+    markMilestone("create");
     if (input.visibility === "Public") {
       trackEvent("prompt_publish", { prompt_id: newPrompt.id });
+      markMilestone("publish");
     }
 
     return newPrompt.id;
@@ -349,6 +352,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       } else {
         await supabase.from("favorites").insert({ user_id: user.id, prompt_id: id });
         trackEvent("prompt_favorite", { prompt_id: id });
+        markMilestone("favorite");
       }
     }
   }, [favorites, user]);
@@ -369,6 +373,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     } else {
       await supabase.from("likes").insert({ user_id: user.id, prompt_id: id });
       trackEvent("prompt_like", { prompt_id: id });
+      markMilestone("like");
     }
   }, [likes, user]);
 
@@ -387,6 +392,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       supabase.from("prompts").update({ last_used_at: now }).eq("id", id).then();
     }
     trackEvent("prompt_copy", { prompt_id: id });
+    markMilestone("copy");
   }, [user]);
 
   const openEditor = useCallback((prompt?: Prompt): void => {
