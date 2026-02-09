@@ -335,7 +335,10 @@ function FeedbackPageContent(): React.ReactElement {
       {/* Content */}
       <div className="max-w-3xl mx-auto px-4 py-6">
         {loading && activeTab !== "features" ? (
-          <div className="flex justify-center py-20 text-slate-400 text-sm">読み込み中...</div>
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <div className="w-8 h-8 border-2 border-yellow-300 border-t-yellow-500 rounded-full animate-spin" />
+            <span className="text-slate-400 text-sm">読み込み中...</span>
+          </div>
         ) : (
           <>
             {activeTab === "features" && <FeaturesTab />}

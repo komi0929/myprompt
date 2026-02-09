@@ -237,6 +237,9 @@ function PageContent(): React.ReactElement {
 }
 
 function EmptyState({ onCreateFirst }: { onCreateFirst: () => void }): React.ReactElement {
+  const { isGuest } = useAuth();
+  const { setView } = usePromptStore();
+
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
       <div className="w-16 h-16 rounded-xl bg-yellow-50 flex items-center justify-center mb-5">
@@ -248,13 +251,23 @@ function EmptyState({ onCreateFirst }: { onCreateFirst: () => void }): React.Rea
       <p className="text-slate-400 text-sm mb-5 max-w-xs leading-relaxed">
         ChatGPTやCursorで使えるプロンプトを<br />メモしてみましょう！
       </p>
-      <button
-        onClick={onCreateFirst}
-        className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-slate-800 font-semibold px-6 py-3 rounded-xl shadow-md shadow-yellow-200 transition-all hover:scale-105 active:scale-[0.97] text-sm"
-      >
-        <Plus className="w-4 h-4" />
-        最初のプロンプトをメモする
-      </button>
+      <div className="flex flex-col gap-3 items-center">
+        <button
+          onClick={onCreateFirst}
+          className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-slate-800 font-semibold px-6 py-3 rounded-xl shadow-md shadow-yellow-200 transition-all hover:scale-105 active:scale-[0.97] text-sm"
+        >
+          <Plus className="w-4 h-4" />
+          最初のプロンプトをメモする
+        </button>
+        {isGuest && (
+          <button
+            onClick={() => setView("trend")}
+            className="text-sm text-slate-400 hover:text-yellow-600 transition-colors underline underline-offset-2"
+          >
+            まずは公開プロンプトを見てみる 👀
+          </button>
+        )}
+      </div>
     </div>
   );
 }

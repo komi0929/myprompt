@@ -29,7 +29,7 @@ export default function BottomNav(): React.ReactElement {
         />
         <NavItem
           icon={<TrendingUp className="w-5 h-5" />}
-          label="みんなの"
+          label="公開"
           active={view === "trend"}
           onClick={() => setView("trend")}
         />
