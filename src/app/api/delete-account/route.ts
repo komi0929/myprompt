@@ -37,7 +37,15 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     // Delete user data first (cascade should handle most, but be explicit)
+    await supabaseAdmin.from("likes").delete().eq("user_id", userId);
     await supabaseAdmin.from("favorites").delete().eq("user_id", userId);
+    await supabaseAdmin.from("folders").delete().eq("user_id", userId);
+    // Delete prompt_history for user's prompts before deleting prompts
+    const { data: userPrompts } = await supabaseAdmin.from("prompts").select("id").eq("user_id", userId) as { data: { id: string }[] | null };
+    if (userPrompts && userPrompts.length > 0) {
+      const promptIds = userPrompts.map(p => p.id);
+      await supabaseAdmin.from("prompt_history").delete().in("prompt_id", promptIds);
+    }
     await supabaseAdmin.from("prompts").delete().eq("user_id", userId);
     await supabaseAdmin.from("profiles").delete().eq("id", userId);
 

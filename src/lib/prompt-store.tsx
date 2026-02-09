@@ -316,6 +316,10 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   }, [user]);
 
   const updatePrompt = useCallback(async (id: string, updates: Partial<Omit<Prompt, "id">>): Promise<void> => {
+    // Capture previous state for rollback
+    const previousPrompt = prompts.find(p => p.id === id);
+
+    // Optimistic UI update
     setPrompts(prev =>
       prev.map(p => {
         if (p.id !== id) return p;
@@ -335,15 +339,26 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       if (updates.isPinned !== undefined) dbUpdates.is_pinned = updates.isPinned;
       if (updates.folderId !== undefined) dbUpdates.folder_id = updates.folderId ?? null;
 
-      await supabase.from("prompts").update(dbUpdates).eq("id", id).eq("user_id", user.id);
+      const { error } = await supabase.from("prompts").update(dbUpdates).eq("id", id).eq("user_id", user.id);
 
-      const prompt = prompts.find(p => p.id === id);
-      if (prompt) {
-        await supabase.from("prompt_history").insert({
-          prompt_id: id,
-          title: updates.title ?? prompt.title,
-          content: updates.content ?? prompt.content,
-        });
+      if (error) {
+        // Rollback optimistic update
+        if (previousPrompt) {
+          setPrompts(prev => prev.map(p => p.id === id ? previousPrompt : p));
+        }
+        showToast("更新の保存に失敗しました");
+        return;
+      }
+
+      // Only create history entry for title/content changes (avoid bloat)
+      if (updates.title !== undefined || updates.content !== undefined) {
+        if (previousPrompt) {
+          await supabase.from("prompt_history").insert({
+            prompt_id: id,
+            title: updates.title ?? previousPrompt.title,
+            content: updates.content ?? previousPrompt.content,
+          });
+        }
       }
     }
   }, [user, prompts]);
@@ -364,10 +379,17 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     if (selectedPromptId === id) setSelectedPromptId(null);
 
     // Schedule actual DB delete after 5s (matches Undo toast duration)
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       deleteTimers.current.delete(id);
       if (user) {
-        supabase.from("prompts").delete().eq("id", id).eq("user_id", user.id).then();
+        const { error } = await supabase.from("prompts").delete().eq("id", id).eq("user_id", user.id);
+        if (error) {
+          // Restore on failure
+          if (deletedPrompt) {
+            setPrompts(prev => [deletedPrompt, ...prev]);
+          }
+          showToast("削除に失敗しました。プロンプトを復元しました");
+        }
       }
     }, 5000);
     deleteTimers.current.set(id, timer);
@@ -414,15 +436,25 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   /* ─── Favorite toggle ─── */
   const toggleFavorite = useCallback(async (id: string): Promise<void> => {
     const isFav = favorites.includes(id);
+    // Optimistic update
     setFavorites(prev => isFav ? prev.filter(fid => fid !== id) : [...prev, id]);
 
     if (user) {
       if (isFav) {
-        await supabase.from("favorites").delete().eq("user_id", user.id).eq("prompt_id", id);
+        const { error } = await supabase.from("favorites").delete().eq("user_id", user.id).eq("prompt_id", id);
+        if (error) {
+          setFavorites(prev => [...prev, id]); // Rollback
+          showToast("お気に入りの解除に失敗しました");
+        }
       } else {
-        await supabase.from("favorites").insert({ user_id: user.id, prompt_id: id });
-        trackEvent("prompt_favorite", { prompt_id: id });
-        markMilestone("favorite");
+        const { error } = await supabase.from("favorites").insert({ user_id: user.id, prompt_id: id });
+        if (error) {
+          setFavorites(prev => prev.filter(fid => fid !== id)); // Rollback
+          showToast("お気に入りの追加に失敗しました");
+        } else {
+          trackEvent("prompt_favorite", { prompt_id: id });
+          markMilestone("favorite");
+        }
       }
     }
   }, [favorites, user]);
@@ -439,11 +471,24 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     }));
 
     if (alreadyLiked) {
-      await supabase.from("likes").delete().eq("user_id", user.id).eq("prompt_id", id);
+      const { error } = await supabase.from("likes").delete().eq("user_id", user.id).eq("prompt_id", id);
+      if (error) {
+        // Rollback
+        setLikes(prev => [...prev, id]);
+        setPrompts(prev => prev.map(p => p.id === id ? { ...p, likeCount: p.likeCount + 1 } : p));
+        showToast("いいねの解除に失敗しました");
+      }
     } else {
-      await supabase.from("likes").insert({ user_id: user.id, prompt_id: id });
-      trackEvent("prompt_like", { prompt_id: id });
-      markMilestone("like");
+      const { error } = await supabase.from("likes").insert({ user_id: user.id, prompt_id: id });
+      if (error) {
+        // Rollback
+        setLikes(prev => prev.filter(lid => lid !== id));
+        setPrompts(prev => prev.map(p => p.id === id ? { ...p, likeCount: p.likeCount - 1 } : p));
+        showToast("いいねに失敗しました");
+      } else {
+        trackEvent("prompt_like", { prompt_id: id });
+        markMilestone("like");
+      }
     }
   }, [likes, user]);
 
@@ -458,8 +503,13 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       return { ...p, useCount: (p.useCount ?? 0) + 1, lastUsedAt: now };
     }));
     if (user) {
-      supabase.rpc("increment_use_count", { prompt_id: id }).then();
-      supabase.from("prompts").update({ last_used_at: now }).eq("id", id).then();
+      // Use count is non-critical — log errors but don't rollback UI
+      supabase.rpc("increment_use_count", { prompt_id: id }).then(({ error }) => {
+        if (error) console.warn("increment_use_count failed:", error.message);
+      });
+      supabase.from("prompts").update({ last_used_at: now }).eq("id", id).then(({ error }) => {
+        if (error) console.warn("last_used_at update failed:", error.message);
+      });
     }
     trackEvent("prompt_copy", { prompt_id: id });
     markMilestone("copy");
@@ -594,14 +644,23 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         if (p.id !== id) return p;
         const newPinned = !p.isPinned;
         // Max 5 pinned
-        if (newPinned && pinnedCount >= 5) return p;
-        newPinnedValue = newPinned; // Capture the actual new value
+        if (newPinned && pinnedCount >= 5) {
+          showToast("ピン留めは最大5件までです");
+          return p;
+        }
+        newPinnedValue = newPinned;
         return { ...p, isPinned: newPinned };
       });
     });
-    // Use the value captured from inside setPrompts (avoids stale closure)
     if (user && newPinnedValue !== null) {
-      supabase.from("prompts").update({ is_pinned: newPinnedValue }).eq("id", id).then();
+      const pinnedVal = newPinnedValue;
+      supabase.from("prompts").update({ is_pinned: pinnedVal }).eq("id", id).then(({ error }) => {
+        if (error) {
+          // Rollback
+          setPrompts(prev => prev.map(p => p.id === id ? { ...p, isPinned: !pinnedVal } : p));
+          showToast("ピン留めの更新に失敗しました");
+        }
+      });
     }
   }, [user]);
 
@@ -622,8 +681,12 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     const newFolder: Folder = { id: tempId, name, color, sortOrder: folders.length };
     setFolders(prev => [...prev, newFolder]);
     if (user) {
-      supabase.from("folders").insert({ user_id: user.id, name, color, sort_order: folders.length }).select("id").single().then(({ data }) => {
-        if (data) {
+      supabase.from("folders").insert({ user_id: user.id, name, color, sort_order: folders.length }).select("id").single().then(({ data, error }) => {
+        if (error) {
+          // Rollback
+          setFolders(prev => prev.filter(f => f.id !== tempId));
+          showToast("フォルダの作成に失敗しました");
+        } else if (data) {
           setFolders(prev => prev.map(f => f.id === tempId ? { ...f, id: data.id } : f));
         }
       });
@@ -631,20 +694,39 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   }, [user, folders.length]);
 
   const deleteFolder = useCallback((id: string): void => {
+    const deletedFolder = folders.find(f => f.id === id);
+    const affectedPrompts = prompts.filter(p => p.folderId === id);
     setFolders(prev => prev.filter(f => f.id !== id));
     setPrompts(prev => prev.map(p => p.folderId === id ? { ...p, folderId: undefined } : p));
     if (selectedFolderId === id) setSelectedFolderId(null);
     if (user) {
-      supabase.from("folders").delete().eq("id", id).then();
+      supabase.from("folders").delete().eq("id", id).then(({ error }) => {
+        if (error) {
+          // Rollback
+          if (deletedFolder) setFolders(prev => [...prev, deletedFolder]);
+          setPrompts(prev => prev.map(p => {
+            const was = affectedPrompts.find(ap => ap.id === p.id);
+            return was ? { ...p, folderId: was.folderId } : p;
+          }));
+          showToast("フォルダの削除に失敗しました");
+        }
+      });
     }
-  }, [user, selectedFolderId]);
+  }, [user, selectedFolderId, folders, prompts]);
 
   const moveToFolder = useCallback((promptId: string, folderId: string | null): void => {
+    const previousFolderId = prompts.find(p => p.id === promptId)?.folderId;
     setPrompts(prev => prev.map(p => p.id === promptId ? { ...p, folderId: folderId ?? undefined } : p));
     if (user) {
-      supabase.from("prompts").update({ folder_id: folderId }).eq("id", promptId).then();
+      supabase.from("prompts").update({ folder_id: folderId }).eq("id", promptId).then(({ error }) => {
+        if (error) {
+          // Rollback
+          setPrompts(prev => prev.map(p => p.id === promptId ? { ...p, folderId: previousFolderId } : p));
+          showToast("フォルダ移動に失敗しました");
+        }
+      });
     }
-  }, [user]);
+  }, [user, prompts]);
 
   const getRecentlyUsed = useCallback((): Prompt[] => {
     return prompts
