@@ -23,7 +23,6 @@ import CopyBuffer from "@/components/CopyBuffer";
 import BulkActionBar from "@/components/BulkActionBar";
 import type { BulkModeState } from "@/components/BulkActionBar";
 import OnboardingProgress from "@/components/OnboardingProgress";
-import OnboardingTooltip from "@/components/OnboardingTooltip";
 import { markMilestone } from "@/components/OnboardingProgress";
 import { useAuth } from "@/components/AuthProvider";
 import { useAuthGuard } from "@/lib/useAuthGuard";
@@ -106,21 +105,17 @@ function PageContent(): React.ReactElement {
         {/* Search Bar */}
         <div className="px-4 md:px-6 pt-2 md:pt-3 pb-1 md:pb-2 z-20">
           <div className="relative max-w-4xl mx-auto">
-            <OnboardingTooltip tipId="search_bar" message="💡 #タグ名 でタグ検索もできます。Ctrl+K でどこからでも一発検索！" position="bottom" delay={3000}>
-              <div className="w-full relative">
-                <Search className="absolute left-3 md:left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={e => {
-                    setSearchQuery(e.target.value);
-                    if (e.target.value.length > 0) markMilestone("search");
-                  }}
-                  placeholder="プロンプトを検索..."
-                  className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-400 transition-all shadow-sm hover:shadow"
-                />
-              </div>
-            </OnboardingTooltip>
+            <Search className="absolute left-3 md:left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => {
+                setSearchQuery(e.target.value);
+                if (e.target.value.length > 0) markMilestone("search");
+              }}
+              placeholder="プロンプトを検索..."
+              className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-400 transition-all shadow-sm hover:shadow"
+            />
           </div>
         </div>
 

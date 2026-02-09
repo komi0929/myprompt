@@ -99,6 +99,7 @@ export default function WelcomeOverlay({
     }
   }, [currentStep]);
 
+  // Spotlight position requires DOM measurement after render
   useEffect(() => {
     updateHighlight();
     window.addEventListener("resize", updateHighlight);

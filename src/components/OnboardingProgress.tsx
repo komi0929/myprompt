@@ -64,6 +64,9 @@ export default function OnboardingProgress(): React.ReactElement | null {
 
   if (isDismissed) return null;
 
+  // Don't show until user has completed at least 1 milestone (after welcome tour)
+  if (completedCount === 0) return null;
+
   const percentage = Math.round((completedCount / total) * 100);
 
   const handleDismiss = (): void => {
