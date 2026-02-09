@@ -122,6 +122,7 @@ interface DbPrompt {
   folder_id?: string | null;
   last_used_at?: string | null;
   notes?: string | null;
+  rating?: string | null;
   created_at: string;
   updated_at: string;
   profiles?: { display_name: string | null; avatar_url: string | null } | null;
@@ -142,6 +143,7 @@ function dbToPrompt(row: DbPrompt): Prompt {
     folderId: row.folder_id ?? undefined,
     lastUsedAt: row.last_used_at ?? undefined,
     notes: row.notes ?? undefined,
+    rating: (row.rating as Prompt["rating"]) ?? undefined,
     authorId: row.user_id,
     authorName: row.profiles?.display_name ?? undefined,
     authorAvatarUrl: row.profiles?.avatar_url ?? undefined,
@@ -272,6 +274,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   const addPrompt = useCallback(async (input: Omit<Prompt, "id" | "updatedAt" | "likeCount">): Promise<string> => {
     if (!user) {
       // Guests cannot create prompts
+      showToast("ログインが必要です");
       return "";
     }
     const { data, error } = await supabase
@@ -284,10 +287,12 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         phase: input.phase,
         visibility: input.visibility,
         parent_id: input.lineage.parent ?? null,
+        notes: input.notes ?? null,
       })
       .select("*, profiles(display_name, avatar_url)")
       .single();
     if (error || !data) {
+      showToast("保存に失敗しました。もう一度お試しください");
       return "";
     }
     const newPrompt = dbToPrompt(data);
@@ -325,6 +330,10 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
       if (updates.phase !== undefined) dbUpdates.phase = updates.phase;
       if (updates.visibility !== undefined) dbUpdates.visibility = updates.visibility;
+      if ('notes' in updates) dbUpdates.notes = updates.notes ?? null;
+      if ('rating' in updates) dbUpdates.rating = updates.rating ?? null;
+      if (updates.isPinned !== undefined) dbUpdates.is_pinned = updates.isPinned;
+      if (updates.folderId !== undefined) dbUpdates.folder_id = updates.folderId ?? null;
 
       await supabase.from("prompts").update(dbUpdates).eq("id", id).eq("user_id", user.id);
 

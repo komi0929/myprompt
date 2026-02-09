@@ -12,6 +12,10 @@ interface ExportData {
     tags: string[];
     phase: string;
     visibility: string;
+    notes?: string;
+    useCount?: number;
+    isPinned?: boolean;
+    rating?: string;
   }>;
 }
 
@@ -25,6 +29,10 @@ export function exportPrompts(prompts: Prompt[]): void {
       tags: p.tags,
       phase: p.phase,
       visibility: p.visibility,
+      notes: p.notes,
+      useCount: p.useCount,
+      isPinned: p.isPinned,
+      rating: p.rating,
     })),
   };
 
@@ -61,7 +69,8 @@ export function parseImportFile(file: File): Promise<ExportData> {
 export function exportAsMarkdown(prompts: Prompt[]): void {
   const lines = prompts.map(p => {
     const tagStr = p.tags.length > 0 ? `\nTags: ${p.tags.map(t => `#${t}`).join(" ")}` : "";
-    return `## ${p.title}\n\n${p.content}${tagStr}\n\n---\n`;
+    const notesStr = p.notes ? `\n\n> 💡 補足: ${p.notes}` : "";
+    return `## ${p.title}\n\n${p.content}${tagStr}${notesStr}\n\n---\n`;
   });
 
   const content = `# MyPrompt エクスポート\n\nエクスポート日: ${new Date().toLocaleDateString("ja-JP")}\nプロンプト数: ${prompts.length}\n\n---\n\n${lines.join("\n")}`;
