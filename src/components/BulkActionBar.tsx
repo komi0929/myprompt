@@ -30,13 +30,13 @@ export default function BulkActionBar({
     setBulkMode(() => ({ isActive: false, selectedIds: new Set() }));
   }, [setBulkMode]);
 
-  const handleAddTag = useCallback((): void => {
+  const handleAddTag = useCallback(async (): Promise<void> => {
     if (!tagValue.trim()) return;
     const tag = tagValue.trim();
     for (const id of bulkMode.selectedIds) {
       const p = prompts.find(pr => pr.id === id);
       if (p && !p.tags.includes(tag)) {
-        updatePrompt(id, { tags: [...p.tags, tag] });
+        await updatePrompt(id, { tags: [...p.tags, tag] });
       }
     }
     showToast(`${selectedCount}件に「${tag}」タグを追加 ✨`);
@@ -44,11 +44,11 @@ export default function BulkActionBar({
     setShowTagInput(false);
   }, [tagValue, bulkMode.selectedIds, prompts, updatePrompt, selectedCount]);
 
-  const handleDeleteSelected = useCallback((): void => {
+  const handleDeleteSelected = useCallback(async (): Promise<void> => {
+    if (!window.confirm(`${selectedCount}件のプロンプトを削除しますか？`)) return;
     for (const id of bulkMode.selectedIds) {
-      deletePrompt(id);
+      await deletePrompt(id);
     }
-    showToast(`${selectedCount}件を削除しました`);
     handleClose();
   }, [bulkMode.selectedIds, deletePrompt, selectedCount, handleClose]);
 

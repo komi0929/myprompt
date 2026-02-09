@@ -76,7 +76,13 @@ export default function LoginModal(): React.ReactElement | null {
         <div className="px-6 pb-6 space-y-3">
           {/* Google (primary - like Nani) */}
           <button
-            onClick={() => signInWithGoogle()}
+            onClick={async () => {
+              try {
+                await signInWithGoogle();
+              } catch {
+                showToast("ログインに失敗しました。ポップアップを許可してください");
+              }
+            }}
             className="w-full flex items-center justify-center gap-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3.5 rounded-full shadow-lg transition-all hover:scale-[1.01] active:scale-[0.99] text-sm"
           >
             <GoogleIcon className="w-5 h-5" />
@@ -85,7 +91,13 @@ export default function LoginModal(): React.ReactElement | null {
 
           {/* GitHub */}
           <button
-            onClick={() => signInWithGitHub()}
+            onClick={async () => {
+              try {
+                await signInWithGitHub();
+              } catch {
+                showToast("ログインに失敗しました。ポップアップを許可してください");
+              }
+            }}
             className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-50 text-slate-700 font-semibold py-3.5 rounded-full border border-slate-200 shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99] text-sm"
           >
             <Github className="w-5 h-5" />

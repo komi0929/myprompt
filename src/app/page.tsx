@@ -56,13 +56,14 @@ function PageContent(): React.ReactElement {
   useKeyboardShortcuts();
   const filteredPrompts = getFilteredPrompts();
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
-  const [lastMobileSelectedId, setLastMobileSelectedId] = useState<string | null>(null);
   const [bulkMode, setBulkMode] = useState<BulkModeState>({ isActive: false, selectedIds: new Set() });
 
-  // Derive mobile detail open from selectedPromptId changes
-  if (selectedPromptId && selectedPromptId !== lastMobileSelectedId) {
-    setLastMobileSelectedId(selectedPromptId);
-    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+  // React-approved pattern: "Adjusting state when a prop changes"
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [prevSelectedId, setPrevSelectedId] = useState<string | null>(null);
+  if (selectedPromptId !== prevSelectedId) {
+    setPrevSelectedId(selectedPromptId);
+    if (selectedPromptId && typeof window !== "undefined" && window.innerWidth < 1024) {
       setMobileDetailOpen(true);
     }
   }

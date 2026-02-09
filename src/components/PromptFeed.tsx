@@ -76,7 +76,6 @@ function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { pro
     e.stopPropagation();
     if (!requireAuth("プロンプトの削除")) return;
     deletePrompt(prompt.id);
-    showToast("削除しました");
   };
 
   const isBulkSelected = bulkMode?.isActive && bulkMode.selectedIds.has(prompt.id);

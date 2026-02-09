@@ -2,18 +2,27 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
+import { Check, Undo2 } from "lucide-react";
 
 interface ToastMessage {
   id: number;
   text: string;
+  /** Optional undo callback — when provided, shows an "元に戻す" button */
+  onUndo?: () => void;
+  /** Duration in ms before auto-dismiss (default 2500, with undo: 5000) */
+  duration?: number;
 }
 
 let toastId = 0;
 const listeners: Array<(msg: ToastMessage) => void> = [];
 
-export function showToast(text: string): void {
-  const msg: ToastMessage = { id: toastId++, text };
+export function showToast(text: string, options?: { onUndo?: () => void; duration?: number }): void {
+  const msg: ToastMessage = {
+    id: toastId++,
+    text,
+    onUndo: options?.onUndo,
+    duration: options?.duration,
+  };
   listeners.forEach(fn => fn(msg));
 }
 
@@ -28,12 +37,15 @@ export function copyToClipboard(text: string, label = "コピーしました"): 
 export default function ToastContainer(): React.ReactElement | null {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
+  const removeToast = useCallback((id: number) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
   const addToast = useCallback((msg: ToastMessage) => {
     setToasts(prev => [...prev, msg]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== msg.id));
-    }, 2500);
-  }, []);
+    const timeout = msg.duration ?? (msg.onUndo ? 5000 : 2500);
+    setTimeout(() => removeToast(msg.id), timeout);
+  }, [removeToast]);
 
   useEffect(() => {
     listeners.push(addToast);
@@ -51,12 +63,24 @@ export default function ToastContainer(): React.ReactElement | null {
         <div
           key={t.id}
           className={cn(
-            "flex items-center gap-2 bg-slate-800 text-white px-6 py-3 rounded-[20px] shadow-xl",
+            "flex items-center gap-2 bg-slate-800 text-white px-5 py-3 rounded-[20px] shadow-xl",
             "text-sm font-bold tracking-wide animate-in fade-in slide-in-from-bottom-4 duration-300"
           )}
         >
-          <Check className="w-4 h-4 text-yellow-400" />
-          {t.text}
+          <Check className="w-4 h-4 text-yellow-400 shrink-0" />
+          <span>{t.text}</span>
+          {t.onUndo && (
+            <button
+              onClick={() => {
+                t.onUndo?.();
+                removeToast(t.id);
+              }}
+              className="ml-2 flex items-center gap-1 text-yellow-400 hover:text-yellow-300 font-semibold text-xs px-2 py-1 rounded-lg hover:bg-white/10 transition-colors shrink-0"
+            >
+              <Undo2 className="w-3.5 h-3.5" />
+              元に戻す
+            </button>
+          )}
         </div>
       ))}
     </div>

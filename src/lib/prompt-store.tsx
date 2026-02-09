@@ -1,11 +1,12 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { type Phase, type Prompt, type Folder } from "@/lib/mock-data";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
 import { trackEvent } from "@/lib/analytics";
 import { markMilestone } from "@/components/OnboardingProgress";
+import { showToast } from "@/components/ui/Toast";
 
 /* ─── History Snapshot ─── */
 export type SortOrder = "updated" | "created" | "useCount" | "likes" | "title";
@@ -316,15 +317,53 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     }
   }, [user, prompts]);
 
+  // Pending delete timers — cleared on Undo
+  const deleteTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
   const deletePrompt = useCallback(async (id: string): Promise<void> => {
+    // Capture the prompt before removing from UI (for undo restoration)
+    const deletedPrompt = prompts.find(p => p.id === id);
+    const deletedFavs = favorites.filter(fid => fid === id);
+    const deletedLikes = likes.filter(lid => lid === id);
+
+    // Optimistic UI removal
     setPrompts(prev => prev.filter(p => p.id !== id));
     setFavorites(prev => prev.filter(fid => fid !== id));
     setLikes(prev => prev.filter(lid => lid !== id));
     if (selectedPromptId === id) setSelectedPromptId(null);
-    if (user) {
-      await supabase.from("prompts").delete().eq("id", id).eq("user_id", user.id);
-    }
-  }, [selectedPromptId, user]);
+
+    // Schedule actual DB delete after 5s (matches Undo toast duration)
+    const timer = setTimeout(() => {
+      deleteTimers.current.delete(id);
+      if (user) {
+        supabase.from("prompts").delete().eq("id", id).eq("user_id", user.id).then();
+      }
+    }, 5000);
+    deleteTimers.current.set(id, timer);
+
+    // Show toast with Undo action
+    showToast("削除しました", {
+      onUndo: () => {
+        // Cancel the scheduled DB delete
+        const pending = deleteTimers.current.get(id);
+        if (pending) {
+          clearTimeout(pending);
+          deleteTimers.current.delete(id);
+        }
+        // Restore to UI
+        if (deletedPrompt) {
+          setPrompts(prev => [deletedPrompt, ...prev]);
+        }
+        if (deletedFavs.length > 0) {
+          setFavorites(prev => [...prev, ...deletedFavs]);
+        }
+        if (deletedLikes.length > 0) {
+          setLikes(prev => [...prev, ...deletedLikes]);
+        }
+        showToast("元に戻しました");
+      },
+    });
+  }, [selectedPromptId, user, prompts, favorites, likes]);
 
   const duplicateAsArrangement = useCallback((sourceId: string): void => {
     const source = prompts.find(p => p.id === sourceId);
@@ -514,6 +553,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
 
   /* ─── Toggle Pin ─── */
   const togglePin = useCallback((id: string): void => {
+    let newPinnedValue: boolean | null = null;
     setPrompts(prev => {
       const pinnedCount = prev.filter(p => p.isPinned).length;
       return prev.map(p => {
@@ -521,16 +561,15 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         const newPinned = !p.isPinned;
         // Max 5 pinned
         if (newPinned && pinnedCount >= 5) return p;
+        newPinnedValue = newPinned; // Capture the actual new value
         return { ...p, isPinned: newPinned };
       });
     });
-    if (user) {
-      const prompt = prompts.find(p => p.id === id);
-      if (prompt) {
-        supabase.from("prompts").update({ is_pinned: !prompt.isPinned }).eq("id", id).then();
-      }
+    // Use the value captured from inside setPrompts (avoids stale closure)
+    if (user && newPinnedValue !== null) {
+      supabase.from("prompts").update({ is_pinned: newPinnedValue }).eq("id", id).then();
     }
-  }, [user, prompts]);
+  }, [user]);
 
   /* ─── Folders (logic) ─── */
 
