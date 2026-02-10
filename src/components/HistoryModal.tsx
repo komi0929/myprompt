@@ -3,30 +3,38 @@
 import { Button } from "@/components/ui/Button";
 import { usePromptStore, type HistoryEntry } from "@/lib/prompt-store";
 import { X, Clock, Loader2, RotateCcw } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { showToast } from "@/components/ui/Toast";
 
 export default function HistoryModal({ promptId, onClose }: { promptId: string; onClose: () => void }): React.ReactElement {
   const { getHistory, updatePrompt, prompts } = usePromptStore();
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  // Use a ref to avoid re-triggering useEffect when getHistory reference changes
+  const getHistoryRef = useRef(getHistory);
+  getHistoryRef.current = getHistory;
 
   useEffect(() => {
     let cancelled = false;
     const load = async (): Promise<void> => {
       try {
-        const data = await getHistory(promptId);
-        if (!cancelled) setEntries(data);
+        const data = await getHistoryRef.current(promptId);
+        if (!cancelled) {
+          setEntries(data);
+          setError(false);
+        }
       } catch {
-        // ignore
+        if (!cancelled) setError(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
     load();
     return () => { cancelled = true; };
-  }, [promptId, getHistory]);
+  }, [promptId]);
 
   const selectedEntry: HistoryEntry | null = selectedIndex !== null ? entries[selectedIndex] ?? null : null;
 
@@ -53,6 +61,11 @@ export default function HistoryModal({ promptId, onClose }: { promptId: string; 
             <div className="text-center text-slate-400 py-10">
               <Loader2 className="w-10 h-10 mx-auto mb-3 text-slate-200 animate-spin" />
               <p className="font-semibold text-sm">履歴を読み込み中…</p>
+            </div>
+          ) : error ? (
+            <div className="text-center text-slate-400 py-10">
+              <Clock className="w-10 h-10 mx-auto mb-3 text-slate-200" />
+              <p className="font-semibold text-sm">履歴の取得に失敗しました</p>
             </div>
           ) : entries.length === 0 ? (
             <div className="text-center text-slate-400 py-10">
@@ -132,3 +145,4 @@ export default function HistoryModal({ promptId, onClose }: { promptId: string; 
     </div>
   );
 }
+
