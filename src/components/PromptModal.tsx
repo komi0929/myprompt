@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { usePromptStore } from "@/lib/prompt-store";
-import { PHASES, type Phase } from "@/lib/mock-data";
+import { PHASES, type Phase } from "@/lib/types";
 
 type PromptPhase = Exclude<Phase, "All">;
 import { X, Save } from "lucide-react";

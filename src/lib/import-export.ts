@@ -1,6 +1,6 @@
 "use client";
 
-import type { Prompt } from "@/lib/mock-data";
+import type { Prompt } from "@/lib/types";
 import { showToast } from "@/components/ui/Toast";
 
 interface ExportData {

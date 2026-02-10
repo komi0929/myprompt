@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { cn } from "@/lib/utils";
-import { type Phase, PHASES } from "@/lib/mock-data";
+import { type Phase, PHASES } from "@/lib/types";
 
 const emptySubscribe = (): (() => void) => () => {};
 

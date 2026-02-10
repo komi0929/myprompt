@@ -1,31 +1,10 @@
-export type Phase = "All" | "Planning" | "Design" | "Implementation" | "Debug" | "Release" | "Other";
-
-export interface Prompt {
-  id: string;
-  title: string;
-  content: string;
-  tags: string[];
-  phase: Exclude<Phase, "All">;
-  visibility: "Private" | "Public";
-  updatedAt: string;
-  likeCount: number;
-  useCount?: number;
-  isPinned?: boolean;
-  authorId?: string;
-  authorName?: string;
-  authorAvatarUrl?: string;
-  folderId?: string;
-  lastUsedAt?: string;
-  notes?: string;
-  rating?: "good" | "neutral" | "bad";
-}
-
-export interface Folder {
-  id: string;
-  name: string;
-  color: string;
-  sortOrder: number;
-}
+/**
+ * Mock data — Sample prompts for development & onboarding.
+ *
+ * Type definitions live in `@/lib/types.ts` (Single Source of Truth).
+ * This file holds mock data only.
+ */
+import type { Prompt } from "@/lib/types";
 
 export const MOCK_PROMPTS: Prompt[] = [
   {
@@ -49,7 +28,6 @@ export const MOCK_PROMPTS: Prompt[] = [
     updatedAt: "2026-02-06T15:30:00",
     likeCount: 12,
     authorId: "other-user",
-
   },
   {
     id: "3",
@@ -61,23 +39,5 @@ export const MOCK_PROMPTS: Prompt[] = [
     updatedAt: "2026-02-05T09:00:00",
     likeCount: 7,
     authorId: "mock-user",
-
   },
-];
-
-export interface PhaseInfo {
-  id: Phase;
-  label: string;
-  icon: string;
-  hint: string;
-}
-
-export const PHASES: PhaseInfo[] = [
-  { id: "All", label: "すべて", icon: "🏠", hint: "全フェーズのプロンプト" },
-  { id: "Planning", label: "企画", icon: "🌱", hint: "アイデアを整理するとき" },
-  { id: "Design", label: "設計", icon: "🎨", hint: "画面や構成を考えるとき" },
-  { id: "Implementation", label: "実装", icon: "💻", hint: "コードを書くとき" },
-  { id: "Debug", label: "デバッグ", icon: "🐛", hint: "エラーを直すとき" },
-  { id: "Release", label: "リリース", icon: "🚀", hint: "公開するとき" },
-  { id: "Other", label: "その他", icon: "📦", hint: "その他のプロンプト" },
 ];

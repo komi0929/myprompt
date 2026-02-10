@@ -2,12 +2,17 @@ import { test, expect } from "@playwright/test";
 
 test.describe("MyPrompt — ページ表示テスト", () => {
   test("ホームページが正常に読み込まれる", async ({ page }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (err) => errors.push(err.message));
+
     await page.goto("/");
     // メインアプリのタイトルまたはロゴが表示される
     await expect(page.locator("body")).toBeVisible();
     // ページがクラッシュしていないことを確認
     const title = await page.title();
     expect(title).toBeTruthy();
+    // コンソールにReactエラーが出ていないことを確認
+    expect(errors).toEqual([]);
   });
 
   test("フィードバックページが正常に読み込まれる", async ({ page }) => {

@@ -7,7 +7,7 @@ import { Copy, Trash2, Pencil, Heart, Bookmark, ArrowUpDown, Pin, CheckSquare, S
 import { usePromptStore, SORT_OPTIONS } from "@/lib/prompt-store";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { copyToClipboard, showToast } from "@/components/ui/Toast";
-import { type Prompt, PHASES } from "@/lib/mock-data";
+import { type Prompt, PHASES } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
 import type { BulkModeState } from "@/components/BulkActionBar";
 

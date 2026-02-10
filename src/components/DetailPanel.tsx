@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { PHASES } from "@/lib/mock-data";
+import { PHASES } from "@/lib/types";
 import { usePromptStore } from "@/lib/prompt-store";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { copyToClipboard } from "@/components/ui/Toast";
@@ -444,7 +444,7 @@ export function DetailPanel(): React.ReactElement {
   );
 }
 
-import type { Prompt } from "@/lib/mock-data";
+import type { Prompt } from "@/lib/types";
 
 function RelatedSuggestions({ currentPrompt, allPrompts, onSelect }: {
   currentPrompt: Prompt;

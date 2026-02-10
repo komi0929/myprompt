@@ -1,39 +1,18 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { type Phase, type Prompt, type Folder } from "@/lib/mock-data";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
 import { trackEvent } from "@/lib/analytics";
 import { markMilestone } from "@/components/OnboardingProgress";
 import { showToast } from "@/components/ui/Toast";
+import { ssGet, ssSet } from "@/lib/hydration";
+import { dbToPrompt } from "@/lib/db";
+import type { Phase, Prompt, Folder, SortOrder, HistoryEntry, AppNotification } from "@/lib/types";
 
-/* ─── History Snapshot ─── */
-export type SortOrder = "updated" | "created" | "useCount" | "likes" | "title";
-
-export const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
-  { value: "updated", label: "更新日順" },
-  { value: "useCount", label: "よく使う順" },
-  { value: "likes", label: "いいね順" },
-  { value: "title", label: "タイトル順" },
-];
-
-export interface HistoryEntry {
-  timestamp: string;
-  title: string;
-  content: string;
-}
-
-/* ─── Notification ─── */
-export interface AppNotification {
-  id: string;
-  type: "like" | "favorite";
-  promptId: string;
-  promptTitle: string;
-  actorName: string;
-  timestamp: string;
-  read: boolean;
-}
+// Re-export types for backward compatibility with existing imports
+export type { SortOrder, HistoryEntry, AppNotification } from "@/lib/types";
+export { SORT_OPTIONS } from "@/lib/types";
 
 /* ─── Store State ─── */
 interface PromptStoreState {
@@ -90,66 +69,6 @@ interface PromptStoreActions {
 type PromptStore = PromptStoreState & PromptStoreActions;
 
 const PromptStoreContext = createContext<PromptStore | null>(null);
-
-/* ─── sessionStorage helpers ─── */
-function ssGet<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") return fallback;
-  try {
-    const v = sessionStorage.getItem(key);
-    return v ? (JSON.parse(v) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-function ssSet(key: string, value: unknown): void {
-  if (typeof window === "undefined") return;
-  sessionStorage.setItem(key, JSON.stringify(value));
-}
-
-/* ─── DB Row → Prompt ─── */
-interface DbPrompt {
-  id: string;
-  user_id: string | null;
-  title: string;
-  content: string;
-  tags: string[] | null;
-  phase: string | null;
-  visibility: string | null;
-
-  like_count: number;
-  use_count: number;
-  is_pinned: boolean;
-  folder_id: string | null;
-  last_used_at: string | null;
-  notes: string | null;
-  rating: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  profiles?: { display_name: string | null; avatar_url: string | null }[] | null;
-}
-
-function dbToPrompt(row: DbPrompt): Prompt {
-  const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
-  return {
-    id: row.id,
-    title: row.title,
-    content: row.content,
-    tags: row.tags ?? [],
-    phase: (row.phase ?? "Implementation") as Prompt["phase"],
-    visibility: (row.visibility ?? "Private") as Prompt["visibility"],
-    updatedAt: row.updated_at ?? new Date().toISOString(),
-    likeCount: row.like_count ?? 0,
-    useCount: row.use_count ?? 0,
-    isPinned: row.is_pinned ?? false,
-    folderId: row.folder_id ?? undefined,
-    lastUsedAt: row.last_used_at ?? undefined,
-    notes: row.notes ?? undefined,
-    rating: (row.rating as Prompt["rating"]) ?? undefined,
-    authorId: row.user_id ?? "",
-    authorName: profile?.display_name ?? undefined,
-    authorAvatarUrl: profile?.avatar_url ?? undefined,
-  };
-}
 
 export function PromptStoreProvider({ children }: { children: ReactNode }): ReactNode {
   const { user, authStatus } = useAuth();

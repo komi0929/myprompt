@@ -11,7 +11,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useState } from "react";
 import type { AppNotification } from "@/lib/prompt-store";
-import type { Prompt } from "@/lib/mock-data";
+import type { Prompt } from "@/lib/types";
 import { copyToClipboard } from "@/components/ui/Toast";
 
 export function Sidebar({ className }: { className?: string }): React.ReactElement {
