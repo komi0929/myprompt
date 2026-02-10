@@ -33,13 +33,19 @@ export default function BulkActionBar({
   const handleAddTag = useCallback(async (): Promise<void> => {
     if (!tagValue.trim()) return;
     const tag = tagValue.trim();
+    let failures = 0;
     for (const id of bulkMode.selectedIds) {
       const p = prompts.find(pr => pr.id === id);
       if (p && !p.tags.includes(tag)) {
-        await updatePrompt(id, { tags: [...p.tags, tag] });
+        const ok = await updatePrompt(id, { tags: [...p.tags, tag] });
+        if (!ok) failures++;
       }
     }
-    showToast(`${selectedCount}件に「${tag}」タグを追加 ✨`);
+    if (failures > 0) {
+      showToast(`${failures}件のタグ追加に失敗しました`);
+    } else {
+      showToast(`${selectedCount}件に「${tag}」タグを追加 ✨`);
+    }
     setTagValue("");
     setShowTagInput(false);
   }, [tagValue, bulkMode.selectedIds, prompts, updatePrompt, selectedCount]);
@@ -58,11 +64,17 @@ export default function BulkActionBar({
   }, [prompts, bulkMode.selectedIds]);
 
   const handleMoveToFolder = useCallback(async (folderId: string | null): Promise<void> => {
+    let failures = 0;
     for (const id of bulkMode.selectedIds) {
-      await updatePrompt(id, { folderId: folderId ?? undefined });
+      const ok = await updatePrompt(id, { folderId: folderId ?? undefined });
+      if (!ok) failures++;
     }
     const fname = folders.find(f => f.id === folderId)?.name ?? "未分類";
-    showToast(`${selectedCount}件を「${fname}」に移動 ✨`);
+    if (failures > 0) {
+      showToast(`${failures}件の移動に失敗しました`);
+    } else {
+      showToast(`${selectedCount}件を「${fname}」に移動 ✨`);
+    }
     setShowFolderSelect(false);
   }, [bulkMode.selectedIds, updatePrompt, selectedCount, folders]);
 

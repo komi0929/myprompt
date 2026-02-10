@@ -49,9 +49,9 @@ export function DetailPanel(): React.ReactElement {
     }
     const update: Record<string, string | undefined> = {};
     update[inlineField] = inlineField === "notes" && !trimmed ? undefined : trimmed;
-    await updatePrompt(prompt.id, update);
+    const ok = await updatePrompt(prompt.id, update);
     setInlineField(null);
-    showToast("保存しました");
+    if (ok) showToast("保存しました");
   }, [prompt, inlineField, inlineValue, updatePrompt]);
 
   const cancelInlineEdit = useCallback((): void => {

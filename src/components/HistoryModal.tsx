@@ -104,15 +104,17 @@ export default function HistoryModal({ promptId, onClose }: { promptId: string; 
               onClick={async () => {
                 const current = prompts.find(p => p.id === promptId);
                 if (!current || !selectedEntry) return;
-                await updatePrompt(promptId, {
+                const ok = await updatePrompt(promptId, {
                   title: selectedEntry.title,
                   content: selectedEntry.content,
                   tags: current.tags,
                   phase: current.phase,
                   visibility: current.visibility,
                 });
-                showToast("この版に復元しました ✨");
-                onClose();
+                if (ok) {
+                  showToast("この版に復元しました ✨");
+                  onClose();
+                }
               }}
               className="flex items-center gap-1.5"
             >

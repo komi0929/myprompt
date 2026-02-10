@@ -57,7 +57,7 @@ interface PromptStoreState {
 /* ─── Actions ─── */
 interface PromptStoreActions {
   addPrompt: (prompt: Omit<Prompt, "id" | "updatedAt" | "likeCount">) => Promise<string>;
-  updatePrompt: (id: string, updates: Partial<Omit<Prompt, "id">>) => Promise<void>;
+  updatePrompt: (id: string, updates: Partial<Omit<Prompt, "id">>) => Promise<boolean>;
   deletePrompt: (id: string) => Promise<void>;
   duplicateAsArrangement: (sourceId: string) => void;
   toggleFavorite: (id: string) => Promise<void>;
@@ -304,7 +304,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       .from("prompts")
       .select("*, profiles(display_name, avatar_url)")
       .eq("id", inserted.id)
-      .single();
+      .maybeSingle();
     const data = enriched ?? inserted;
     const newPrompt = dbToPrompt(data);
     setPrompts(prev => [newPrompt, ...prev]);
@@ -327,7 +327,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     return newPrompt.id;
   }, [user]);
 
-  const updatePrompt = useCallback(async (id: string, updates: Partial<Omit<Prompt, "id">>): Promise<void> => {
+  const updatePrompt = useCallback(async (id: string, updates: Partial<Omit<Prompt, "id">>): Promise<boolean> => {
     // Capture previous state for rollback
     const previousPrompt = prompts.find(p => p.id === id);
 
@@ -359,7 +359,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
           setPrompts(prev => prev.map(p => p.id === id ? previousPrompt : p));
         }
         showToast("更新の保存に失敗しました");
-        return;
+        return false;
       }
 
       // Only create history entry for title/content changes (avoid bloat)
@@ -374,6 +374,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         }
       }
     }
+    return true;
   }, [user, prompts]);
 
   // Pending delete timers — cleared on Undo

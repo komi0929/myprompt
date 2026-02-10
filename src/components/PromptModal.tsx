@@ -126,7 +126,7 @@ export default function PromptModal(): React.ReactElement | null {
       if (!id) return; // addPrompt failed (e.g. not logged in) — it already shows its own toast
       showToast("プロンプトを保存しました");
     } else {
-      await updatePrompt(editingPrompt.id, {
+      const ok = await updatePrompt(editingPrompt.id, {
         title: title.trim(),
         content: content.trim(),
         tags,
@@ -134,6 +134,7 @@ export default function PromptModal(): React.ReactElement | null {
         visibility,
         notes: notes.trim() || undefined,
       });
+      if (!ok) return; // updatePrompt already shows error toast
       showToast("プロンプトを更新しました");
     }
     closeEditor();
