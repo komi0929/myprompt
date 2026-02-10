@@ -181,7 +181,7 @@ function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { pro
 
       <CardContent className="pb-2">
         <div className="relative group/preview">
-          <div className="mt-2 text-xs leading-relaxed text-slate-500 font-mono whitespace-pre-wrap line-clamp-5 md:line-clamp-3 bg-slate-50 rounded-lg p-3 border border-slate-100 transition-colors">
+          <div className="mt-2 text-xs leading-relaxed text-slate-500 font-mono whitespace-pre-wrap wrap-break-word line-clamp-5 md:line-clamp-3 bg-slate-50 rounded-lg p-3 border border-slate-100 transition-colors">
             {prompt.content}
           </div>
           {/* Hover preview tooltip */}
@@ -240,6 +240,7 @@ function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { pro
             )}
             onClick={handleLike}
             title="いいね！"
+            aria-label="いいね！"
           >
             <Heart className={cn("w-3.5 h-3.5", liked && "fill-pink-400")} />
             <span className="font-medium tabular-nums">{prompt.likeCount}</span>
@@ -252,6 +253,7 @@ function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { pro
                 className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
                 onClick={handleEdit}
                 title="編集"
+                aria-label="編集"
               >
                 <Pencil className="w-3.5 h-3.5" />
               </button>
@@ -259,6 +261,7 @@ function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { pro
                 className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
                 onClick={handleDelete}
                 title="削除"
+                aria-label="削除"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>

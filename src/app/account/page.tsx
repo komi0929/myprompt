@@ -45,6 +45,12 @@ function AccountContent(): React.ReactElement {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
+    const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      showToast("JPEG, PNG, WebP, GIF形式の画像のみアップロードできます");
+      return;
+    }
+
     if (file.size > 2 * 1024 * 1024) {
       showToast("画像サイズは2MB以下にしてください");
       return;

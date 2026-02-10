@@ -282,7 +282,7 @@ export function DetailPanel(): React.ReactElement {
             </div>
           ) : (
           <div
-            className={cn("bg-slate-50 rounded-xl p-5 border border-slate-100 font-mono text-sm leading-relaxed text-slate-700 shadow-inner min-h-[160px] whitespace-pre-wrap group/content", isOwner && "cursor-pointer hover:border-yellow-200 transition-colors")}
+            className={cn("bg-slate-50 rounded-xl p-5 border border-slate-100 font-mono text-sm leading-relaxed text-slate-700 shadow-inner min-h-[160px] whitespace-pre-wrap wrap-break-word group/content", isOwner && "cursor-pointer hover:border-yellow-200 transition-colors")}
             onDoubleClick={() => isOwner && startInlineEdit("content", prompt.content)}
             title={isOwner ? "ダブルクリックで編集" : undefined}
           >

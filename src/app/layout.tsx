@@ -15,6 +15,21 @@ const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 export const metadata: Metadata = {
   title: "マイプロンプト — バイブコーダーのためのプロンプト簡単メモサイト",
   description: "バイブコーダーのためのプロンプト簡単メモサイト。AIプロンプトを保存・整理・共有できるツール",
+  metadataBase: new URL("https://myprompt-one.vercel.app"),
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "マイプロンプト — バイブコーダーのためのプロンプト簡単メモサイト",
+    description: "AIプロンプトを保存・整理・共有できるツール。バイブコーディングに最適化。",
+    url: "https://myprompt-one.vercel.app",
+    siteName: "マイプロンプト",
+    locale: "ja_JP",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "マイプロンプト",
+    description: "バイブコーダーのためのプロンプト簡単メモサイト",
+  },
 };
 
 export default function RootLayout({

@@ -36,3 +36,8 @@ body {
   background-color: #fef08a; /* yellow-200 */
   color: #854d0e; /* yellow-800 */
 }
+
+/* Prevent layout shift from scrollbar appearing */
+html {
+  scrollbar-gutter: stable;
+}

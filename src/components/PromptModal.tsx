@@ -150,7 +150,7 @@ export default function PromptModal(): React.ReactElement | null {
           <h2 className="text-lg font-semibold text-slate-800">
             {isNew ? "新しいプロンプトをメモ" : "プロンプトを編集"}
           </h2>
-          <button onClick={closeEditor} className="p-1.5 hover:bg-slate-100 rounded-md transition-colors">
+          <button onClick={closeEditor} className="p-1.5 hover:bg-slate-100 rounded-md transition-colors" aria-label="閉じる">
             <X className="w-5 h-5 text-slate-400" />
           </button>
         </div>
@@ -173,6 +173,7 @@ export default function PromptModal(): React.ReactElement | null {
               value={title}
               onChange={e => { setTitle(e.target.value); saveDraft(); }}
               placeholder="例: Cursor用レスポンシブ修正プロンプト"
+              maxLength={200}
               className="w-full h-10 px-4 rounded-lg border border-slate-200 text-slate-700 text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-400 transition-all"
             />
           </div>
@@ -185,6 +186,7 @@ export default function PromptModal(): React.ReactElement | null {
               onChange={e => { setContent(e.target.value); saveDraft(); }}
               placeholder={"プロンプトの内容を入力\n\n変数には {変数名} を使えます"}
               rows={8}
+              maxLength={10000}
               className="w-full px-4 py-3 rounded-lg border border-slate-200 text-slate-700 text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-400 transition-all font-mono leading-relaxed resize-none"
             />
           </div>
@@ -197,6 +199,7 @@ export default function PromptModal(): React.ReactElement | null {
               onChange={e => { setNotes(e.target.value); saveDraft(); }}
               placeholder="使い方のコツ、効果的だった場面、注意点など"
               rows={3}
+              maxLength={2000}
               className="w-full px-4 py-3 rounded-lg border border-slate-200 text-slate-700 text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-400 transition-all resize-none"
             />
           </div>
