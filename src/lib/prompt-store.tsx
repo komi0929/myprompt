@@ -278,24 +278,34 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       showToast("ログインが必要です");
       return "";
     }
-    const { data, error } = await supabase
+    const insertPayload = {
+      user_id: user.id,
+      title: input.title,
+      content: input.content,
+      tags: input.tags,
+      phase: input.phase,
+      visibility: input.visibility,
+      parent_id: input.lineage.parent ?? null,
+      notes: input.notes ?? null,
+    };
+    // INSERT first, then SELECT separately to avoid profiles JOIN failure blocking insert
+    const { data: inserted, error: insertError } = await supabase
       .from("prompts")
-      .insert({
-        user_id: user.id,
-        title: input.title,
-        content: input.content,
-        tags: input.tags,
-        phase: input.phase,
-        visibility: input.visibility,
-        parent_id: input.lineage.parent ?? null,
-        notes: input.notes ?? null,
-      })
-      .select("*, profiles(display_name, avatar_url)")
+      .insert(insertPayload)
+      .select("*")
       .single();
-    if (error || !data) {
+    if (insertError || !inserted) {
+      console.error("addPrompt insert failed:", insertError?.message);
       showToast("保存に失敗しました。もう一度お試しください");
       return "";
     }
+    // Try to enrich with profile data (non-blocking)
+    const { data: enriched } = await supabase
+      .from("prompts")
+      .select("*, profiles(display_name, avatar_url)")
+      .eq("id", inserted.id)
+      .single();
+    const data = enriched ?? inserted;
     const newPrompt = dbToPrompt(data);
     setPrompts(prev => [newPrompt, ...prev]);
     setSelectedPromptId(newPrompt.id);
