@@ -76,6 +76,7 @@ export default function HistoryModal({ promptId, onClose }: { promptId: string; 
             entries.slice().reverse().map((entry, idx) => {
               const reverseIdx = entries.length - 1 - idx;
               const isSelected = selectedIndex === reverseIdx;
+              const versionLabel = entry.label || `ver${reverseIdx + 1}`;
               return (
                 <button
                   key={idx}
@@ -87,7 +88,10 @@ export default function HistoryModal({ promptId, onClose }: { promptId: string; 
                   }`}
                 >
                   <div className="flex justify-between items-center mb-1">
-                    <span className="font-semibold text-sm text-slate-700 truncate">{entry.title}</span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700">{versionLabel}</span>
+                      <span className="font-semibold text-sm text-slate-700 truncate">{entry.title}</span>
+                    </div>
                     <span className="text-[10px] text-slate-400 font-mono shrink-0 ml-2">
                       {new Date(entry.timestamp).toLocaleString("ja-JP")}
                     </span>

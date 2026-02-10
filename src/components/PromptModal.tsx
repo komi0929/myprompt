@@ -7,7 +7,7 @@ import { usePromptStore } from "@/lib/prompt-store";
 import { PHASES, type Phase } from "@/lib/types";
 
 type PromptPhase = Exclude<Phase, "All">;
-import { X, Save } from "lucide-react";
+import { X, Save, Clock } from "lucide-react";
 import { showToast } from "@/components/ui/Toast";
 import { showCelebration } from "@/components/SuccessCelebration";
 import TagAutocomplete from "@/components/TagAutocomplete";
@@ -24,6 +24,8 @@ export default function PromptModal(): React.ReactElement | null {
   const [notes, setNotes] = useState("");
   const [hasDraft, setHasDraft] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveHistory, setSaveHistory] = useState(false);
+  const [historyLabel, setHistoryLabel] = useState("");
 
   const isNew = editingPrompt?.id === "";
 
@@ -137,12 +139,12 @@ export default function PromptModal(): React.ReactElement | null {
           phase,
           visibility,
           notes: notes.trim() || undefined,
-        });
+        }, { save: saveHistory, label: historyLabel.trim() || undefined });
         if (!ok) { setSaving(false); return; }
         if (visibility === "Public" && editingPrompt.visibility !== "Public") {
           showCelebration("share");
         }
-        showToast("更新に成功しました ✅");
+        showToast(saveHistory ? "更新に成功しました（履歴あり）✅" : "更新に成功しました ✅");
       }
       clearDraft();
       closeEditor();
@@ -274,6 +276,33 @@ export default function PromptModal(): React.ReactElement | null {
               </select>
             </div>
           </div>
+
+          {/* History Save Option (update only) */}
+          {!isNew && (
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={saveHistory}
+                  onChange={e => setSaveHistory(e.target.checked)}
+                  className="w-4 h-4 accent-yellow-500 rounded"
+                />
+                <Clock className="w-3.5 h-3.5 text-slate-400" />
+                <span className="text-xs font-semibold text-slate-600">この更新を編集履歴に残す</span>
+              </label>
+              {saveHistory && (
+                <input
+                  type="text"
+                  value={historyLabel}
+                  onChange={e => setHistoryLabel(e.target.value)}
+                  placeholder="バージョン名（例: GPT-4o向け調整）"
+                  maxLength={60}
+                  className="w-full h-8 px-3 text-xs rounded-lg border border-slate-200 text-slate-700 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-400 transition-all bg-white placeholder:text-slate-300"
+                />
+              )}
+              <p className="text-[10px] text-slate-400 leading-relaxed">※ 誤字脱字の修正など軽微な変更は履歴を残さないことを推奨します</p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

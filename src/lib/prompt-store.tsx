@@ -36,7 +36,7 @@ interface PromptStoreState {
 /* ─── Actions ─── */
 interface PromptStoreActions {
   addPrompt: (prompt: Omit<Prompt, "id" | "updatedAt" | "likeCount">) => Promise<string>;
-  updatePrompt: (id: string, updates: Partial<Omit<Prompt, "id">>) => Promise<boolean>;
+  updatePrompt: (id: string, updates: Partial<Omit<Prompt, "id">>, historyOptions?: { save: boolean; label?: string }) => Promise<boolean>;
   deletePrompt: (id: string) => Promise<void>;
 
   toggleFavorite: (id: string) => Promise<void>;
@@ -312,7 +312,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     return newPrompt.id;
   }, [user]);
 
-  const updatePrompt = useCallback(async (id: string, updates: Partial<Omit<Prompt, "id">>): Promise<boolean> => {
+  const updatePrompt = useCallback(async (id: string, updates: Partial<Omit<Prompt, "id">>, historyOptions?: { save: boolean; label?: string }): Promise<boolean> => {
     // Capture previous state for rollback
     const previousPrompt = prompts.find(p => p.id === id);
 
@@ -347,14 +347,22 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         return false;
       }
 
-      // Only create history entry for title/content changes (avoid bloat)
-      if (updates.title !== undefined || updates.content !== undefined) {
+      // Save history only if explicitly requested (default: don't save)
+      const shouldSaveHistory = historyOptions?.save ?? false;
+      if (shouldSaveHistory && (updates.title !== undefined || updates.content !== undefined)) {
         if (previousPrompt) {
+          const historyCount = await supabase
+            .from("prompt_history")
+            .select("id", { count: "exact", head: true })
+            .eq("prompt_id", id);
+          const versionNumber = (historyCount.count ?? 0) + 1;
+          const label = historyOptions?.label?.trim() || `ver${versionNumber}`;
           const { error: histError } = await supabase.from("prompt_history").insert({
             prompt_id: id,
             title: updates.title ?? previousPrompt.title,
             content: updates.content ?? previousPrompt.content,
-          });
+            label,
+          } as Record<string, unknown>);
           if (histError) console.warn("prompt_history insert failed:", histError.message);
         }
       }
@@ -527,13 +535,15 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   const getHistory = useCallback(async (id: string): Promise<HistoryEntry[]> => {
     if (!user) return history[id] ?? [];
     try {
+      // Use explicit type since database.types.ts may not have the label column yet
+      interface HistoryRow { title: string | null; content: string | null; created_at: string | null; label: string | null }
       const { data, error } = await supabase
         .from("prompt_history")
-        .select("title, content, created_at")
+        .select("title, content, created_at, label")
         .eq("prompt_id", id)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: true }) as unknown as { data: HistoryRow[] | null; error: { message: string } | null };
       if (!error && data) {
-        return data.map(d => ({ title: d.title ?? "", content: d.content ?? "", timestamp: d.created_at ?? "" }));
+        return data.map(d => ({ title: d.title ?? "", content: d.content ?? "", timestamp: d.created_at ?? "", label: d.label ?? undefined }));
       }
     } catch {
       // fallback

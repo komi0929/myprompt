@@ -58,6 +58,7 @@ export interface HistoryEntry {
   timestamp: string;
   title: string;
   content: string;
+  label?: string;
 }
 
 export interface AppNotification {
