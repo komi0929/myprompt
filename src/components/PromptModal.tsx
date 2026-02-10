@@ -20,7 +20,7 @@ export default function PromptModal(): React.ReactElement | null {
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [phase, setPhase] = useState<PromptPhase>("Implementation");
-  const [visibility, setVisibility] = useState<"Private" | "Public">("Private");
+  const [visibility, setVisibility] = useState<"Private" | "Public">("Public");
   const [notes, setNotes] = useState("");
   const [hasDraft, setHasDraft] = useState(false);
 
@@ -44,7 +44,7 @@ export default function PromptModal(): React.ReactElement | null {
           setContent(draft.content);
           setTags(draft.tags ?? []);
           setPhase(draft.phase ?? "Implementation");
-          setVisibility(draft.visibility ?? "Private");
+          setVisibility(draft.visibility ?? "Public");
           setNotes(draft.notes ?? "");
           setHasDraft(true);
         } else {

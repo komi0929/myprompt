@@ -509,7 +509,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         content: "",
         tags: [],
         phase: defaultPhase,
-        visibility: "Private",
+        visibility: "Public",
         updatedAt: "",
         likeCount: 0,
         authorId: currentUserId,

@@ -181,10 +181,9 @@ function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { pro
           </div>
           {/* Hover preview tooltip */}
           {prompt.content.length > 120 && (
-            <div className="absolute left-0 right-0 top-full mt-1 z-40 hidden group-hover/preview:block pointer-events-none">
-              <div className="bg-white rounded-lg border border-slate-200 shadow-xl p-3 text-xs text-slate-600 font-mono leading-relaxed max-h-48 overflow-y-auto whitespace-pre-wrap">
-                {prompt.content.slice(0, 500)}
-                {prompt.content.length > 500 && "…"}
+            <div className="absolute left-0 right-0 top-full z-40 hidden group-hover/preview:block pt-2">
+              <div className="bg-white rounded-lg border border-slate-200 shadow-xl p-3 text-xs text-slate-600 font-mono leading-relaxed max-h-64 overflow-y-auto whitespace-pre-wrap">
+                {prompt.content}
               </div>
             </div>
           )}
