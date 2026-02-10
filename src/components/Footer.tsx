@@ -27,7 +27,7 @@ export default function Footer(): React.ReactElement {
           <p className="text-[10px] text-slate-500">
             produced by{" "}
             <a
-              href="https://mykanban.hitokoto.tech/"
+              href="https://note.com/sogu1/n/ne4a0b0ec9952"
               target="_blank"
               rel="noopener noreferrer"
               className="text-yellow-500 hover:text-yellow-600 font-medium transition-colors"
