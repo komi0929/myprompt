@@ -1,7 +1,10 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { cn } from "@/lib/utils";
 import { type Phase, PHASES } from "@/lib/mock-data";
+
+const emptySubscribe = (): (() => void) => () => {};
 
 export function PhaseCompass({
   currentPhase,
@@ -10,7 +13,9 @@ export function PhaseCompass({
   currentPhase?: Phase;
   onPhaseChange?: (phase: Phase) => void;
 }): React.ReactElement {
-  const active = currentPhase || "All";
+  // Hydration-safe: SSR returns "All", client returns currentPhase after hydration
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const active = mounted ? (currentPhase || "All") : "All";
 
   const handleClick = (p: Phase): void => {
     onPhaseChange?.(p);
@@ -31,6 +36,7 @@ export function PhaseCompass({
                 : "bg-white text-slate-500 border border-slate-200 hover:bg-yellow-50 hover:text-yellow-700 hover:border-yellow-300"
             )}
             title={phase.hint}
+            suppressHydrationWarning
           >
             <span className="text-sm leading-none">{phase.icon}</span>
             {phase.label}
