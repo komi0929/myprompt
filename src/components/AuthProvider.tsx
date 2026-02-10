@@ -58,60 +58,58 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
     setEmail(u.email ?? "");
   };
 
-  const fetchProfile = async (userId: string): Promise<void> => {
-    try {
-      const { data } = await supabase
-        .from("profiles")
-        .select("display_name, avatar_url")
-        .eq("id", userId)
-        .maybeSingle();
-      if (data) {
-        if (data.display_name) setDisplayName(data.display_name);
-        if (data.avatar_url) setAvatarUrl(data.avatar_url);
-      }
-    } catch {
-      // Silently handle abort/network errors
-    }
-  };
+
 
   useEffect(() => {
     let cancelled = false;
 
-    const ensureProfile = async (u: User): Promise<void> => {
+    const ensureProfile = async (u: User, forceMetaFallback = false): Promise<void> => {
       try {
-        // 1. Check if profile exists
-        const { data } = await supabase
+        // 1. Check if profile exists (Check "error" to distinguish network issues)
+        const { data, error } = await supabase
           .from("profiles")
           .select("display_name, avatar_url")
           .eq("id", u.id)
           .maybeSingle();
+
+        if (error) {
+          console.error("Profile check error:", error.message);
+          // On DB error, do NOT overwrite with metadata if we already have state
+          // Only fallback if we have nothing or forced
+          if (forceMetaFallback) {
+             extractUserMeta(u);
+          }
+          return;
+        }
         
         if (data) {
           // Profile exists, update local state
-          if (data.display_name) setDisplayName(data.display_name);
-          if (data.avatar_url) setAvatarUrl(data.avatar_url);
+          setDisplayName(data.display_name || "");
+          setAvatarUrl(data.avatar_url || "");
           return;
         }
 
-        // 2. Profile missing (Trigger failed?), create it manually (Self-Healing)
+        // 2. Profile missing (data is null, error is null) -> Create it
         console.warn("Profile missing for user, creating manually (Self-Healing)...");
-        const displayName = u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split("@")[0] || "User";
-        const avatarUrl = u.user_metadata?.avatar_url || "";
+        const metaName = u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split("@")[0] || "User";
+        const metaAvatar = u.user_metadata?.avatar_url || "";
         
         const { error: insertError } = await supabase
           .from("profiles")
-          .insert({ id: u.id, display_name: displayName, avatar_url: avatarUrl });
+          .insert({ id: u.id, display_name: metaName, avatar_url: metaAvatar });
           
         if (insertError) {
-           // If insert failed (e.g. race condition), try fetching one last time
            console.error("Manual profile creation failed:", insertError.message);
-           await fetchProfile(u.id);
+           // Fallback to metadata for UI
+           setDisplayName(metaName);
+           setAvatarUrl(metaAvatar);
         } else {
-           setDisplayName(displayName);
-           setAvatarUrl(avatarUrl);
+           setDisplayName(metaName);
+           setAvatarUrl(metaAvatar);
         }
       } catch (e) {
         console.error("ensureProfile error:", e);
+        if (forceMetaFallback) extractUserMeta(u);
       }
     };
 
@@ -122,9 +120,9 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
         setSession(data.session);
         setUser(data.session?.user ?? null);
         if (data.session?.user) {
-          extractUserMeta(data.session.user);
-          // GUARANTEE: Wait for profile check/creation before setting initialized
-          await ensureProfile(data.session.user);
+          // Don't extract meta immediately, trust ensureProfile to fetch truth
+          // (Only fallback if needed)
+          await ensureProfile(data.session.user, true);
         }
       } catch (e) {
         const name = (e as Error)?.name ?? "";
@@ -134,22 +132,30 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
     };
     init();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (cancelled) return;
-      try {
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        if (newSession?.user) {
-          extractUserMeta(newSession.user);
-          // GUARANTEE: Ensure profile exists on fresh login/switch
-          await ensureProfile(newSession.user);
+      // INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED, USER_UPDATED, SIGNED_OUT, PASSWORD_RECOVERY
+      // console.log("Auth event:", event);
+
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+      if (newSession?.user) {
+        // Handle events smartly
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+             // Fetch fresh
+             await ensureProfile(newSession.user, true);
+        } else if (event === 'TOKEN_REFRESHED') {
+             // Don't overwrite state blindly, just ensure consistency in background
+             // Pass false to forceMetaFallback to keep existing state on error
+             await ensureProfile(newSession.user, false);
         } else {
-          setDisplayName("");
-          setAvatarUrl("");
-          setEmail("");
+             // USER_UPDATED etc.
+             await ensureProfile(newSession.user, false);
         }
-      } catch {
-        // Silently handle abort errors during auth state changes
+      } else if (event === 'SIGNED_OUT') {
+        setDisplayName("");
+        setAvatarUrl("");
+        setEmail("");
       }
     });
 

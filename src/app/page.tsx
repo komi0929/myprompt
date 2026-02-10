@@ -15,7 +15,7 @@ import FloatingCreateButton from "@/components/FloatingCreateButton";
 import BottomNav from "@/components/BottomNav";
 import TagFilter from "@/components/TagFilter";
 import ImportExportMenu from "@/components/ImportExportMenu";
-import StatsBar from "@/components/StatsBar";
+
 import CopyBuffer from "@/components/CopyBuffer";
 import BulkActionBar from "@/components/BulkActionBar";
 import type { BulkModeState } from "@/components/BulkActionBar";
@@ -146,7 +146,7 @@ function PageContent(): React.ReactElement {
         <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-20 md:pb-10 scroll-smooth">
           <div className="max-w-4xl mx-auto py-3">
             <OnboardingProgress />
-            <StatsBar />
+
 
             {filteredPrompts.length > 0 ? (
               <PromptFeed bulkMode={bulkMode} onToggleSelect={(id: string) => setBulkMode(prev => {

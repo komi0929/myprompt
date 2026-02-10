@@ -78,7 +78,7 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
           className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-xs font-medium text-yellow-700 bg-yellow-50 border border-yellow-200 hover:bg-yellow-100 transition-all"
         >
           <BookOpen className="w-4 h-4" />
-          <span>📖 使い方ガイド</span>
+          <span>使い方ガイド</span>
         </Link>
       </div>
 

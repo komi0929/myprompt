@@ -178,13 +178,15 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   // Hydrate on auth change — only after auth is resolved
   useEffect(() => {
     if (authStatus === "loading") return; // Don't fetch until auth state is known
+    let cancelled = false;
     const load = async (): Promise<void> => {
       await refreshPrompts();
       await refreshFavorites();
       await refreshLikes();
-      setHydrated(true);
+      if (!cancelled) setHydrated(true);
     };
     load();
+    return () => { cancelled = true; };
   }, [refreshPrompts, refreshFavorites, refreshLikes, authStatus]);
 
   // Auto-select first prompt (inside hydration callback, not in a separate effect)
@@ -225,14 +227,15 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       console.warn("addPrompt first attempt failed:", insertError.message);
 
       // Self-healing: If FK violation (23503) or any error, try to ensure profile exists
-      // This fixes the "User references missing profile" issue
-      const { error: profileError } = await supabase.from("profiles").upsert({
+      // FIXED: Use INSERT instead of UPSERT to avoid overwriting existing profile data with stale metadata
+      const { error: profileError } = await supabase.from("profiles").insert({
         id: user.id,
         display_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "User",
         avatar_url: user.user_metadata?.avatar_url || "",
       });
 
-      if (profileError) {
+      // Ignore duplicate key error (PGRST116 or 23505) - implies profile already exists, which is good
+      if (profileError && !profileError.message.includes("duplicate key") && profileError.code !== "23505") {
         console.error("Profile self-healing failed:", profileError.message);
         showToast("ユーザープロファイルの修復に失敗しました");
         return "";

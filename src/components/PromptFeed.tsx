@@ -19,7 +19,7 @@ export function PromptFeed({ bulkMode, onToggleSelect }: { bulkMode?: BulkModeSt
     <div className="space-y-3 pb-28">
       {/* Sort bar */}
       <div className="flex items-center justify-between">
-        <span className="text-xs text-slate-400 font-medium">{prompts.length}件</span>
+
         <div className="flex items-center gap-1.5">
           <ArrowUpDown className="w-3 h-3 text-slate-400" />
           <select
