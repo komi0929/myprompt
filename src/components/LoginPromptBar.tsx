@@ -5,10 +5,10 @@ import { useAuthGuard } from "@/lib/useAuthGuard";
 import { Sparkles } from "lucide-react";
 
 export default function LoginPromptBar(): React.ReactElement | null {
-  const { isGuest, isLoading } = useAuth();
+  const { authStatus } = useAuth();
   const { openLoginModal } = useAuthGuard();
 
-  if (isLoading || !isGuest) return null;
+  if (authStatus !== "guest") return null;
 
   return (
     <div className="mt-auto px-1 pb-1 pt-4">

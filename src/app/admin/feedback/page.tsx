@@ -58,7 +58,7 @@ const STATUS_CONFIG = {
 /*  Admin Feedback Management                  */
 /* ═══════════════════════════════════════════ */
 function AdminContent(): React.ReactElement {
-  const { user, isLoading, email } = useAuth();
+  const { user, authStatus, email } = useAuth();
   const [activeTab, setActiveTab] = useState<"feedback" | "changelog">("feedback");
   const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([]);
   const [changelog, setChangelog] = useState<ChangelogItem[]>([]);
@@ -72,7 +72,7 @@ function AdminContent(): React.ReactElement {
   const [clDesc, setClDesc] = useState("");
   const [clType, setClType] = useState<"feature" | "improvement" | "bugfix">("improvement");
 
-  const isAdmin = !isLoading && user && ADMIN_EMAILS.includes(email);
+  const isAdmin = authStatus === "authenticated" && ADMIN_EMAILS.includes(email);
 
   const fetchAll = useCallback(async (): Promise<void> => {
     setFetching(true);
@@ -141,7 +141,7 @@ function AdminContent(): React.ReactElement {
   };
 
   /* ─── Guard ─── */
-  if (isLoading) {
+  if (authStatus === "loading") {
     return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><p className="text-slate-400">読み込み中...</p></div>;
   }
   if (!isAdmin) {

@@ -48,7 +48,7 @@ export default function Page(): React.ReactElement {
 
 function PageContent(): React.ReactElement {
   const { currentPhase, setCurrentPhase, filteredPrompts, searchQuery, setSearchQuery, openEditor, selectedPromptId, setSelectedPromptId } = usePromptStore();
-  const { isGuest, isLoading: authLoading } = useAuth();
+  const { authStatus } = useAuth();
   const { requireAuth } = useAuthGuard();
   useKeyboardShortcuts();
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
@@ -232,7 +232,7 @@ function PageContent(): React.ReactElement {
       })()}
 
       {/* Floating Create Button (auth-guarded, desktop only) */}
-      {!authLoading && !isGuest && <div className="hidden md:block"><FloatingCreateButton /></div>}
+      {authStatus === "authenticated" && <div className="hidden md:block"><FloatingCreateButton /></div>}
 
       {/* Mobile Bottom Navigation */}
       <BottomNav />
@@ -242,10 +242,10 @@ function PageContent(): React.ReactElement {
 }
 
 function EmptyState({ onCreateFirst }: { onCreateFirst: () => void }): React.ReactElement {
-  const { isGuest, isLoading } = useAuth();
+  const { authStatus } = useAuth();
   const { setView } = usePromptStore();
 
-  if (isLoading) {
+  if (authStatus === "loading") {
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <div className="w-10 h-10 border-2 border-yellow-300 border-t-yellow-500 rounded-full animate-spin" />
@@ -272,7 +272,7 @@ function EmptyState({ onCreateFirst }: { onCreateFirst: () => void }): React.Rea
           <Plus className="w-4 h-4" />
           最初のプロンプトをメモする
         </button>
-        {isGuest && (
+        {authStatus === "guest" && (
           <button
             onClick={() => setView("trend")}
             className="text-sm text-slate-400 hover:text-yellow-600 transition-colors underline underline-offset-2"

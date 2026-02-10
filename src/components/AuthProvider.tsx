@@ -1,13 +1,19 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, useMemo, type ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
 import type { User, Session } from "@supabase/supabase-js";
+
+export type AuthStatus = "loading" | "guest" | "authenticated";
 
 interface AuthState {
   user: User | null;
   session: Session | null;
+  /** 三値状態: loading（初期化中）| guest（未認証）| authenticated（認証済み） */
+  authStatus: AuthStatus;
+  /** @deprecated authStatus === "loading" を使用 */
   isLoading: boolean;
+  /** @deprecated authStatus === "guest" を使用 */
   isGuest: boolean;
   displayName: string;
   avatarUrl: string;
@@ -30,10 +36,20 @@ const AuthCtx = createContext<AuthContext | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }): React.ReactElement {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [email, setEmail] = useState("");
+
+  // 三値状態を user と initialized から導出（Single Source of Truth）
+  const authStatus: AuthStatus = useMemo(() => {
+    if (!initialized) return "loading";
+    return user ? "authenticated" : "guest";
+  }, [initialized, user]);
+
+  // 後方互換（@deprecated）
+  const isLoading = authStatus === "loading";
+  const isGuest = authStatus === "guest";
 
   const extractUserMeta = (u: User): void => {
     const meta = u.user_metadata ?? {};
@@ -75,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
         const name = (e as Error)?.name ?? "";
         if (name === "AbortError" || cancelled) return;
       }
-      if (!cancelled) setIsLoading(false);
+      if (!cancelled) setInitialized(true);
     };
     init();
 
@@ -175,10 +191,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
     return { error: null };
   }, [user]);
 
-  const isGuest = !isLoading && !user;
-
   const value: AuthContext = {
-    user, session, isLoading, isGuest,
+    user, session, authStatus, isLoading, isGuest,
     displayName, avatarUrl, email,
     signInWithEmail, signUpWithEmail, signInWithGitHub, signInWithGoogle, signOut, updateProfile,
   };

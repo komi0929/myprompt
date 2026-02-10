@@ -15,30 +15,34 @@ interface AuthGuardContext {
 const AuthGuardCtx = createContext<AuthGuardContext | null>(null);
 
 export function AuthGuardProvider({ children }: { children: ReactNode }): React.ReactElement {
-  const { isGuest } = useAuth();
+  const { authStatus } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginAction, setLoginAction] = useState("");
   const pendingCallback = useRef<(() => void) | null>(null);
 
   const requireAuth = useCallback((action?: string): boolean => {
-    if (isGuest) {
-      setLoginAction(action ?? "この機能を使う");
-      setShowLoginModal(true);
+    if (authStatus !== "authenticated") {
+      if (authStatus === "guest") {
+        setLoginAction(action ?? "この機能を使う");
+        setShowLoginModal(true);
+      }
       pendingCallback.current = null;
       return false;
     }
     return true;
-  }, [isGuest]);
+  }, [authStatus]);
 
   const requireAuthWithCallback = useCallback((action: string, callback: () => void): boolean => {
-    if (isGuest) {
-      setLoginAction(action);
-      setShowLoginModal(true);
-      pendingCallback.current = callback;
+    if (authStatus !== "authenticated") {
+      if (authStatus === "guest") {
+        setLoginAction(action);
+        setShowLoginModal(true);
+        pendingCallback.current = callback;
+      }
       return false;
     }
     return true;
-  }, [isGuest]);
+  }, [authStatus]);
 
   const openLoginModal = useCallback((action?: string): void => {
     setLoginAction(action ?? "");
@@ -52,11 +56,11 @@ export function AuthGuardProvider({ children }: { children: ReactNode }): React.
     pendingCallback.current = null;
     setShowLoginModal(false);
     setLoginAction("");
-    if (cb && !isGuest) {
+    if (cb && authStatus === "authenticated") {
       // Delay to let auth state settle
       setTimeout(cb, 100);
     }
-  }, [isGuest]);
+  }, [authStatus]);
 
   return (
     <AuthGuardCtx.Provider value={{ requireAuth, requireAuthWithCallback, showLoginModal, loginAction, closeLoginModal, openLoginModal }}>

@@ -152,7 +152,7 @@ function dbToPrompt(row: DbPrompt): Prompt {
 }
 
 export function PromptStoreProvider({ children }: { children: ReactNode }): ReactNode {
-  const { user, isGuest, isLoading: authLoading } = useAuth();
+  const { user, authStatus } = useAuth();
 
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -190,9 +190,9 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
 
   /* ─── Fetch prompts ─── */
   const refreshPrompts = useCallback(async (): Promise<void> => {
-    if (authLoading) return; // Wait for auth to resolve
+    if (authStatus === "loading") return; // Wait for auth to resolve
     try {
-      if (isGuest) {
+      if (authStatus === "guest") {
         const { data, error } = await supabase
           .from("prompts")
           .select("*, profiles(display_name, avatar_url)")
@@ -213,11 +213,11 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     } catch {
       // Keep current prompts on error
     }
-  }, [isGuest, authLoading]);
+  }, [authStatus]);
 
   /* ─── Fetch favorites from Supabase ─── */
   const refreshFavorites = useCallback(async (): Promise<void> => {
-    if (authLoading || isGuest || !user) return;
+    if (authStatus !== "authenticated" || !user) return;
     try {
       const { data, error } = await supabase
         .from("favorites")
@@ -229,11 +229,11 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     } catch {
       // ignore
     }
-  }, [isGuest, user, authLoading]);
+  }, [authStatus, user]);
 
   /* ─── Fetch likes from Supabase ─── */
   const refreshLikes = useCallback(async (): Promise<void> => {
-    if (authLoading || isGuest || !user) return;
+    if (authStatus !== "authenticated" || !user) return;
     try {
       const { data, error } = await supabase
         .from("likes")
@@ -245,11 +245,11 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     } catch {
       // ignore
     }
-  }, [isGuest, user, authLoading]);
+  }, [authStatus, user]);
 
   // Hydrate on auth change — only after auth is resolved
   useEffect(() => {
-    if (authLoading) return; // Don't fetch until auth state is known
+    if (authStatus === "loading") return; // Don't fetch until auth state is known
     const load = async (): Promise<void> => {
       await refreshPrompts();
       await refreshFavorites();
@@ -257,7 +257,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       setHydrated(true);
     };
     load();
-  }, [refreshPrompts, refreshFavorites, refreshLikes, authLoading]);
+  }, [refreshPrompts, refreshFavorites, refreshLikes, authStatus]);
 
   // Auto-select first prompt (inside hydration callback, not in a separate effect)
   const autoSelectId = hydrated && prompts.length > 0 && !selectedPromptId

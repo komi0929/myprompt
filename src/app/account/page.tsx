@@ -11,7 +11,7 @@ import { showToast } from "@/components/ui/Toast";
 import AvatarPicker from "@/components/AvatarPicker";
 
 function AccountContent(): React.ReactElement {
-  const { user, isGuest, isLoading, displayName, avatarUrl, email, signOut, updateProfile } = useAuth();
+  const { user, authStatus, displayName, avatarUrl, email, signOut, updateProfile } = useAuth();
   const { notifications, unreadCount, markAllNotificationsRead } = usePromptStore();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -27,7 +27,7 @@ function AccountContent(): React.ReactElement {
     }
   }, [unreadCount, markAllNotificationsRead]);
 
-  if (isLoading) {
+  if (authStatus === "loading") {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-sm text-slate-400">読み込み中...</div>
@@ -35,7 +35,7 @@ function AccountContent(): React.ReactElement {
     );
   }
 
-  if (isGuest) {
+  if (authStatus === "guest") {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
         <div className="text-center">

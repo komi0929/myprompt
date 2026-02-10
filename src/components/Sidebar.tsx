@@ -16,7 +16,7 @@ import { copyToClipboard } from "@/components/ui/Toast";
 
 export function Sidebar({ className }: { className?: string }): React.ReactElement {
   const { view, setView, notifications, unreadCount, markAllNotificationsRead, getRecentlyUsed, setSelectedPromptId, incrementUseCount } = usePromptStore();
-  const { isGuest, isLoading, displayName, avatarUrl } = useAuth();
+  const { authStatus, displayName, avatarUrl } = useAuth();
   const { openLoginModal } = useAuthGuard();
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -103,12 +103,12 @@ export function Sidebar({ className }: { className?: string }): React.ReactEleme
 
       {/* Bottom: User Info pushed to bottom */}
       <div className="mt-auto pt-6 px-1">
-        {isLoading ? (
+        {authStatus === "loading" ? (
           <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 animate-pulse">
             <div className="h-8 w-8 rounded-full bg-slate-200" />
             <div className="h-3 w-16 rounded bg-slate-200" />
           </div>
-        ) : isGuest ? (
+        ) : authStatus === "guest" ? (
           <button
             onClick={() => openLoginModal()}
             className="flex items-center gap-3 w-full p-3 rounded-lg bg-yellow-50 border border-yellow-200 hover:bg-yellow-100 transition-colors"

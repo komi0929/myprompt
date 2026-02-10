@@ -80,7 +80,7 @@ interface ChangelogItem {
 /*  Admin Dashboard                                */
 /* ═══════════════════════════════════════════════ */
 function AdminDashboard(): React.ReactElement {
-  const { user, isLoading, email } = useAuth();
+  const { user, authStatus, email } = useAuth();
   const [activeTab, setActiveTab] = useState<TabId>("kpi");
   const [fetching, setFetching] = useState(false);
 
@@ -107,7 +107,7 @@ function AdminDashboard(): React.ReactElement {
   const [clDesc, setClDesc] = useState("");
   const [clType, setClType] = useState<"feature" | "improvement" | "bugfix">("improvement");
 
-  const isAdmin = !isLoading && user && ADMIN_EMAILS.includes(email);
+  const isAdmin = authStatus === "authenticated" && ADMIN_EMAILS.includes(email);
 
   /* ─── Fetch All Data ─── */
   const fetchAll = useCallback(async (): Promise<void> => {
@@ -142,7 +142,7 @@ function AdminDashboard(): React.ReactElement {
   }, [isAdmin, fetchAll]);
 
   /* ─── Guards ─── */
-  if (isLoading) {
+  if (authStatus === "loading") {
     return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><p className="text-slate-400">読み込み中...</p></div>;
   }
   if (!isAdmin) {

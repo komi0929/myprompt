@@ -33,12 +33,12 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function AdminContent(): React.ReactElement {
-  const { user, isLoading, email } = useAuth();
+  const { user, authStatus, email } = useAuth();
   const [contacts, setContacts] = useState<ContactEntry[]>([]);
   const [fetching, setFetching] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const isAdmin = !isLoading && user && ADMIN_EMAILS.includes(email);
+  const isAdmin = authStatus === "authenticated" && ADMIN_EMAILS.includes(email);
 
   const fetchContacts = useCallback(async (): Promise<void> => {
     setFetching(true);
@@ -93,7 +93,7 @@ function AdminContent(): React.ReactElement {
     }
   };
 
-  if (isLoading) {
+  if (authStatus === "loading") {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <p className="text-slate-400">読み込み中...</p>
