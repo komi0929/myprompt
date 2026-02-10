@@ -114,7 +114,7 @@ export default function PromptModal(): React.ReactElement | null {
     }
 
     if (isNew) {
-      await addPrompt({
+      const id = await addPrompt({
         title: title.trim(),
         content: content.trim(),
         tags,
@@ -123,6 +123,7 @@ export default function PromptModal(): React.ReactElement | null {
         lineage: editingPrompt.lineage,
         notes: notes.trim() || undefined,
       });
+      if (!id) return; // addPrompt failed (e.g. not logged in) — it already shows its own toast
       showToast("プロンプトを保存しました");
     } else {
       await updatePrompt(editingPrompt.id, {

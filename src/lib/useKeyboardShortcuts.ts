@@ -2,6 +2,7 @@
 
 import { useEffect, useCallback } from "react";
 import { usePromptStore } from "@/lib/prompt-store";
+import { useAuthGuard } from "@/lib/useAuthGuard";
 import { copyToClipboard } from "@/components/ui/Toast";
 
 /**
@@ -16,6 +17,7 @@ export function useKeyboardShortcuts(): void {
     setSelectedPromptId,
     incrementUseCount,
   } = usePromptStore();
+  const { requireAuth } = useAuthGuard();
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent): void => {
@@ -42,7 +44,9 @@ export function useKeyboardShortcuts(): void {
       // Ctrl+N — New prompt
       if ((e.ctrlKey || e.metaKey) && e.key === "n") {
         e.preventDefault();
-        openEditor();
+        if (requireAuth("プロンプトのメモ")) {
+          openEditor();
+        }
         return;
       }
 
@@ -86,7 +90,7 @@ export function useKeyboardShortcuts(): void {
         return;
       }
     },
-    [openEditor, getFilteredPrompts, selectedPromptId, setSelectedPromptId, incrementUseCount]
+    [openEditor, requireAuth, getFilteredPrompts, selectedPromptId, setSelectedPromptId, incrementUseCount]
   );
 
   useEffect(() => {
