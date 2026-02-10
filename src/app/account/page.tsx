@@ -6,7 +6,7 @@ import { usePromptStore, PromptStoreProvider } from "@/lib/prompt-store";
 import type { AppNotification } from "@/lib/prompt-store";
 import { AuthGuardProvider } from "@/lib/useAuthGuard";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LogOut, Trash2, Bell, ChevronRight, ArrowLeft, AlertTriangle, Pencil } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { showToast } from "@/components/ui/Toast";
@@ -23,9 +23,11 @@ function AccountContent(): React.ReactElement {
   const [uploading, setUploading] = useState(false);
 
   // Mark all as read on mount
-  if (unreadCount > 0) {
-    markAllNotificationsRead();
-  }
+  useEffect(() => {
+    if (unreadCount > 0) {
+      markAllNotificationsRead();
+    }
+  }, [unreadCount, markAllNotificationsRead]);
 
   if (isGuest) {
     return (
@@ -114,20 +116,23 @@ function AccountContent(): React.ReactElement {
       if (user?.id) {
         const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token;
-        if (token) {
-          const res = await fetch("/api/delete-account", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify({ userId: user.id }),
-          });
-          if (!res.ok) {
-            showToast("アカウント削除に失敗しました");
-            setDeleting(false);
-            return;
-          }
+        if (!token) {
+          showToast("認証情報を取得できませんでした。再ログイン後にお試しください");
+          setDeleting(false);
+          return;
+        }
+        const res = await fetch("/api/delete-account", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({ userId: user.id }),
+        });
+        if (!res.ok) {
+          showToast("アカウント削除に失敗しました");
+          setDeleting(false);
+          return;
         }
       }
       await signOut();
