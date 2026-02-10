@@ -32,6 +32,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 
 import CommandPalette from "@/components/CommandPalette";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import SuccessCelebration from "@/components/SuccessCelebration";
 
 export default function Page(): React.ReactElement {
   return (
@@ -46,6 +47,7 @@ export default function Page(): React.ReactElement {
             <CopyBuffer />
           </ErrorBoundary>
           <ToastContainer />
+          <SuccessCelebration />
         </PromptStoreProvider>
       </AuthGuardProvider>
     </AuthProvider>

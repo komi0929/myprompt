@@ -588,7 +588,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         p.authorId === currentUserId || favorites.includes(p.id)
       );
     } else if (view === "trend") {
-      result = result.filter(p => p.visibility === "Public");
+      result = result.filter(p => p.visibility === "Public" || (currentUserId && p.authorId === currentUserId));
     }
 
     // Phase filter

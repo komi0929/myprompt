@@ -9,6 +9,7 @@ import { PHASES, type Phase } from "@/lib/mock-data";
 type PromptPhase = Exclude<Phase, "All">;
 import { X, Save } from "lucide-react";
 import { showToast } from "@/components/ui/Toast";
+import { showCelebration } from "@/components/SuccessCelebration";
 import TagAutocomplete from "@/components/TagAutocomplete";
 
 export default function PromptModal(): React.ReactElement | null {
@@ -124,7 +125,7 @@ export default function PromptModal(): React.ReactElement | null {
         notes: notes.trim() || undefined,
       });
       if (!id) return; // addPrompt failed (e.g. not logged in) — it already shows its own toast
-      showToast("プロンプトを保存しました");
+      showCelebration(visibility === "Public" ? "share" : "save");
     } else {
       const ok = await updatePrompt(editingPrompt.id, {
         title: title.trim(),
@@ -135,7 +136,12 @@ export default function PromptModal(): React.ReactElement | null {
         notes: notes.trim() || undefined,
       });
       if (!ok) return; // updatePrompt already shows error toast
-      showToast("プロンプトを更新しました");
+      // Show celebration if visibility changed to Public (sharing), otherwise just a toast
+      if (visibility === "Public" && editingPrompt.visibility !== "Public") {
+        showCelebration("share");
+      } else {
+        showToast("プロンプトを更新しました ✨");
+      }
     }
     closeEditor();
     clearDraft();
