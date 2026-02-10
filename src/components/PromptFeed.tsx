@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
-import { Copy, GitBranch, Trash2, Pencil, Heart, Bookmark, ArrowUpDown, Pin, CheckSquare, Square } from "lucide-react";
+import { Copy, Trash2, Pencil, Heart, Bookmark, ArrowUpDown, Pin, CheckSquare, Square } from "lucide-react";
 import { usePromptStore, SORT_OPTIONS } from "@/lib/prompt-store";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { copyToClipboard, showToast } from "@/components/ui/Toast";
@@ -157,11 +157,7 @@ function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { pro
               {phaseInfo.icon} {phaseInfo.label}
             </span>
           )}
-          {!prompt.lineage.isOriginal && (
-            <span className="flex items-center text-[10px] text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
-              <GitBranch className="w-3 h-3 mr-0.5" />派生
-            </span>
-          )}
+
           {/* Origin indicator */}
           {isOwned ? (
             <span className="text-[10px] font-medium text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">

@@ -121,7 +121,6 @@ export default function PromptModal(): React.ReactElement | null {
         tags,
         phase,
         visibility,
-        lineage: editingPrompt.lineage,
         notes: notes.trim() || undefined,
       });
       if (!id) return; // addPrompt failed (e.g. not logged in) — it already shows its own toast

@@ -18,11 +18,6 @@ export interface Prompt {
   lastUsedAt?: string;
   notes?: string;
   rating?: "good" | "neutral" | "bad";
-  lineage: {
-    parent?: string;
-    children?: string[];
-    isOriginal: boolean;
-  };
 }
 
 export interface Folder {
@@ -43,9 +38,6 @@ export const MOCK_PROMPTS: Prompt[] = [
     updatedAt: "2026-02-07T10:00:00",
     likeCount: 3,
     authorId: "mock-user",
-    lineage: {
-      isOriginal: true,
-    },
   },
   {
     id: "2",
@@ -57,11 +49,7 @@ export const MOCK_PROMPTS: Prompt[] = [
     updatedAt: "2026-02-06T15:30:00",
     likeCount: 12,
     authorId: "other-user",
-    lineage: {
-      parent: "Old PRD Gen",
-      children: ["Fixed for SaaS", "Mobile App ver"],
-      isOriginal: false,
-    },
+
   },
   {
     id: "3",
@@ -73,9 +61,7 @@ export const MOCK_PROMPTS: Prompt[] = [
     updatedAt: "2026-02-05T09:00:00",
     likeCount: 7,
     authorId: "mock-user",
-    lineage: {
-      isOriginal: true,
-    },
+
   },
 ];
 

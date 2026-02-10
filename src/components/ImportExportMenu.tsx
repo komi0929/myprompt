@@ -45,7 +45,6 @@ export default function ImportExportMenu(): React.ReactElement {
           phase: validPhase,
           visibility: p.visibility === "Public" ? "Public" : "Private",
           notes: p.notes,
-          lineage: { isOriginal: true },
         });
         count++;
       }

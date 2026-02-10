@@ -309,12 +309,10 @@ function AccountContent(): React.ReactElement {
 }
 
 function NotificationItem({ notification: n }: { notification: AppNotification }): React.ReactElement {
-  const icon = n.type === "like" ? "👍" : n.type === "favorite" ? "⭐" : "🔄";
+  const icon = n.type === "like" ? "👍" : "⭐";
   const action = n.type === "like"
     ? "がいいね！しました"
-    : n.type === "favorite"
-      ? "がお気に入りに追加しました"
-      : "が派生プロンプトを作成しました";
+    : "がお気に入りに追加しました";
 
   return (
     <div className="px-6 py-3.5 border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">

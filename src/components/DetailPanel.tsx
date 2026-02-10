@@ -6,7 +6,7 @@ import { PHASES } from "@/lib/mock-data";
 import { usePromptStore } from "@/lib/prompt-store";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { copyToClipboard } from "@/components/ui/Toast";
-import { ArrowRight, Copy, GitBranch, History, Share2, Sparkles, Edit3, Pencil, Heart, Bookmark, Zap, ChevronDown, Lightbulb, ThumbsUp, ThumbsDown, Minus, Check, X } from "lucide-react";
+import { Copy, History, Share2, Sparkles, Edit3, Pencil, Heart, Bookmark, Zap, ChevronDown, Lightbulb, ThumbsUp, ThumbsDown, Minus, Check, X } from "lucide-react";
 import { useState, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import HistoryModal from "@/components/HistoryModal";
@@ -17,7 +17,7 @@ import { hasVariables } from "@/lib/template-utils";
 import { addToCopyBuffer } from "@/components/CopyBuffer";
 
 export function DetailPanel(): React.ReactElement {
-  const { selectedPromptId, prompts, openEditor, duplicateAsArrangement, toggleFavorite, isFavorited, toggleLike, isLiked, incrementUseCount, updatePrompt, setSelectedPromptId } = usePromptStore();
+  const { selectedPromptId, prompts, openEditor, toggleFavorite, isFavorited, toggleLike, isLiked, incrementUseCount, updatePrompt, setSelectedPromptId } = usePromptStore();
   const { requireAuth } = useAuthGuard();
   const { user } = useAuth();
   const prompt = prompts.find(p => p.id === selectedPromptId) ?? null;
@@ -81,10 +81,7 @@ export function DetailPanel(): React.ReactElement {
     }
   };
 
-  const handleArrange = (): void => {
-    if (!requireAuth("プロンプトの派生メモ")) return;
-    duplicateAsArrangement(prompt.id);
-  };
+
 
   const handleEdit = (): void => {
     if (!requireAuth("プロンプトの編集")) return;
@@ -110,32 +107,6 @@ export function DetailPanel(): React.ReactElement {
   return (
     <div className="flex h-full flex-col overflow-y-auto bg-white border-l border-slate-200/80 shadow-lg shadow-slate-200/30 z-20 w-full max-w-[480px]">
       
-      {/* Lineage Bar */}
-      <div className="bg-slate-50 border-b border-slate-200/80 p-4">
-        <div className="flex items-center space-x-2 text-xs text-slate-500 overflow-x-auto no-scrollbar whitespace-nowrap">
-          <GitBranch className="w-4 h-4 text-slate-400 shrink-0" />
-          {prompt.lineage.parent && (
-            <>
-              <span className="px-2 py-1 rounded-md bg-white border border-slate-200 text-slate-400">
-                {prompt.lineage.parent}
-              </span>
-              <ArrowRight className="w-3 h-3 text-slate-300 shrink-0" />
-            </>
-          )}
-          <span className="px-2 py-1 rounded-md bg-yellow-100 border border-yellow-200 text-yellow-700 font-semibold">
-            現在
-          </span>
-          {prompt.lineage.children && prompt.lineage.children.length > 0 && (
-            <>
-              <ArrowRight className="w-3 h-3 text-slate-300 shrink-0" />
-              <span className="px-2 py-1 rounded-md bg-white border border-slate-200 text-slate-400">
-                {prompt.lineage.children.length} 派生
-              </span>
-            </>
-          )}
-        </div>
-      </div>
-
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         
         {/* Header */}
@@ -438,11 +409,6 @@ export function DetailPanel(): React.ReactElement {
 
         {/* Actions */}
         <div className="space-y-3 pt-4">
-          <Button className="w-full" variant="outline" size="lg" onClick={handleArrange}>
-            <Sparkles className="w-4 h-4 mr-2" />
-            このプロンプトをもとにメモ
-          </Button>
-          
           <div className="grid grid-cols-2 gap-2">
             <Button variant="secondary" className="w-full" onClick={handleShare}>
               <Share2 className="w-4 h-4 mr-1.5" /> シェア
@@ -457,21 +423,7 @@ export function DetailPanel(): React.ReactElement {
         {/* Related prompts */}
         <RelatedSuggestions currentPrompt={prompt} allPrompts={prompts} onSelect={setSelectedPromptId} />
 
-        {/* Descendants */}
-        {prompt.lineage.children && prompt.lineage.children.length > 0 && (
-          <div className="pt-6 border-t border-slate-100">
-            <h4 className="font-semibold text-sm text-slate-500 mb-3 flex items-center gap-2">
-              <GitBranch className="w-4 h-4" /> みんなの活用事例
-            </h4>
-            <div className="space-y-2">
-              {prompt.lineage.children.map(child => (
-                <div key={child} className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-sm text-slate-600 hover:bg-white hover:border-yellow-200 transition-colors cursor-pointer">
-                  {child}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+
       </div>
 
       {historyOpen && (
@@ -508,8 +460,6 @@ function RelatedSuggestions({ currentPrompt, allPrompts, onSelect }: {
       score += sharedTags * 3;
       // Same phase
       if (p.phase === currentPrompt.phase) score += 2;
-      // Lineage connection
-      if (currentPrompt.lineage.parent === p.id || currentPrompt.lineage.children?.includes(p.id)) score += 5;
       return { prompt: p, score };
     })
     .filter(r => r.score > 0)

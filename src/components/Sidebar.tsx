@@ -179,12 +179,12 @@ function NotificationPanel({ notifications, onClose }: { notifications: AppNotif
             >
               <div className="flex items-start gap-2">
                 <span className="text-sm mt-0.5">
-                  {n.type === "like" ? "👍" : n.type === "favorite" ? "⭐" : "🔄"}
+                  {n.type === "like" ? "👍" : "⭐"}
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-slate-600 leading-tight">
                     <span className="font-semibold">{n.actorName}</span>
-                    {n.type === "like" ? " がいいね！しました" : n.type === "favorite" ? " がお気に入りに追加しました" : " が派生プロンプトを作成しました"}
+                    {n.type === "like" ? " がいいね！しました" : " がお気に入りに追加しました"}
                   </p>
                   <p className="text-[10px] text-slate-400 truncate mt-0.5">
                     「{n.promptTitle}」

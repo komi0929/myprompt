@@ -27,7 +27,7 @@ export interface HistoryEntry {
 /* ─── Notification ─── */
 export interface AppNotification {
   id: string;
-  type: "like" | "favorite" | "fork";
+  type: "like" | "favorite";
   promptId: string;
   promptTitle: string;
   actorName: string;
@@ -59,7 +59,7 @@ interface PromptStoreActions {
   addPrompt: (prompt: Omit<Prompt, "id" | "updatedAt" | "likeCount">) => Promise<string>;
   updatePrompt: (id: string, updates: Partial<Omit<Prompt, "id">>) => Promise<boolean>;
   deletePrompt: (id: string) => Promise<void>;
-  duplicateAsArrangement: (sourceId: string) => void;
+
   toggleFavorite: (id: string) => Promise<void>;
   toggleLike: (id: string) => Promise<void>;
   isFavorited: (id: string) => boolean;
@@ -115,7 +115,7 @@ interface DbPrompt {
   tags: string[] | null;
   phase: string | null;
   visibility: string | null;
-  parent_id: string | null;
+
   like_count: number;
   use_count: number;
   is_pinned: boolean;
@@ -148,10 +148,6 @@ function dbToPrompt(row: DbPrompt): Prompt {
     authorId: row.user_id ?? "",
     authorName: profile?.display_name ?? undefined,
     authorAvatarUrl: profile?.avatar_url ?? undefined,
-    lineage: {
-      parent: row.parent_id ?? undefined,
-      isOriginal: !row.parent_id,
-    },
   };
 }
 
@@ -285,7 +281,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
       tags: input.tags,
       phase: input.phase,
       visibility: input.visibility,
-      parent_id: input.lineage.parent ?? null,
+
       notes: input.notes ?? null,
     };
     // INSERT first, then SELECT separately to avoid profiles JOIN failure blocking insert
@@ -432,20 +428,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     });
   }, [selectedPromptId, user, prompts, favorites, likes]);
 
-  const duplicateAsArrangement = useCallback((sourceId: string): void => {
-    const source = prompts.find(p => p.id === sourceId);
-    if (!source) return;
-    const newPrompt: Prompt = {
-      ...source,
-      id: "",
-      title: `${source.title} (アレンジ)`,
-      updatedAt: new Date().toISOString(),
-      likeCount: 0,
-      authorId: currentUserId,
-      lineage: { parent: source.id, isOriginal: false },
-    };
-    setEditingPrompt(newPrompt);
-  }, [prompts, currentUserId]);
+
 
   /* ─── Favorite toggle ─── */
   const toggleFavorite = useCallback(async (id: string): Promise<void> => {
@@ -544,7 +527,6 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
         updatedAt: "",
         likeCount: 0,
         authorId: currentUserId,
-        lineage: { isOriginal: true },
       });
     }
   }, [currentPhase, currentUserId]);
@@ -756,7 +738,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   const store = useMemo<PromptStore>(() => ({
     prompts, favorites, likes, history, notifications, unreadCount, view, visibilityFilter, searchQuery,
     selectedPromptId, currentPhase, editingPrompt, sortOrder, folders, selectedFolderId, filteredPrompts,
-    addPrompt, updatePrompt, deletePrompt, duplicateAsArrangement,
+    addPrompt, updatePrompt, deletePrompt,
     toggleFavorite, toggleLike, isFavorited, isLiked, incrementUseCount, togglePin,
     setView, setVisibilityFilter, setSearchQuery, setSortOrder,
     setSelectedPromptId, setCurrentPhase, openEditor, closeEditor,
@@ -765,7 +747,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   }), [
     prompts, favorites, likes, history, notifications, unreadCount, view, visibilityFilter, searchQuery,
     selectedPromptId, currentPhase, editingPrompt, sortOrder, folders, selectedFolderId, filteredPrompts,
-    addPrompt, updatePrompt, deletePrompt, duplicateAsArrangement,
+    addPrompt, updatePrompt, deletePrompt,
     toggleFavorite, toggleLike, isFavorited, isLiked, incrementUseCount, togglePin,
     setView, setVisibilityFilter, setSearchQuery, setSortOrder, setCurrentPhase,
     openEditor, closeEditor, getHistory, getFilteredPrompts, refreshPrompts, markAllNotificationsRead,

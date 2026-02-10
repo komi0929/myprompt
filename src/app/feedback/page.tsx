@@ -66,7 +66,7 @@ const FEATURES = [
   { name: "みんなのプロンプト共有", status: "done" as const, icon: "🌐" },
   { name: "いいね！＆ お気に入り", status: "done" as const, icon: "❤️" },
   { name: "Google ログイン", status: "done" as const, icon: "🔐" },
-  { name: "プロンプトの系譜 (リミックス)", status: "done" as const, icon: "🌳" },
+
   { name: "タグ付け＆タグ検索", status: "done" as const, icon: "🏷️" },
   { name: "JSON / Markdown エクスポート", status: "done" as const, icon: "📤" },
   { name: "ピン留め機能", status: "done" as const, icon: "📌" },

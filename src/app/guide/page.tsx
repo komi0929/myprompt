@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   Search, Copy, Sparkles, ChevronDown, ChevronUp,
-  Flame, Star, GitBranch, ArrowLeft, Tag,
+  Flame, Star, ArrowLeft, Tag,
   Download, Upload, Heart, Eye, Plus, Layers, Command,
   HelpCircle,
 } from "lucide-react";
@@ -204,17 +204,7 @@ export default function GuidePage(): React.ReactElement {
                 </p>
               </div>
             </div>
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-                <GitBranch className="w-4 h-4 text-blue-500" />
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold text-slate-700">派生して自分用に</h4>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  他の人のプロンプトを元に、自分用にカスタマイズした「派生プロンプト」を作成できます。元のプロンプトへのリンクも残ります。
-                </p>
-              </div>
-            </div>
+
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
                 <Eye className="w-4 h-4 text-green-500" />

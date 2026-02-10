@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { useAuthGuard } from "@/lib/useAuthGuard";
-import { X, Mail, Github, Check, Lock, Eye, Copy, Pencil, Star, GitBranch, History, Zap, Shield } from "lucide-react";
+import { X, Mail, Github, Check, Lock, Eye, Copy, Pencil, Star, Sparkles, History, Zap, Shield } from "lucide-react";
 import { showToast } from "@/components/ui/Toast";
 
 /* Google "G" SVG icon */
@@ -170,7 +170,7 @@ export default function LoginModal(): React.ReactElement | null {
               <CompRow icon={<Copy className="w-3 h-3" />} label="コピー" guest check />
               <CompRow icon={<Pencil className="w-3 h-3" />} label="メモ・編集" check />
               <CompRow icon={<Star className="w-3 h-3" />} label="お気に入り" check />
-              <CompRow icon={<GitBranch className="w-3 h-3" />} label="カスタマイズ" check />
+              <CompRow icon={<Sparkles className="w-3 h-3" />} label="シェア" check />
               <CompRow icon={<History className="w-3 h-3" />} label="履歴" check last />
             </div>
           </details>
