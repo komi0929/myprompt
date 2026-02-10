@@ -101,9 +101,12 @@ export default function WelcomeOverlay({
 
   // Spotlight position requires DOM measurement after render
   useEffect(() => {
-    updateHighlight();
+    const raf = requestAnimationFrame(() => updateHighlight());
     window.addEventListener("resize", updateHighlight);
-    return () => window.removeEventListener("resize", updateHighlight);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", updateHighlight);
+    };
   }, [updateHighlight]);
 
   if (wasWelcomed || dismissed) return null;
@@ -243,7 +246,7 @@ export default function WelcomeOverlay({
             {isLast ? (
               <>
                 <Sparkles className="w-4 h-4" />
-                さっそく始める！
+                さっそくメモする！
               </>
             ) : (
               <>
@@ -252,6 +255,14 @@ export default function WelcomeOverlay({
               </>
             )}
           </button>
+          {isLast && (
+            <button
+              onClick={handleDismiss}
+              className="flex items-center justify-center gap-2 text-sm text-slate-400 hover:text-slate-600 py-3 px-4 rounded-xl hover:bg-slate-50 transition-colors whitespace-nowrap"
+            >
+              まず見てみる
+            </button>
+          )}
         </div>
 
         {/* Skip link */}

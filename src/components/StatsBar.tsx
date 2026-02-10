@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { usePromptStore } from "@/lib/prompt-store";
+import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
 import { BarChart3, TrendingUp, Flame, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function StatsBar(): React.ReactElement {
   const { prompts } = usePromptStore();
+  const { isGuest } = useAuth();
   const [open, setOpen] = useState(false);
 
   // Only show stats for user's own prompts
@@ -55,7 +57,8 @@ export default function StatsBar(): React.ReactElement {
     return count;
   }, [ownPrompts]);
 
-  if (totalCount === 0) return <></>;
+  // Hide stats for guests or when no prompts
+  if (isGuest || totalCount === 0) return <></>;
 
   return (
     <div className="max-w-4xl mx-auto">

@@ -17,12 +17,13 @@ import { hasVariables } from "@/lib/template-utils";
 import { addToCopyBuffer } from "@/components/CopyBuffer";
 
 export function DetailPanel(): React.ReactElement {
-  const { selectedPromptId, prompts, openEditor, duplicateAsArrangement, toggleFavorite, isFavorited, toggleLike, isLiked, incrementUseCount, updatePrompt, setSelectedPromptId, filteredPrompts } = usePromptStore();
+  const { selectedPromptId, prompts, openEditor, duplicateAsArrangement, toggleFavorite, isFavorited, toggleLike, isLiked, incrementUseCount, updatePrompt, setSelectedPromptId } = usePromptStore();
   const { requireAuth } = useAuthGuard();
   const { user } = useAuth();
   const prompt = prompts.find(p => p.id === selectedPromptId) ?? null;
   const [historyOpen, setHistoryOpen] = useState(false);
   const [templateOpen, setTemplateOpen] = useState(false);
+  const [formatMenuOpen, setFormatMenuOpen] = useState(false);
 
   // V-06: Inline editing state
   const [inlineField, setInlineField] = useState<"title" | "content" | "notes" | null>(null);
@@ -196,11 +197,12 @@ export function DetailPanel(): React.ReactElement {
               </div>
             ) : (
               <h1
-                className={cn("text-xl font-semibold text-slate-800 leading-tight tracking-tight", isOwner && "cursor-pointer hover:bg-yellow-50 hover:rounded-lg transition-colors px-1 -mx-1")}
+                className={cn("text-xl font-semibold text-slate-800 leading-tight tracking-tight group/title", isOwner && "cursor-pointer hover:bg-yellow-50 hover:rounded-lg transition-colors px-1 -mx-1")}
                 onDoubleClick={() => isOwner && startInlineEdit("title", prompt.title)}
                 title={isOwner ? "ダブルクリックで編集" : undefined}
               >
                 {prompt.title}
+                {isOwner && <Pencil className="inline-block w-3 h-3 ml-1.5 text-slate-300 opacity-0 group-hover/title:opacity-100 transition-opacity align-middle" />}
               </h1>
             )}
             {/* Edit button - only for owned prompts */}
@@ -280,10 +282,11 @@ export function DetailPanel(): React.ReactElement {
             </div>
           ) : (
           <div
-            className={cn("bg-slate-50 rounded-xl p-5 border border-slate-100 font-mono text-sm leading-relaxed text-slate-700 shadow-inner min-h-[160px] whitespace-pre-wrap", isOwner && "cursor-pointer hover:border-yellow-200 transition-colors")}
+            className={cn("bg-slate-50 rounded-xl p-5 border border-slate-100 font-mono text-sm leading-relaxed text-slate-700 shadow-inner min-h-[160px] whitespace-pre-wrap group/content", isOwner && "cursor-pointer hover:border-yellow-200 transition-colors")}
             onDoubleClick={() => isOwner && startInlineEdit("content", prompt.content)}
             title={isOwner ? "ダブルクリックで編集" : undefined}
           >
+            {isOwner && <span className="float-right text-[10px] text-slate-300 opacity-0 group-hover/content:opacity-100 transition-opacity flex items-center gap-1"><Pencil className="w-2.5 h-2.5" />ダブルクリックで編集</span>}
             {prompt.content.split(/({.*?})/).map((part, i) => 
               part.match(/^{.*}$/) ? (
                 <span key={i} className="bg-yellow-200 text-yellow-800 px-1 rounded font-semibold mx-0.5 border-b-2 border-yellow-300">
@@ -321,34 +324,41 @@ export function DetailPanel(): React.ReactElement {
                 <Copy className="w-4 h-4 mr-2" />
                 コピー
               </Button>
-              <div className="relative group/fmt">
-                <Button variant="ghost" size="lg" className="px-2" title="フォーマット選択">
+              <div className="relative">
+                <Button variant="ghost" size="lg" className="px-2" title="フォーマット選択" onClick={() => setFormatMenuOpen(prev => !prev)}>
                   <ChevronDown className="w-4 h-4" />
                 </Button>
-                <div className="absolute bottom-full right-0 mb-1 hidden group-hover/fmt:block z-30">
-                  <div className="bg-white rounded-lg border border-slate-200 shadow-lg py-1 min-w-[140px]">
-                    <button
-                      className="w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-yellow-50 hover:text-yellow-700 transition-colors"
-                      onClick={() => {
-                        const md = `## ${prompt.title}\n\n${prompt.content}\n\nTags: ${prompt.tags.map(t => `#${t}`).join(" ")}`;
-                        copyToClipboard(md, "Markdown形式でコピー ✨");
-                        incrementUseCount(prompt.id);
-                      }}
-                    >
-                      📝 Markdown形式
-                    </button>
-                    <button
-                      className="w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-yellow-50 hover:text-yellow-700 transition-colors"
-                      onClick={() => {
-                        const xml = `<prompt>\n<title>${prompt.title}</title>\n<content>\n${prompt.content}\n</content>\n<tags>${prompt.tags.join(", ")}</tags>\n</prompt>`;
-                        copyToClipboard(xml, "XML形式でコピー ✨");
-                        incrementUseCount(prompt.id);
-                      }}
-                    >
-                      🏷️ XML形式
-                    </button>
-                  </div>
-                </div>
+                {formatMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-20" onClick={() => setFormatMenuOpen(false)} />
+                    <div className="absolute bottom-full right-0 mb-1 z-30">
+                      <div className="bg-white rounded-lg border border-slate-200 shadow-lg py-1 min-w-[140px]">
+                        <button
+                          className="w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-yellow-50 hover:text-yellow-700 transition-colors"
+                          onClick={() => {
+                            const md = `## ${prompt.title}\n\n${prompt.content}\n\nTags: ${prompt.tags.map(t => `#${t}`).join(" ")}`;
+                            copyToClipboard(md, "Markdown形式でコピー ✨");
+                            incrementUseCount(prompt.id);
+                            setFormatMenuOpen(false);
+                          }}
+                        >
+                          📝 Markdown形式
+                        </button>
+                        <button
+                          className="w-full text-left px-3 py-1.5 text-xs text-slate-600 hover:bg-yellow-50 hover:text-yellow-700 transition-colors"
+                          onClick={() => {
+                            const xml = `<prompt>\n<title>${prompt.title}</title>\n<content>\n${prompt.content}\n</content>\n<tags>${prompt.tags.join(", ")}</tags>\n</prompt>`;
+                            copyToClipboard(xml, "XML形式でコピー ✨");
+                            incrementUseCount(prompt.id);
+                            setFormatMenuOpen(false);
+                          }}
+                        >
+                          🏷️ XML形式
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}

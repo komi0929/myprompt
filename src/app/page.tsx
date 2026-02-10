@@ -28,7 +28,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useKeyboardShortcuts } from "@/lib/useKeyboardShortcuts";
 import { Search, Plus, Sparkles, X, CheckSquare, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 
 import CommandPalette from "@/components/CommandPalette";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -59,6 +59,20 @@ function PageContent(): React.ReactElement {
   useKeyboardShortcuts();
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [bulkMode, setBulkMode] = useState<BulkModeState>({ isActive: false, selectedIds: new Set() });
+
+  // Debounced search
+  const [localSearch, setLocalSearch] = useState(searchQuery);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleSearchChange = useCallback((value: string): void => {
+    setLocalSearch(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSearchQuery(value);
+      if (value.length > 0) markMilestone("search");
+    }, 300);
+  }, [setSearchQuery]);
+  // Cleanup on unmount
+  useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
 
   // React-approved pattern: "Adjusting state when a prop changes"
   // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
@@ -111,12 +125,9 @@ function PageContent(): React.ReactElement {
             <Search className="absolute left-3 md:left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              value={searchQuery}
-              onChange={e => {
-                setSearchQuery(e.target.value);
-                if (e.target.value.length > 0) markMilestone("search");
-              }}
-              placeholder="プロンプトを検索..."
+              value={localSearch}
+              onChange={e => handleSearchChange(e.target.value)}
+              placeholder="プロンプトを検索... (Ctrl+K)"
               className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-400/30 focus:border-yellow-400 transition-all shadow-sm hover:shadow"
             />
           </div>

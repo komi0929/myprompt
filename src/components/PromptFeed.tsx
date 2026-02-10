@@ -62,6 +62,7 @@ function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { pro
 
   const handleLike = (e: React.MouseEvent): void => {
     e.stopPropagation();
+    if (!requireAuth("いいね")) return;
     toggleLike(prompt.id);
     if (!liked) showToast("👍 いいね！しました");
   };
@@ -75,7 +76,9 @@ function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { pro
   const handleDelete = (e: React.MouseEvent): void => {
     e.stopPropagation();
     if (!requireAuth("プロンプトの削除")) return;
+    if (!window.confirm("このプロンプトを削除しますか？\nこの操作は元に戻せません。")) return;
     deletePrompt(prompt.id);
+    showToast("プロンプトを削除しました");
   };
 
   const isBulkSelected = bulkMode?.isActive && bulkMode.selectedIds.has(prompt.id);
@@ -178,7 +181,7 @@ function PromptCard({ prompt, isFavoritedByMe, bulkMode, onToggleSelect }: { pro
 
       <CardContent className="pb-2">
         <div className="relative group/preview">
-          <div className="mt-2 text-xs leading-relaxed text-slate-500 font-mono whitespace-pre-wrap line-clamp-3 bg-slate-50 rounded-lg p-3 border border-slate-100 transition-colors">
+          <div className="mt-2 text-xs leading-relaxed text-slate-500 font-mono whitespace-pre-wrap line-clamp-5 md:line-clamp-3 bg-slate-50 rounded-lg p-3 border border-slate-100 transition-colors">
             {prompt.content}
           </div>
           {/* Hover preview tooltip */}

@@ -165,7 +165,8 @@ function NotificationPanel({ notifications, onClose }: { notifications: AppNotif
       <div className="max-h-52 overflow-y-auto">
         {notifications.length === 0 ? (
           <div className="p-4 text-center text-xs text-slate-400">
-            まだ通知はありません
+            <p>まだ通知はありません</p>
+            <p className="mt-1 text-[10px] text-slate-300">プロンプトを公開するとリアクション通知が届きます ✨</p>
           </div>
         ) : (
           notifications.slice(0, 10).map(n => (

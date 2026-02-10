@@ -1,10 +1,11 @@
 "use client";
 
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "@/components/AuthProvider";
 
 interface AuthGuardContext {
   requireAuth: (action?: string) => boolean;
+  requireAuthWithCallback: (action: string, callback: () => void) => boolean;
   showLoginModal: boolean;
   loginAction: string;
   closeLoginModal: () => void;
@@ -17,11 +18,23 @@ export function AuthGuardProvider({ children }: { children: ReactNode }): React.
   const { isGuest } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginAction, setLoginAction] = useState("");
+  const pendingCallback = useRef<(() => void) | null>(null);
 
   const requireAuth = useCallback((action?: string): boolean => {
     if (isGuest) {
       setLoginAction(action ?? "この機能を使う");
       setShowLoginModal(true);
+      pendingCallback.current = null;
+      return false;
+    }
+    return true;
+  }, [isGuest]);
+
+  const requireAuthWithCallback = useCallback((action: string, callback: () => void): boolean => {
+    if (isGuest) {
+      setLoginAction(action);
+      setShowLoginModal(true);
+      pendingCallback.current = callback;
       return false;
     }
     return true;
@@ -30,15 +43,23 @@ export function AuthGuardProvider({ children }: { children: ReactNode }): React.
   const openLoginModal = useCallback((action?: string): void => {
     setLoginAction(action ?? "");
     setShowLoginModal(true);
+    pendingCallback.current = null;
   }, []);
 
   const closeLoginModal = useCallback((): void => {
+    // Execute pending callback if login succeeded (no longer guest)
+    const cb = pendingCallback.current;
+    pendingCallback.current = null;
     setShowLoginModal(false);
     setLoginAction("");
-  }, []);
+    if (cb && !isGuest) {
+      // Delay to let auth state settle
+      setTimeout(cb, 100);
+    }
+  }, [isGuest]);
 
   return (
-    <AuthGuardCtx.Provider value={{ requireAuth, showLoginModal, loginAction, closeLoginModal, openLoginModal }}>
+    <AuthGuardCtx.Provider value={{ requireAuth, requireAuthWithCallback, showLoginModal, loginAction, closeLoginModal, openLoginModal }}>
       {children}
     </AuthGuardCtx.Provider>
   );

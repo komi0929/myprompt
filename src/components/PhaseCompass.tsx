@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { type Phase, PHASES } from "@/lib/mock-data";
 
@@ -11,10 +10,9 @@ export function PhaseCompass({
   currentPhase?: Phase;
   onPhaseChange?: (phase: Phase) => void;
 }): React.ReactElement {
-  const [active, setActive] = useState<Phase>(currentPhase || "All");
+  const active = currentPhase || "All";
 
   const handleClick = (p: Phase): void => {
-    setActive(p);
     onPhaseChange?.(p);
   };
 
