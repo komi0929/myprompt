@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import AbortErrorSuppressor from "@/components/AbortErrorSuppressor";
+import { ClientProviders } from "@/components/ClientProviders";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -56,7 +57,9 @@ export default function RootLayout({
         className={`${inter.variable} font-sans antialiased bg-slate-50 text-slate-700`}
       >
         <AbortErrorSuppressor />
-        {children}
+        <ClientProviders>
+          {children}
+        </ClientProviders>
       </body>
     </html>
   );

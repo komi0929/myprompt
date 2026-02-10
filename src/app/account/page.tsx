@@ -1,10 +1,8 @@
 "use client";
 
 import { useAuth } from "@/components/AuthProvider";
-import { AuthProvider } from "@/components/AuthProvider";
 import { usePromptStore, PromptStoreProvider } from "@/lib/prompt-store";
 import type { AppNotification } from "@/lib/prompt-store";
-import { AuthGuardProvider } from "@/lib/useAuthGuard";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { LogOut, Trash2, Bell, ChevronRight, ArrowLeft, AlertTriangle, Pencil } from "lucide-react";
@@ -337,12 +335,8 @@ function NotificationItem({ notification: n }: { notification: AppNotification }
 
 export default function AccountPage(): React.ReactElement {
   return (
-    <AuthProvider>
-      <AuthGuardProvider>
-        <PromptStoreProvider>
-          <AccountContent />
-        </PromptStoreProvider>
-      </AuthGuardProvider>
-    </AuthProvider>
+    <PromptStoreProvider>
+      <AccountContent />
+    </PromptStoreProvider>
   );
 }

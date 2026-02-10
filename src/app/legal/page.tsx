@@ -2,11 +2,8 @@
 
 import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
-import { AuthProvider } from "@/components/AuthProvider";
-import { AuthGuardProvider } from "@/lib/useAuthGuard";
 import { PromptStoreProvider } from "@/lib/prompt-store";
 import LoginModal from "@/components/LoginModal";
-import ToastContainer from "@/components/ui/Toast";
 import { Send, CheckCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -89,7 +86,6 @@ function LegalContent(): React.ReactElement {
       </main>
 
       <LoginModal />
-      <ToastContainer />
     </div>
   );
 }
@@ -375,12 +371,8 @@ function ContactContent(): React.ReactElement {
 
 export default function LegalPage(): React.ReactElement {
   return (
-    <AuthProvider>
-      <AuthGuardProvider>
-        <PromptStoreProvider>
-          <LegalContent />
-        </PromptStoreProvider>
-      </AuthGuardProvider>
-    </AuthProvider>
+    <PromptStoreProvider>
+      <LegalContent />
+    </PromptStoreProvider>
   );
 }

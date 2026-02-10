@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { useAuth, AuthProvider } from "@/components/AuthProvider";
+import { useAuth } from "@/components/AuthProvider";
 import { fetchRecentKpi, aggregateDailyKpi, type DailyKpi } from "@/lib/analytics";
 import type { FeatureFlag } from "@/lib/feature-flags";
 import {
@@ -713,9 +713,5 @@ function FeedbackTab(props: FeedbackTabAllProps): React.ReactElement {
 
 /* ─── Page Wrapper ─── */
 export default function AdminPage(): React.ReactElement {
-  return (
-    <AuthProvider>
-      <AdminDashboard />
-    </AuthProvider>
-  );
+  return <AdminDashboard />;
 }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { showToast } from "@/components/ui/Toast";
-import { AuthProvider, useAuth } from "@/components/AuthProvider";
+import { useAuth } from "@/components/AuthProvider";
 import {
   Lightbulb,
   Bug,
@@ -734,9 +734,5 @@ function ChangelogTab({ items }: { items: ChangelogItem[] }): React.ReactElement
 
 /* ─── Page Wrapper ─── */
 export default function FeedbackPage(): React.ReactElement {
-  return (
-    <AuthProvider>
-      <FeedbackPageContent />
-    </AuthProvider>
-  );
+  return <FeedbackPageContent />;
 }

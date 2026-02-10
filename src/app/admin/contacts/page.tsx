@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
-import { AuthProvider } from "@/components/AuthProvider";
 import { Trash2, RefreshCw, Mail, ExternalLink, Shield } from "lucide-react";
 
 /* ─── Admin Owner ID ─── */
@@ -252,9 +251,5 @@ function AdminContent(): React.ReactElement {
 }
 
 export default function AdminContactsPage(): React.ReactElement {
-  return (
-    <AuthProvider>
-      <AdminContent />
-    </AuthProvider>
-  );
+  return <AdminContent />;
 }

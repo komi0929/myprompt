@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
-import { AuthProvider } from "@/components/AuthProvider";
 import {
   Trash2,
   RefreshCw,
@@ -449,9 +448,5 @@ function AdminContent(): React.ReactElement {
 }
 
 export default function AdminFeedbackPage(): React.ReactElement {
-  return (
-    <AuthProvider>
-      <AdminContent />
-    </AuthProvider>
-  );
+  return <AdminContent />;
 }

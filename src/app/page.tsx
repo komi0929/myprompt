@@ -5,9 +5,6 @@ import { PhaseCompass } from "@/components/PhaseCompass";
 import { PromptFeed } from "@/components/PromptFeed";
 import { DetailPanel } from "@/components/DetailPanel";
 import { PromptStoreProvider, usePromptStore } from "@/lib/prompt-store";
-import { AuthProvider } from "@/components/AuthProvider";
-import { AuthGuardProvider } from "@/lib/useAuthGuard";
-import ToastContainer from "@/components/ui/Toast";
 import PromptModal from "@/components/PromptModal";
 import LoginModal from "@/components/LoginModal";
 import Footer from "@/components/Footer";
@@ -36,21 +33,16 @@ import SuccessCelebration from "@/components/SuccessCelebration";
 
 export default function Page(): React.ReactElement {
   return (
-    <AuthProvider>
-      <AuthGuardProvider>
-        <PromptStoreProvider>
-          <ErrorBoundary>
-            <PageContent />
-            <PromptModal />
-            <LoginModal />
-            <CommandPalette />
-            <CopyBuffer />
-          </ErrorBoundary>
-          <ToastContainer />
-          <SuccessCelebration />
-        </PromptStoreProvider>
-      </AuthGuardProvider>
-    </AuthProvider>
+    <PromptStoreProvider>
+      <ErrorBoundary>
+        <PageContent />
+        <PromptModal />
+        <LoginModal />
+        <CommandPalette />
+        <CopyBuffer />
+      </ErrorBoundary>
+      <SuccessCelebration />
+    </PromptStoreProvider>
   );
 }
 
