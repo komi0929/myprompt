@@ -23,6 +23,7 @@ export default function PromptModal(): React.ReactElement | null {
   const [visibility, setVisibility] = useState<"Private" | "Public">("Public");
   const [notes, setNotes] = useState("");
   const [hasDraft, setHasDraft] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const isNew = editingPrompt?.id === "";
 
@@ -104,6 +105,7 @@ export default function PromptModal(): React.ReactElement | null {
     setTags(prev => prev.filter(t => t !== tag));
   };
 
+
   const handleSave = async (): Promise<void> => {
     if (!title.trim()) {
       showToast("タイトルを入力してください");
@@ -114,40 +116,44 @@ export default function PromptModal(): React.ReactElement | null {
       return;
     }
 
-    if (isNew) {
-      const id = await addPrompt({
-        title: title.trim(),
-        content: content.trim(),
-        tags,
-        phase,
-        visibility,
-        notes: notes.trim() || undefined,
-      });
-      if (!id) return; // addPrompt failed (e.g. not logged in) — it already shows its own toast
-      showCelebration(visibility === "Public" ? "share" : "save");
-    } else {
-      const ok = await updatePrompt(editingPrompt.id, {
-        title: title.trim(),
-        content: content.trim(),
-        tags,
-        phase,
-        visibility,
-        notes: notes.trim() || undefined,
-      });
-      if (!ok) return; // updatePrompt already shows error toast
-      // Show celebration if visibility changed to Public (sharing), otherwise just a toast
-      if (visibility === "Public" && editingPrompt.visibility !== "Public") {
-        showCelebration("share");
+    setSaving(true);
+    try {
+      if (isNew) {
+        const id = await addPrompt({
+          title: title.trim(),
+          content: content.trim(),
+          tags,
+          phase,
+          visibility,
+          notes: notes.trim() || undefined,
+        });
+        if (!id) { setSaving(false); return; }
+        showCelebration(visibility === "Public" ? "share" : "save");
       } else {
-        showToast("プロンプトを更新しました ✨");
+        const ok = await updatePrompt(editingPrompt.id, {
+          title: title.trim(),
+          content: content.trim(),
+          tags,
+          phase,
+          visibility,
+          notes: notes.trim() || undefined,
+        });
+        if (!ok) { setSaving(false); return; }
+        if (visibility === "Public" && editingPrompt.visibility !== "Public") {
+          showCelebration("share");
+        }
+        showToast("更新に成功しました ✅");
       }
+      clearDraft();
+      closeEditor();
+    } finally {
+      setSaving(false);
     }
-    closeEditor();
-    clearDraft();
   };
 
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={closeEditor}>
+
       <div
         className="w-full max-w-2xl max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
         onClick={e => e.stopPropagation()}
@@ -275,9 +281,9 @@ export default function PromptModal(): React.ReactElement | null {
           <Button variant="ghost" onClick={closeEditor}>
             キャンセル
           </Button>
-          <Button onClick={handleSave} className="shadow-md shadow-yellow-200">
+          <Button onClick={handleSave} disabled={saving} className="shadow-md shadow-yellow-200">
             <Save className="w-4 h-4 mr-1.5" />
-            {isNew ? "メモする" : "更新する"}
+            {saving ? "保存中..." : isNew ? "メモする" : "更新する"}
           </Button>
         </div>
       </div>
