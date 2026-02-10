@@ -29,12 +29,11 @@ function getMilestoneSnapshot(): boolean[] {
 }
 
 function useMilestoneState(): boolean[] {
-  const [state, setState] = useState<boolean[]>(() => {
-    if (typeof window === "undefined") return MILESTONES.map(() => false);
-    return getMilestoneSnapshot();
-  });
+  const [state, setState] = useState<boolean[]>(() => MILESTONES.map(() => false));
 
   useEffect(() => {
+    // Hydration-safe: read localStorage only after mount
+    setState(getMilestoneSnapshot());
     // Re-read whenever a milestone is marked
     const handler = (): void => setState(getMilestoneSnapshot());
     window.addEventListener("ob-milestone-update", handler);
@@ -75,10 +74,14 @@ export default function OnboardingProgress(): React.ReactElement | null {
   const [activeHint, setActiveHint] = useState<string | null>(null);
 
   // Check if the user has dismissed onboarding progress
-  const [isDismissed, setIsDismissed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("ob_progress_dismissed") === "true";
-  });
+  const [isDismissed, setIsDismissed] = useState(false);
+
+  // Hydration-safe: read localStorage only after mount
+  useEffect(() => {
+    if (localStorage.getItem("ob_progress_dismissed") === "true") {
+      setIsDismissed(true);
+    }
+  }, []);
 
   if (isDismissed) return null;
 
