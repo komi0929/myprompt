@@ -92,3 +92,74 @@ Promptインターフェースにフィールドを追加したら、以下3箇�
 - 環境変数は `.env.local` に保管、`NEXT_PUBLIC_` プレフィックスはクライアント公開可能なもののみ
 - ユーザー入力は必ずバリデーション（zod推奨）
 - API ルートに Rate Limiting を検討
+
+## バグ予防ルール（絶対遵守）
+
+### 状態設計の原則
+
+#### 排他的状態は Union 型で表現する
+
+boolean の組み合わせで状態を表現しない。排他的な状態は **必ず Union リテラル型1つ** で表現する。
+
+```typescript
+// ❌ 禁止: boolean の組み合わせ（チェック漏れが構造的に発生する）
+const [isLoading, setIsLoading] = useState(true);
+const [isError, setIsError] = useState(false);
+
+// ✅ 正しい: Union 型（switch で網羅チェックが効く）
+type Status = "loading" | "error" | "success";
+const [status, setStatus] = useState<Status>("loading");
+```
+
+#### 状態は Single Source of Truth から導出する
+
+`useMemo` で状態を導出し、`useState` の直接管理を最小化する。
+
+```typescript
+const authStatus = useMemo(() => {
+  if (!initialized) return "loading";
+  return user ? "authenticated" : "guest";
+}, [initialized, user]);
+```
+
+### 非同期操作の原則
+
+#### DB書き込みに .then() 禁止（再掲・強化）
+
+`.then()` は例外として `increment_use_count` のような非クリティカル fire-and-forget のみ許可。
+それ以外は **必ず async/await**。
+
+#### useEffect 内の非同期処理には cancelled フラグ必須
+
+```typescript
+useEffect(() => {
+  let cancelled = false;
+  const load = async () => {
+    const { data } = await fetch();
+    if (!cancelled) setState(data);
+  };
+  load();
+  return () => {
+    cancelled = true;
+  };
+}, [deps]);
+```
+
+### 認証ガードの原則
+
+- 全ユーザー操作（いいね、お気に入り、作成、編集、削除）に `requireAuth` 必須
+- loading 中は操作を **ブロック**（成功と判定しない）
+- guest のみモーダル表示
+
+### コンポーネント追加チェックリスト
+
+`useAuth()` を使う新コンポーネントでは以下を確認：
+
+1. `authStatus` を使っているか（`isLoading`/`isGuest` を直接使わない）
+2. loading 状態で不適切なUIが表示されないか
+3. guest 状態で操作ボタンが表示されていないか
+
+### `as` キャスト原則
+
+`as unknown as` が必要になったら、まず `database.types.ts` を再生成する。
+キャストは型の「嘘」であり最終手段とする。
