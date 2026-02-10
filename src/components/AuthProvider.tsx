@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
         .from("profiles")
         .select("display_name, avatar_url")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
       if (data) {
         if (data.display_name) setDisplayName(data.display_name);
         if (data.avatar_url) setAvatarUrl(data.avatar_url);

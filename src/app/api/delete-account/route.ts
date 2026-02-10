@@ -36,35 +36,27 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Delete user data first (cascade should handle most, but be explicit)
-    const tables = ["likes", "favorites", "folders"] as const;
-    for (const table of tables) {
-      const { error } = await supabaseAdmin.from(table).delete().eq("user_id", userId);
-      if (error) {
-        console.error(`delete-account: ${table} deletion failed:`, error.message);
-        return NextResponse.json({ error: `Failed to delete ${table}` }, { status: 500 });
-      }
-    }
+    // Delete user data — errors are logged but don't block deletion
+    // (missing rows or tables that don't exist yet should not prevent account deletion)
+    const del = async (table: string, col: string, id: string): Promise<void> => {
+      const { error } = await supabaseAdmin.from(table).delete().eq(col, id);
+      if (error) console.warn(`delete-account: ${table} cleanup warning:`, error.message);
+    };
+
+    await del("likes", "user_id", userId);
+    await del("favorites", "user_id", userId);
+    await del("folders", "user_id", userId);
+
     // Delete prompt_history for user's prompts before deleting prompts
     const { data: userPrompts } = await supabaseAdmin.from("prompts").select("id").eq("user_id", userId) as { data: { id: string }[] | null };
     if (userPrompts && userPrompts.length > 0) {
       const promptIds = userPrompts.map(p => p.id);
-      const { error: histError } = await supabaseAdmin.from("prompt_history").delete().in("prompt_id", promptIds);
-      if (histError) {
-        console.error("delete-account: prompt_history deletion failed:", histError.message);
-        return NextResponse.json({ error: "Failed to delete prompt_history" }, { status: 500 });
-      }
+      await supabaseAdmin.from("prompt_history").delete().in("prompt_id", promptIds)
+        .then(({ error }) => { if (error) console.warn("delete-account: prompt_history cleanup warning:", error.message); });
     }
-    const { error: promptsError } = await supabaseAdmin.from("prompts").delete().eq("user_id", userId);
-    if (promptsError) {
-      console.error("delete-account: prompts deletion failed:", promptsError.message);
-      return NextResponse.json({ error: "Failed to delete prompts" }, { status: 500 });
-    }
-    const { error: profileError } = await supabaseAdmin.from("profiles").delete().eq("id", userId);
-    if (profileError) {
-      console.error("delete-account: profiles deletion failed:", profileError.message);
-      return NextResponse.json({ error: "Failed to delete profile" }, { status: 500 });
-    }
+
+    await del("prompts", "user_id", userId);
+    await del("profiles", "id", userId);
 
     // Delete the auth user completely
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
