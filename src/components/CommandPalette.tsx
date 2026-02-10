@@ -12,7 +12,7 @@ export default function CommandPalette(): React.ReactElement | null {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const { prompts, setSelectedPromptId, incrementUseCount, openEditor } = usePromptStore();
+  const { prompts, setSelectedPromptId, incrementUseCount } = usePromptStore();
 
   // Filter prompts by query
   const results = useMemo(() => {
@@ -27,17 +27,25 @@ export default function CommandPalette(): React.ReactElement | null {
       .slice(0, 10);
   }, [query, prompts]);
 
-  // Reset selection when results change
-  useEffect(() => {
+  // Reset selection when query changes
+  const handleQueryChange = (val: string): void => {
+    setQuery(val);
     setSelectedIndex(0);
-  }, [results]);
+  };
 
   // Global shortcut: Ctrl+K opens palette
   useEffect(() => {
     const handler = (e: KeyboardEvent): void => {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
-        setOpen(prev => !prev);
+        setOpen(prev => {
+          if (!prev) {
+            setQuery("");
+            setSelectedIndex(0);
+            setTimeout(() => inputRef.current?.focus(), 50);
+          }
+          return !prev;
+        });
       }
       if (e.key === "Escape" && open) {
         setOpen(false);
@@ -47,11 +55,12 @@ export default function CommandPalette(): React.ReactElement | null {
     return (): void => window.removeEventListener("keydown", handler);
   }, [open]);
 
-  // Focus input when opened
+  // Remove "Focus input when opened" effect as it is now handled in keydown or we need a separate "onOpen" effect if triggered elsewhere?
+  // Wait, if opened via other means (not Ctrl+K, e.g. clicking a button somewhere?).
+  // If there's no button to open it (it's a command palette), Ctrl+K is likely the main entry.
+  // But let's keep a simplified effect just for focus if opened via other means, but WITHOUT state reset.
   useEffect(() => {
     if (open) {
-      setQuery("");
-      setSelectedIndex(0);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [open]);
@@ -95,7 +104,7 @@ export default function CommandPalette(): React.ReactElement | null {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]" onClick={() => setOpen(false)}>
+    <div className="fixed inset-0 z-100 flex items-start justify-center pt-[15vh]" onClick={() => setOpen(false)}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
       <div
         className="relative w-full max-w-lg mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-100"
@@ -108,7 +117,7 @@ export default function CommandPalette(): React.ReactElement | null {
             ref={inputRef}
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => handleQueryChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="プロンプトを検索してコピー..."
             className="flex-1 text-sm text-slate-700 placeholder:text-slate-400 bg-transparent outline-none"

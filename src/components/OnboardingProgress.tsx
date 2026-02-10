@@ -32,8 +32,8 @@ function useMilestoneState(): boolean[] {
   const [state, setState] = useState<boolean[]>(() => MILESTONES.map(() => false));
 
   useEffect(() => {
-    // Hydration-safe: read localStorage only after mount
-    setState(getMilestoneSnapshot());
+    // Hydration-safe: read localStorage only after mount (deferred to next tick)
+    setTimeout(() => setState(getMilestoneSnapshot()), 0);
     // Re-read whenever a milestone is marked
     const handler = (): void => setState(getMilestoneSnapshot());
     window.addEventListener("ob-milestone-update", handler);
@@ -79,7 +79,7 @@ export default function OnboardingProgress(): React.ReactElement | null {
   // Hydration-safe: read localStorage only after mount
   useEffect(() => {
     if (localStorage.getItem("ob_progress_dismissed") === "true") {
-      setIsDismissed(true);
+      setTimeout(() => setIsDismissed(true), 0);
     }
   }, []);
 

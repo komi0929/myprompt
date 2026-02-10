@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { HTMLAttributes, forwardRef } from "react";
+import { HTMLAttributes } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
 const badgeVariants = cva(

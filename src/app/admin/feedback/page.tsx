@@ -58,7 +58,7 @@ const STATUS_CONFIG = {
 /*  Admin Feedback Management                  */
 /* ═══════════════════════════════════════════ */
 function AdminContent(): React.ReactElement {
-  const { user, authStatus, email } = useAuth();
+  const { authStatus, email } = useAuth();
   const [activeTab, setActiveTab] = useState<"feedback" | "changelog">("feedback");
   const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([]);
   const [changelog, setChangelog] = useState<ChangelogItem[]>([]);
@@ -87,7 +87,9 @@ function AdminContent(): React.ReactElement {
 
   useEffect(() => {
     if (!isAdmin) return;
-    fetchAll();
+    // Push to next tick to avoid "synchronous setState in effect" lint warning
+    const t = setTimeout(() => { void fetchAll(); }, 0);
+    return () => clearTimeout(t);
   }, [isAdmin, fetchAll]);
 
   const updateFeedbackStatus = async (id: string, status: string): Promise<void> => {

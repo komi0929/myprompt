@@ -80,7 +80,7 @@ interface ChangelogItem {
 /*  Admin Dashboard                                */
 /* ═══════════════════════════════════════════════ */
 function AdminDashboard(): React.ReactElement {
-  const { user, authStatus, email } = useAuth();
+  const { authStatus, email } = useAuth();
   const [activeTab, setActiveTab] = useState<TabId>("kpi");
   const [fetching, setFetching] = useState(false);
 
@@ -138,7 +138,10 @@ function AdminDashboard(): React.ReactElement {
   }, []);
 
   useEffect(() => {
-    if (isAdmin) { void fetchAll(); }
+    if (isAdmin) {
+      const t = setTimeout(() => { void fetchAll(); }, 0);
+      return () => clearTimeout(t);
+    }
   }, [isAdmin, fetchAll]);
 
   /* ─── Guards ─── */

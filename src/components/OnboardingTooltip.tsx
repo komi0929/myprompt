@@ -72,7 +72,7 @@ export default function OnboardingTooltip({
       {mounted && (
         <div
           className={cn(
-            "absolute z-[100] transition-all duration-200",
+            "absolute z-100 transition-all duration-200",
             positionClasses[position],
             visible ? "opacity-100 scale-100" : "opacity-0 scale-95"
           )}
