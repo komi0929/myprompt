@@ -92,24 +92,38 @@ function AdminContent(): React.ReactElement {
   }, [isAdmin, fetchAll]);
 
   const updateFeedbackStatus = async (id: string, status: string): Promise<void> => {
-    await supabase.from("feedback").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
-    setFeedbackItems(prev => prev.map(f => f.id === id ? { ...f, status: status as FeedbackItem["status"] } : f));
+    const prev = feedbackItems.find(f => f.id === id)?.status;
+    setFeedbackItems(p => p.map(f => f.id === id ? { ...f, status: status as FeedbackItem["status"] } : f));
+    const { error } = await supabase.from("feedback").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
+    if (error && prev) {
+      setFeedbackItems(p => p.map(f => f.id === id ? { ...f, status: prev } : f));
+      console.error("updateFeedbackStatus failed:", error.message);
+    }
   };
 
   const deleteFeedback = async (id: string): Promise<void> => {
-    await supabase.from("feedback").delete().eq("id", id);
+    const backup = feedbackItems.find(f => f.id === id);
     setFeedbackItems(prev => prev.filter(f => f.id !== id));
     if (selectedFeedbackId === id) setSelectedFeedbackId(null);
+    const { error } = await supabase.from("feedback").delete().eq("id", id);
+    if (error && backup) {
+      setFeedbackItems(prev => [...prev, backup]);
+      console.error("deleteFeedback failed:", error.message);
+    }
   };
 
   const addChangelog = async (): Promise<void> => {
     if (!clTitle.trim()) return;
-    await supabase.from("changelog").insert({
+    const { error } = await supabase.from("changelog").insert({
       version: clVersion.trim(),
       title: clTitle.trim(),
       description: clDesc.trim(),
       type: clType,
     });
+    if (error) {
+      console.error("addChangelog failed:", error.message);
+      return;
+    }
     setClVersion("");
     setClTitle("");
     setClDesc("");
@@ -118,8 +132,13 @@ function AdminContent(): React.ReactElement {
   };
 
   const deleteChangelog = async (id: string): Promise<void> => {
-    await supabase.from("changelog").delete().eq("id", id);
+    const backup = changelog.find(c => c.id === id);
     setChangelog(prev => prev.filter(c => c.id !== id));
+    const { error } = await supabase.from("changelog").delete().eq("id", id);
+    if (error && backup) {
+      setChangelog(prev => [...prev, backup]);
+      console.error("deleteChangelog failed:", error.message);
+    }
   };
 
   /* ─── Guard ─── */

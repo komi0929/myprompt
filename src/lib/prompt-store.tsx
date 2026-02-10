@@ -682,7 +682,11 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   // Load folders from DB
   useEffect(() => {
     if (!user) return;
-    supabase.from("folders").select("*").order("sort_order").then(({ data }) => {
+    supabase.from("folders").select("*").order("sort_order").then(({ data, error }) => {
+      if (error) {
+        console.warn("folders fetch failed:", error.message);
+        return;
+      }
       if (data) {
         setFolders(data.map(f => ({ id: f.id, name: f.name, color: f.color, sortOrder: f.sort_order })));
       }

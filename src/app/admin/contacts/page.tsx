@@ -74,14 +74,24 @@ function AdminContent(): React.ReactElement {
   }, [isAdmin]);
 
   const updateStatus = async (id: string, status: string): Promise<void> => {
-    await supabase.from("contacts").update({ status }).eq("id", id);
-    setContacts(prev => prev.map(c => c.id === id ? { ...c, status } : c));
+    const prev = contacts.find(c => c.id === id)?.status;
+    setContacts(p => p.map(c => c.id === id ? { ...c, status } : c));
+    const { error } = await supabase.from("contacts").update({ status }).eq("id", id);
+    if (error && prev) {
+      setContacts(p => p.map(c => c.id === id ? { ...c, status: prev } : c));
+      console.error("updateStatus failed:", error.message);
+    }
   };
 
   const deleteContact = async (id: string): Promise<void> => {
-    await supabase.from("contacts").delete().eq("id", id);
+    const backup = contacts.find(c => c.id === id);
     setContacts(prev => prev.filter(c => c.id !== id));
     if (selectedId === id) setSelectedId(null);
+    const { error } = await supabase.from("contacts").delete().eq("id", id);
+    if (error && backup) {
+      setContacts(prev => [...prev, backup]);
+      console.error("deleteContact failed:", error.message);
+    }
   };
 
   if (isLoading) {
