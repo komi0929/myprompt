@@ -214,17 +214,73 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
 
       notes: input.notes ?? null,
     };
-    // INSERT first, then SELECT separately to avoid profiles JOIN failure blocking insert
+    // INSERT first
     const { data: inserted, error: insertError } = await supabase
       .from("prompts")
       .insert(insertPayload)
       .select("*")
       .single();
-    if (insertError || !inserted) {
-      console.error("addPrompt insert failed:", insertError?.message);
-      showToast("保存に失敗しました。もう一度お試しください");
-      return "";
+
+    if (insertError) {
+      console.warn("addPrompt first attempt failed:", insertError.message);
+
+      // Self-healing: If FK violation (23503) or any error, try to ensure profile exists
+      // This fixes the "User references missing profile" issue
+      const { error: profileError } = await supabase.from("profiles").upsert({
+        id: user.id,
+        display_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "User",
+        avatar_url: user.user_metadata?.avatar_url || "",
+      });
+
+      if (profileError) {
+        console.error("Profile self-healing failed:", profileError.message);
+        showToast("ユーザープロファイルの修復に失敗しました");
+        return "";
+      }
+
+      // Retry insert
+      const { data: retryInserted, error: retryError } = await supabase
+        .from("prompts")
+        .insert(insertPayload)
+        .select("*")
+        .single();
+
+      if (retryError || !retryInserted) {
+        console.error("addPrompt retry failed:", retryError?.message);
+        showToast("保存に失敗しました。もう一度お試しください");
+        return "";
+      }
+      
+      // Success on retry
+      // Continue with 'retryInserted' as 'inserted'
+      // Note: We need to assign it to a variable accessible below, or just copy the logic.
+      // Refactoring to avoid code duplication is better, but simple nested structure is safer for patch.
+      
+      // ... continue with retryInserted ...
+      const newPrompt = dbToPrompt(retryInserted);
+      setPrompts(prev => [newPrompt, ...prev]);
+      setSelectedPromptId(newPrompt.id);
+
+      const { error: histError } = await supabase.from("prompt_history").insert({
+        prompt_id: newPrompt.id,
+        title: newPrompt.title,
+        content: newPrompt.content,
+      });
+      if (histError) console.warn("prompt_history insert failed:", histError.message);
+
+      trackEvent("prompt_create", { prompt_id: newPrompt.id, visibility: input.visibility, phase: input.phase });
+      markMilestone("create");
+      if (input.visibility === "Public") {
+        trackEvent("prompt_publish", { prompt_id: newPrompt.id });
+        markMilestone("publish");
+      }
+      return newPrompt.id;
     }
+
+    if (!inserted) return ""; // Should not happen if error is null
+
+    // ... Original success path ...
+
     // Try to enrich with profile data (non-blocking)
     const { data: enriched } = await supabase
       .from("prompts")

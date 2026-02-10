@@ -77,6 +77,44 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
   useEffect(() => {
     let cancelled = false;
 
+    const ensureProfile = async (u: User): Promise<void> => {
+      try {
+        // 1. Check if profile exists
+        const { data } = await supabase
+          .from("profiles")
+          .select("display_name, avatar_url")
+          .eq("id", u.id)
+          .maybeSingle();
+        
+        if (data) {
+          // Profile exists, update local state
+          if (data.display_name) setDisplayName(data.display_name);
+          if (data.avatar_url) setAvatarUrl(data.avatar_url);
+          return;
+        }
+
+        // 2. Profile missing (Trigger failed?), create it manually (Self-Healing)
+        console.warn("Profile missing for user, creating manually (Self-Healing)...");
+        const displayName = u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split("@")[0] || "User";
+        const avatarUrl = u.user_metadata?.avatar_url || "";
+        
+        const { error: insertError } = await supabase
+          .from("profiles")
+          .insert({ id: u.id, display_name: displayName, avatar_url: avatarUrl });
+          
+        if (insertError) {
+           // If insert failed (e.g. race condition), try fetching one last time
+           console.error("Manual profile creation failed:", insertError.message);
+           await fetchProfile(u.id);
+        } else {
+           setDisplayName(displayName);
+           setAvatarUrl(avatarUrl);
+        }
+      } catch (e) {
+        console.error("ensureProfile error:", e);
+      }
+    };
+
     const init = async (): Promise<void> => {
       try {
         const { data } = await supabase.auth.getSession();
@@ -85,7 +123,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
         setUser(data.session?.user ?? null);
         if (data.session?.user) {
           extractUserMeta(data.session.user);
-          await fetchProfile(data.session.user.id);
+          // GUARANTEE: Wait for profile check/creation before setting initialized
+          await ensureProfile(data.session.user);
         }
       } catch (e) {
         const name = (e as Error)?.name ?? "";
@@ -102,7 +141,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
         setUser(newSession?.user ?? null);
         if (newSession?.user) {
           extractUserMeta(newSession.user);
-          await fetchProfile(newSession.user.id);
+          // GUARANTEE: Ensure profile exists on fresh login/switch
+          await ensureProfile(newSession.user);
         } else {
           setDisplayName("");
           setAvatarUrl("");
