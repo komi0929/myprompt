@@ -100,6 +100,7 @@ export function DetailPanel(): React.ReactElement {
   };
 
   const handleLike = (): void => {
+    if (!requireAuth("いいね")) return;
     toggleLike(prompt.id);
     if (!liked) showToast("👍 いいね！しました");
   };

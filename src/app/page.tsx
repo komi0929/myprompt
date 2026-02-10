@@ -48,7 +48,7 @@ export default function Page(): React.ReactElement {
 
 function PageContent(): React.ReactElement {
   const { currentPhase, setCurrentPhase, filteredPrompts, searchQuery, setSearchQuery, openEditor, selectedPromptId, setSelectedPromptId } = usePromptStore();
-  const { isGuest } = useAuth();
+  const { isGuest, isLoading: authLoading } = useAuth();
   const { requireAuth } = useAuthGuard();
   useKeyboardShortcuts();
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
@@ -232,7 +232,7 @@ function PageContent(): React.ReactElement {
       })()}
 
       {/* Floating Create Button (auth-guarded, desktop only) */}
-      {!isGuest && <div className="hidden md:block"><FloatingCreateButton /></div>}
+      {!authLoading && !isGuest && <div className="hidden md:block"><FloatingCreateButton /></div>}
 
       {/* Mobile Bottom Navigation */}
       <BottomNav />
@@ -242,8 +242,16 @@ function PageContent(): React.ReactElement {
 }
 
 function EmptyState({ onCreateFirst }: { onCreateFirst: () => void }): React.ReactElement {
-  const { isGuest } = useAuth();
+  const { isGuest, isLoading } = useAuth();
   const { setView } = usePromptStore();
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16">
+        <div className="w-10 h-10 border-2 border-yellow-300 border-t-yellow-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">

@@ -8,7 +8,7 @@ import { BarChart3, TrendingUp, Flame, ChevronDown, ChevronUp } from "lucide-rea
 
 export default function StatsBar(): React.ReactElement {
   const { prompts } = usePromptStore();
-  const { isGuest } = useAuth();
+  const { isGuest, isLoading } = useAuth();
   const [open, setOpen] = useState(false);
 
   // Only show stats for user's own prompts
@@ -57,8 +57,8 @@ export default function StatsBar(): React.ReactElement {
     return count;
   }, [ownPrompts]);
 
-  // Hide stats for guests or when no prompts
-  if (isGuest || totalCount === 0) return <></>;
+  // Hide stats for guests, loading, or when no prompts
+  if (isLoading || isGuest || totalCount === 0) return <></>;
 
   return (
     <div className="max-w-4xl mx-auto">

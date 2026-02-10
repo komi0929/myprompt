@@ -652,13 +652,15 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
     });
     if (user && newPinnedValue !== null) {
       const pinnedVal = newPinnedValue;
-      supabase.from("prompts").update({ is_pinned: pinnedVal }).eq("id", id).then(({ error }) => {
+      // Fire-and-forget is acceptable here since we have rollback
+      (async () => {
+        const { error } = await supabase.from("prompts").update({ is_pinned: pinnedVal }).eq("id", id);
         if (error) {
           // Rollback
           setPrompts(prev => prev.map(p => p.id === id ? { ...p, isPinned: !pinnedVal } : p));
           showToast("ピン留めの更新に失敗しました");
         }
-      });
+      })();
     }
   }, [user]);
 
