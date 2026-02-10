@@ -133,7 +133,17 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
   }, []);
 
   const signOut = useCallback(async (): Promise<void> => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // signOut失敗時もクライアント側の状態をクリア
+    }
+    // 確実にUIをリセット（onAuthStateChangeが発火しなかった場合のフォールバック）
+    setUser(null);
+    setSession(null);
+    setDisplayName("");
+    setAvatarUrl("");
+    setEmail("");
   }, []);
 
   const updateProfile = useCallback(async (name: string, newAvatarUrl: string): Promise<{ error: string | null }> => {

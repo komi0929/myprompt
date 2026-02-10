@@ -9,7 +9,7 @@ import Link from "next/link";
 
 export default function BottomNav(): React.ReactElement {
   const { view, setView, openEditor } = usePromptStore();
-  const { isGuest } = useAuth();
+  const { isGuest, isLoading } = useAuth();
   const { requireAuth } = useAuthGuard();
 
   const handleCreate = (): void => {
@@ -34,7 +34,7 @@ export default function BottomNav(): React.ReactElement {
           onClick={() => setView("trend")}
         />
         {/* Center create button */}
-        {!isGuest && (
+        {!isGuest && !isLoading && (
           <button
             onClick={handleCreate}
             className="flex items-center justify-center w-12 h-12 -mt-4 rounded-full bg-yellow-400 text-white shadow-lg shadow-yellow-200 hover:bg-yellow-500 active:scale-95 transition-all"
