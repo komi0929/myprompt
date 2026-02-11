@@ -83,6 +83,8 @@ function AdminDashboard(): React.ReactElement {
   const { authStatus, email } = useAuth();
   const [activeTab, setActiveTab] = useState<TabId>("kpi");
   const [fetching, setFetching] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [authTimeout, setAuthTimeout] = useState(false);
 
   // KPI data
   const [kpiData, setKpiData] = useState<DailyKpi[]>([]);
@@ -109,32 +111,45 @@ function AdminDashboard(): React.ReactElement {
 
   const isAdmin = authStatus === "authenticated" && ADMIN_EMAILS.includes(email);
 
+  // Auth loading timeout: if auth stays "loading" for more than 8s, show fallback
+  useEffect(() => {
+    if (authStatus !== "loading") return;
+    const timer = setTimeout(() => setAuthTimeout(true), 8000);
+    return () => clearTimeout(timer);
+  }, [authStatus]);
+
   /* ─── Fetch All Data ─── */
   const fetchAll = useCallback(async (): Promise<void> => {
     setFetching(true);
+    setFetchError(null);
+    try {
+      // Aggregate today & yesterday KPI (fire-and-forget, don't block)
+      const today = new Date().toISOString().split("T")[0];
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+      await Promise.allSettled([
+        aggregateDailyKpi(today),
+        aggregateDailyKpi(yesterday),
+      ]);
 
-    // Aggregate today & yesterday KPI
-    const today = new Date().toISOString().split("T")[0];
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
-    await Promise.all([
-      aggregateDailyKpi(today),
-      aggregateDailyKpi(yesterday),
-    ]);
+      const [kpi, flagsData, contactsData, fbData, clData] = await Promise.all([
+        fetchRecentKpi(14),
+        supabase.from("feature_flags" as "profiles").select("*").order("id") as unknown as { data: FeatureFlag[] | null },
+        supabase.from("contacts").select("*").order("created_at", { ascending: false }),
+        supabase.from("feedback").select("*").order("created_at", { ascending: false }),
+        supabase.from("changelog").select("*").order("created_at", { ascending: false }),
+      ]);
 
-    const [kpi, flagsData, contactsData, fbData, clData] = await Promise.all([
-      fetchRecentKpi(14),
-      supabase.from("feature_flags" as "profiles").select("*").order("id") as unknown as { data: FeatureFlag[] | null },
-      supabase.from("contacts").select("*").order("created_at", { ascending: false }),
-      supabase.from("feedback").select("*").order("created_at", { ascending: false }),
-      supabase.from("changelog").select("*").order("created_at", { ascending: false }),
-    ]);
-
-    setKpiData(kpi);
-    setFlags(flagsData.data ?? []);
-    setContacts((contactsData.data as unknown as ContactEntry[]) ?? []);
-    setFeedbackItems((fbData.data as unknown as FeedbackItem[]) ?? []);
-    setChangelog((clData.data as unknown as ChangelogItem[]) ?? []);
-    setFetching(false);
+      setKpiData(kpi);
+      setFlags(flagsData.data ?? []);
+      setContacts((contactsData.data as unknown as ContactEntry[]) ?? []);
+      setFeedbackItems((fbData.data as unknown as FeedbackItem[]) ?? []);
+      setChangelog((clData.data as unknown as ChangelogItem[]) ?? []);
+    } catch (e) {
+      console.error("Admin fetchAll error:", e);
+      setFetchError("データの読み込みに失敗しました。再試行してください。");
+    } finally {
+      setFetching(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -145,8 +160,23 @@ function AdminDashboard(): React.ReactElement {
   }, [isAdmin, fetchAll]);
 
   /* ─── Guards ─── */
-  if (authStatus === "loading") {
+  if (authStatus === "loading" && !authTimeout) {
     return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><p className="text-slate-400">読み込み中...</p></div>;
+  }
+  if (authStatus === "loading" && authTimeout) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
+        <div className="text-center max-w-md">
+          <Shield className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+          <h1 className="text-xl font-bold text-slate-800 mb-2">認証の読み込みがタイムアウトしました</h1>
+          <p className="text-sm text-slate-500 mb-4">ページを再読み込みするか、ログイン状態を確認してください。</p>
+          <div className="flex gap-3 justify-center">
+            <button onClick={() => window.location.reload()} className="text-sm bg-yellow-400 text-slate-800 px-4 py-2 rounded-lg font-medium hover:bg-yellow-500">再読み込み</button>
+            <Link href="/" className="text-sm text-yellow-600 hover:text-yellow-700 font-medium px-4 py-2">← マイプロンプトに戻る</Link>
+          </div>
+        </div>
+      </div>
+    );
   }
   if (!isAdmin) {
     return (
@@ -214,6 +244,14 @@ function AdminDashboard(): React.ReactElement {
             );
           })}
         </div>
+
+        {/* Error Banner */}
+        {fetchError && (
+          <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-3 flex items-center justify-between">
+            <p className="text-sm text-red-600">{fetchError}</p>
+            <button onClick={fetchAll} className="text-xs bg-red-100 text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-200 font-medium">再試行</button>
+          </div>
+        )}
 
         {/* Tab Content */}
         {activeTab === "kpi" && <KpiTab data={kpiData} />}
