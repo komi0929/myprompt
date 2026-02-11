@@ -3,11 +3,11 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/components/AuthProvider";
 import { fetchRecentKpi, aggregateDailyKpi, type DailyKpi } from "@/lib/analytics";
 import type { FeatureFlag } from "@/lib/feature-flags";
 import {
   Shield,
+  Lock,
   RefreshCw,
   BarChart3,
   ToggleLeft,
@@ -33,7 +33,8 @@ import {
 import { cn } from "@/lib/utils";
 
 /* ─── Config ─── */
-const ADMIN_EMAILS = ["komi0929@gmail.com"];
+const ADMIN_PASSCODE = "09295373";
+const SESSION_KEY = "mp_admin_unlocked";
 
 /* ─── Tab Definition ─── */
 type TabId = "kpi" | "flags" | "contacts" | "feedback";
@@ -80,11 +81,17 @@ interface ChangelogItem {
 /*  Admin Dashboard                                */
 /* ═══════════════════════════════════════════════ */
 function AdminDashboard(): React.ReactElement {
-  const { authStatus, email } = useAuth();
+  // Passcode auth state
+  const [unlocked, setUnlocked] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return sessionStorage.getItem(SESSION_KEY) === "1";
+  });
+  const [passcode, setPasscode] = useState("");
+  const [passcodeError, setPasscodeError] = useState(false);
+
   const [activeTab, setActiveTab] = useState<TabId>("kpi");
   const [fetching, setFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [authTimeout, setAuthTimeout] = useState(false);
 
   // KPI data
   const [kpiData, setKpiData] = useState<DailyKpi[]>([]);
@@ -109,14 +116,18 @@ function AdminDashboard(): React.ReactElement {
   const [clDesc, setClDesc] = useState("");
   const [clType, setClType] = useState<"feature" | "improvement" | "bugfix">("improvement");
 
-  const isAdmin = authStatus === "authenticated" && ADMIN_EMAILS.includes(email);
-
-  // Auth loading timeout: if auth stays "loading" for more than 8s, show fallback
-  useEffect(() => {
-    if (authStatus !== "loading") return;
-    const timer = setTimeout(() => setAuthTimeout(true), 8000);
-    return () => clearTimeout(timer);
-  }, [authStatus]);
+  /* ─── Passcode Submit ─── */
+  const handlePasscodeSubmit = (e: React.FormEvent): void => {
+    e.preventDefault();
+    if (passcode === ADMIN_PASSCODE) {
+      sessionStorage.setItem(SESSION_KEY, "1");
+      setUnlocked(true);
+      setPasscodeError(false);
+    } else {
+      setPasscodeError(true);
+      setPasscode("");
+    }
+  };
 
   /* ─── Fetch All Data ─── */
   const fetchAll = useCallback(async (): Promise<void> => {
@@ -153,39 +164,52 @@ function AdminDashboard(): React.ReactElement {
   }, []);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (unlocked) {
       const t = setTimeout(() => { void fetchAll(); }, 0);
       return () => clearTimeout(t);
     }
-  }, [isAdmin, fetchAll]);
+  }, [unlocked, fetchAll]);
 
-  /* ─── Guards ─── */
-  if (authStatus === "loading" && !authTimeout) {
-    return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><p className="text-slate-400">読み込み中...</p></div>;
-  }
-  if (authStatus === "loading" && authTimeout) {
+  /* ─── Passcode Gate ─── */
+  if (!unlocked) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
-        <div className="text-center max-w-md">
-          <Shield className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-slate-800 mb-2">認証の読み込みがタイムアウトしました</h1>
-          <p className="text-sm text-slate-500 mb-4">ページを再読み込みするか、ログイン状態を確認してください。</p>
-          <div className="flex gap-3 justify-center">
-            <button onClick={() => window.location.reload()} className="text-sm bg-yellow-400 text-slate-800 px-4 py-2 rounded-lg font-medium hover:bg-yellow-500">再読み込み</button>
-            <Link href="/" className="text-sm text-yellow-600 hover:text-yellow-700 font-medium px-4 py-2">← マイプロンプトに戻る</Link>
+        <div className="text-center max-w-sm w-full">
+          <div className="w-16 h-16 bg-yellow-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+            <Lock className="w-8 h-8 text-yellow-600" />
           </div>
-        </div>
-      </div>
-    );
-  }
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
-        <div className="text-center max-w-md">
-          <Shield className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-slate-800 mb-2">アクセス権がありません</h1>
-          <p className="text-sm text-slate-500 mb-6">このページは管理者専用です。</p>
-          <Link href="/" className="text-sm text-yellow-600 hover:text-yellow-700 font-medium">← マイプロンプトに戻る</Link>
+          <h1 className="text-xl font-bold text-slate-800 mb-1">管理ダッシュボード</h1>
+          <p className="text-sm text-slate-500 mb-6">アクセスコードを入力してください</p>
+          <form onSubmit={handlePasscodeSubmit} className="space-y-3">
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={8}
+              value={passcode}
+              onChange={e => { setPasscode(e.target.value.replace(/\D/g, "")); setPasscodeError(false); }}
+              placeholder="8桁のコード"
+              autoFocus
+              className={cn(
+                "w-full h-12 text-center text-2xl tracking-[0.5em] font-mono rounded-xl border-2 bg-white focus:outline-none transition-colors",
+                passcodeError
+                  ? "border-red-300 focus:border-red-400 bg-red-50"
+                  : "border-slate-200 focus:border-yellow-400"
+              )}
+            />
+            {passcodeError && (
+              <p className="text-xs text-red-500 font-medium">コードが正しくありません</p>
+            )}
+            <button
+              type="submit"
+              disabled={passcode.length !== 8}
+              className="w-full h-10 bg-yellow-400 hover:bg-yellow-500 text-slate-800 font-semibold rounded-xl text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              認証する
+            </button>
+          </form>
+          <Link href="/" className="inline-block mt-6 text-sm text-slate-400 hover:text-slate-600 transition-colors">
+            ← マイプロンプトに戻る
+          </Link>
         </div>
       </div>
     );
