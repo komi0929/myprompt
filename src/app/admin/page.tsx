@@ -6,7 +6,6 @@ import { supabase } from "@/lib/supabase";
 import { fetchRecentKpi, aggregateDailyKpi, type DailyKpi } from "@/lib/analytics";
 import type { FeatureFlag } from "@/lib/feature-flags";
 import {
-  Shield,
   Lock,
   RefreshCw,
   BarChart3,

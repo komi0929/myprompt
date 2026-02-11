@@ -78,23 +78,14 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   const [likes, setLikes] = useState<string[]>([]);
   const [history] = useState<Record<string, HistoryEntry[]>>({});
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [view, setViewState] = useState<PromptStoreState["view"]>("library");
-  const [visibilityFilter, setVisibilityFilterState] = useState<PromptStoreState["visibilityFilter"]>("all");
-  const [searchQuery, setSearchQueryState] = useState("");
+  const [view, setViewState] = useState<PromptStoreState["view"]>(() => ssGet("mp-view", "library" as const));
+  const [visibilityFilter, setVisibilityFilterState] = useState<PromptStoreState["visibilityFilter"]>(() => ssGet("mp-vf", "all" as const));
+  const [searchQuery, setSearchQueryState] = useState(() => ssGet("mp-sq", ""));
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
-  const [currentPhase, setCurrentPhaseState] = useState<Phase>("All");
+  const [currentPhase, setCurrentPhaseState] = useState<Phase>(() => ssGet("mp-phase", "All" as Phase));
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
   const [hydrated, setHydrated] = useState(false);
-  const [sortOrder, setSortOrderState] = useState<SortOrder>("updated");
-
-  // Hydration-safe: restore sessionStorage values only after mount
-  useEffect(() => {
-    setViewState(ssGet("mp-view", "library" as const));
-    setVisibilityFilterState(ssGet("mp-vf", "all" as const));
-    setSearchQueryState(ssGet("mp-sq", ""));
-    setCurrentPhaseState(ssGet("mp-phase", "All" as Phase));
-    setSortOrderState(ssGet("mp-sort", "updated" as SortOrder));
-  }, []);
+  const [sortOrder, setSortOrderState] = useState<SortOrder>(() => ssGet("mp-sort", "updated" as SortOrder));
 
   // V-13: Persist filter state to sessionStorage
   const setView = useCallback((v: PromptStoreState["view"]) => { setViewState(v); ssSet("mp-view", v); }, []);
