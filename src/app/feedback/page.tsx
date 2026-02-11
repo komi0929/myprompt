@@ -148,12 +148,19 @@ function FeedbackPageContent(): React.ReactElement {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     const load = async (): Promise<void> => {
       setLoading(true);
-      await Promise.all([fetchFeedback(), fetchChangelog(), fetchLikedIds()]);
-      setLoading(false);
+      try {
+        await Promise.all([fetchFeedback(), fetchChangelog(), fetchLikedIds()]);
+      } catch (e) {
+        console.error("Feedback load error:", e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
     load();
+    return () => { cancelled = true; };
   }, [fetchFeedback, fetchChangelog, fetchLikedIds]);
 
   /* ─── Like Toggle ─── */
