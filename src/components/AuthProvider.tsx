@@ -72,10 +72,10 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
           .eq("id", u.id)
           .maybeSingle();
 
+        if (cancelled) return;
+
         if (error) {
           console.error("Profile check error:", error.message);
-          // On DB error, do NOT overwrite with metadata if we already have state
-          // Only fallback if we have nothing or forced
           if (forceMetaFallback) {
              extractUserMeta(u);
           }
@@ -83,13 +83,12 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
         }
         
         if (data) {
-          // Profile exists, update local state
           setDisplayName(data.display_name || "");
           setAvatarUrl(data.avatar_url || "");
           return;
         }
 
-        // 2. Profile missing (data is null, error is null) -> Create it
+        // 2. Profile missing -> Create it
         console.warn("Profile missing for user, creating manually (Self-Healing)...");
         const metaName = u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split("@")[0] || "User";
         const metaAvatar = u.user_metadata?.avatar_url || "";
@@ -100,18 +99,24 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
           
         if (insertError) {
            console.error("Manual profile creation failed:", insertError.message);
-           // Fallback to metadata for UI
-           setDisplayName(metaName);
-           setAvatarUrl(metaAvatar);
-        } else {
-           setDisplayName(metaName);
-           setAvatarUrl(metaAvatar);
         }
+        setDisplayName(metaName);
+        setAvatarUrl(metaAvatar);
       } catch (e) {
         console.error("ensureProfile error:", e);
         if (forceMetaFallback) extractUserMeta(u);
       }
     };
+
+    // Safety timeout: force initialization after 5 seconds no matter what
+    const safetyTimer = setTimeout(() => {
+      if (!cancelled) {
+        setInitialized(prev => {
+          if (!prev) console.warn("Auth init forced by safety timeout (5s)");
+          return true;
+        });
+      }
+    }, 5000);
 
     const init = async (): Promise<void> => {
       try {
@@ -120,37 +125,38 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
         setSession(data.session);
         setUser(data.session?.user ?? null);
         if (data.session?.user) {
-          // Don't extract meta immediately, trust ensureProfile to fetch truth
-          // (Only fallback if needed)
-          await ensureProfile(data.session.user, true);
+          // Set metadata immediately for instant UI, then fetch profile in background
+          extractUserMeta(data.session.user);
+          // Non-blocking: don't await — let UI render while profile loads
+          ensureProfile(data.session.user, true).catch(() => {/* already handled inside */});
         }
       } catch (e) {
         const name = (e as Error)?.name ?? "";
         if (name === "AbortError" || cancelled) return;
       }
+      // Mark initialized immediately — don't wait for profile fetch
       if (!cancelled) setInitialized(true);
     };
     init();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (cancelled) return;
-      // INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED, USER_UPDATED, SIGNED_OUT, PASSWORD_RECOVERY
-      // console.log("Auth event:", event);
 
       setSession(newSession);
       setUser(newSession?.user ?? null);
+
+      // Ensure initialized on first auth event (redundant safety)
+      setInitialized(true);
+
       if (newSession?.user) {
-        // Handle events smartly
+        // Set metadata immediately for responsive UI
+        extractUserMeta(newSession.user);
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-             // Fetch fresh
-             await ensureProfile(newSession.user, true);
+             ensureProfile(newSession.user, true).catch(() => {});
         } else if (event === 'TOKEN_REFRESHED') {
-             // Don't overwrite state blindly, just ensure consistency in background
-             // Pass false to forceMetaFallback to keep existing state on error
-             await ensureProfile(newSession.user, false);
+             ensureProfile(newSession.user, false).catch(() => {});
         } else {
-             // USER_UPDATED etc.
-             await ensureProfile(newSession.user, false);
+             ensureProfile(newSession.user, false).catch(() => {});
         }
       } else if (event === 'SIGNED_OUT') {
         setDisplayName("");
@@ -161,6 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
 
     return () => {
       cancelled = true;
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
