@@ -79,6 +79,7 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   const [history] = useState<Record<string, HistoryEntry[]>>({});
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [view, setViewState] = useState<PromptStoreState["view"]>(() => ssGet("mp-view", "library" as const));
+
   const [visibilityFilter, setVisibilityFilterState] = useState<PromptStoreState["visibilityFilter"]>(() => ssGet("mp-vf", "all" as const));
   const [searchQuery, setSearchQueryState] = useState(() => ssGet("mp-sq", ""));
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
@@ -93,6 +94,17 @@ export function PromptStoreProvider({ children }: { children: ReactNode }): Reac
   const setSearchQuery = useCallback((v: string) => { setSearchQueryState(v); ssSet("mp-sq", v); }, []);
   const setCurrentPhase = useCallback((v: Phase) => { setCurrentPhaseState(v); ssSet("mp-phase", v); }, []);
   const setSortOrder = useCallback((v: SortOrder) => { setSortOrderState(v); ssSet("mp-sort", v); }, []);
+
+  // Guest users: default to "trend" view (みんなのプロンプト) when no stored preference
+  useEffect(() => {
+    if (authStatus === "guest") {
+      const stored = typeof window !== "undefined" ? sessionStorage.getItem("mp-view") : null;
+      if (!stored) {
+        setViewState("trend");
+      }
+    }
+  }, [authStatus]);
+
 
   const currentUserId = user?.id ?? "";
 

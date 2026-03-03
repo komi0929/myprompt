@@ -16,7 +16,7 @@ export type DbPromptRow = Tables<"prompts"> & {
 export type DbFolderRow = Tables<"folders">;
 
 /* ─── Domain types ─── */
-export type Phase = "All" | "Planning" | "Design" | "Implementation" | "Debug" | "Release" | "Other";
+export type Phase = "All" | "Planning" | "Design" | "Implementation" | "Debug" | "Release" | "MVP" | "Memo" | "Other";
 
 export interface Prompt {
   id: string;
@@ -86,5 +86,7 @@ export const PHASES: PhaseInfo[] = [
   { id: "Implementation", label: "実装", icon: "💻", hint: "コードを書くとき" },
   { id: "Debug", label: "デバッグ", icon: "🐛", hint: "エラーを直すとき" },
   { id: "Release", label: "リリース", icon: "🚀", hint: "公開するとき" },
+  { id: "MVP", label: "MVP", icon: "🏆", hint: "最小限の機能で検証するとき" },
+  { id: "Memo", label: "memo", icon: "📝", hint: "メモ・覚え書き" },
   { id: "Other", label: "その他", icon: "📦", hint: "その他のプロンプト" },
 ];

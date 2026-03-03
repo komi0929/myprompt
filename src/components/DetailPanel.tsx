@@ -16,6 +16,31 @@ import { useAuth } from "@/components/AuthProvider";
 import { hasVariables } from "@/lib/template-utils";
 import { addToCopyBuffer } from "@/components/CopyBuffer";
 
+/** URLを検出してリンク化するヘルパー */
+function linkifyText(text: string): React.ReactNode[] {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  return parts.map((part, i) => {
+    if (urlRegex.test(part)) {
+      // Reset lastIndex since we're reusing the regex
+      urlRegex.lastIndex = 0;
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:text-blue-800 underline break-all"
+          onClick={e => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+}
+
 export function DetailPanel(): React.ReactElement {
   const { selectedPromptId, prompts, openEditor, toggleFavorite, isFavorited, toggleLike, isLiked, incrementUseCount, updatePrompt, setSelectedPromptId } = usePromptStore();
   const { requireAuth } = useAuthGuard();
@@ -235,43 +260,8 @@ export function DetailPanel(): React.ReactElement {
               </span>
             )}
           </div>
-          
-          {inlineField === "content" ? (
-            <div className="space-y-2">
-              <textarea
-                autoFocus
-                ref={inlineRef as React.RefObject<HTMLTextAreaElement>}
-                value={inlineValue}
-                onChange={e => setInlineValue(e.target.value)}
-                onKeyDown={e => { if (e.key === "Escape") cancelInlineEdit(); }}
-                rows={10}
-                className="w-full bg-yellow-50 rounded-xl p-5 border border-yellow-300 font-mono text-sm leading-relaxed text-slate-700 min-h-[160px] resize-none focus:outline-none focus:ring-2 focus:ring-yellow-400/40"
-              />
-              <div className="flex justify-end gap-1.5">
-                <button onClick={cancelInlineEdit} className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100">キャンセル</button>
-                <button onClick={saveInlineEdit} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-yellow-700 bg-yellow-100 hover:bg-yellow-200 border border-yellow-300">保存</button>
-              </div>
-            </div>
-          ) : (
-          <div
-            className={cn("bg-slate-50 rounded-xl p-5 border border-slate-100 font-mono text-sm leading-relaxed text-slate-700 shadow-inner min-h-[160px] whitespace-pre-wrap wrap-break-word group/content", isOwner && "cursor-pointer hover:border-yellow-200 transition-colors")}
-            onDoubleClick={() => isOwner && startInlineEdit("content", prompt.content)}
-            title={isOwner ? "ダブルクリックで編集" : undefined}
-          >
-            {isOwner && <span className="float-right text-[10px] text-slate-300 opacity-0 group-hover/content:opacity-100 transition-opacity flex items-center gap-1"><Pencil className="w-2.5 h-2.5" />ダブルクリックで編集</span>}
-            {prompt.content.split(/({.*?})/).map((part, i) => 
-              part.match(/^{.*}$/) ? (
-                <span key={i} className="bg-yellow-200 text-yellow-800 px-1 rounded font-semibold mx-0.5 border-b-2 border-yellow-300">
-                  {part}
-                </span>
-              ) : (
-                part
-              )
-            )}
-          </div>
-          )}
 
-          {/* Template Use button or simple copy */}
+          {/* Copy / Template button — moved above prompt content for quick access */}
           {hasVariables(prompt.content) ? (
             <Button
               className="w-full shadow-md shadow-yellow-200 hover:shadow-yellow-300 transition-shadow"
@@ -334,6 +324,41 @@ export function DetailPanel(): React.ReactElement {
               </div>
             </div>
           )}
+          
+          {inlineField === "content" ? (
+            <div className="space-y-2">
+              <textarea
+                autoFocus
+                ref={inlineRef as React.RefObject<HTMLTextAreaElement>}
+                value={inlineValue}
+                onChange={e => setInlineValue(e.target.value)}
+                onKeyDown={e => { if (e.key === "Escape") cancelInlineEdit(); }}
+                rows={10}
+                className="w-full bg-yellow-50 rounded-xl p-5 border border-yellow-300 font-mono text-sm leading-relaxed text-slate-700 min-h-[160px] resize-none focus:outline-none focus:ring-2 focus:ring-yellow-400/40"
+              />
+              <div className="flex justify-end gap-1.5">
+                <button onClick={cancelInlineEdit} className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100">キャンセル</button>
+                <button onClick={saveInlineEdit} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-yellow-700 bg-yellow-100 hover:bg-yellow-200 border border-yellow-300">保存</button>
+              </div>
+            </div>
+          ) : (
+          <div
+            className={cn("bg-slate-50 rounded-xl p-5 border border-slate-100 font-mono text-sm leading-relaxed text-slate-700 shadow-inner min-h-[160px] whitespace-pre-wrap wrap-break-word group/content", isOwner && "cursor-pointer hover:border-yellow-200 transition-colors")}
+            onDoubleClick={() => isOwner && startInlineEdit("content", prompt.content)}
+            title={isOwner ? "ダブルクリックで編集" : undefined}
+          >
+            {isOwner && <span className="float-right text-[10px] text-slate-300 opacity-0 group-hover/content:opacity-100 transition-opacity flex items-center gap-1"><Pencil className="w-2.5 h-2.5" />ダブルクリックで編集</span>}
+            {prompt.content.split(/({.*?})/).map((part, i) => 
+              part.match(/^{.*}$/) ? (
+                <span key={i} className="bg-yellow-200 text-yellow-800 px-1 rounded font-semibold mx-0.5 border-b-2 border-yellow-300">
+                  {part}
+                </span>
+              ) : (
+                part
+              )
+            )}
+          </div>
+          )}
         </div>
 
         {/* 💡 補足情報 */}
@@ -364,7 +389,7 @@ export function DetailPanel(): React.ReactElement {
                 onDoubleClick={() => isOwner && startInlineEdit("notes", prompt.notes ?? "")}
                 title={isOwner ? "ダブルクリックで編集" : undefined}
               >
-                {prompt.notes}
+                {linkifyText(prompt.notes)}
               </div>
             ) : isOwner ? (
               <button
